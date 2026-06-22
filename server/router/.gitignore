@@ -1,0 +1,5 @@
+server/router/node_modules/
+node_modules/
+cliente/android/Tempjdk17.msi
+*.msi
+*.exe
