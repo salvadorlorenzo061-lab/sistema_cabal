@@ -21,58 +21,63 @@ const registrarBitacora = (id_usuario, tipo_movimiento, ejecutado_por, detalles,
 };
 
 // =========================================================================
-// 🔐 ENDPOINT: INICIO DE SESIÓN (LOGIN) 
+// 🔐 ENDPOINT: INICIO DE SESIÓN (LOGIN) - CON PROTECCIÓN ANTI-CRASH (ERROR 500)
 // =========================================================================
 router.post("/login", (req, res) => {
-    const { correo, clave } = req.body;
+    try {
+        const { correo, clave } = req.body;
 
-    // Validación de campos vacíos
-    if (!correo || !clave) {
-        return res.status(400).send({ error: "Por favor, ingrese el correo electrónico y la contraseña." });
-    }
-
-    const correoLimpio = correo.toLowerCase().trim();
-
-    // Consulta con funciones de limpieza SQL para evitar fallos de formato
-    db.query('SELECT * FROM usuarios WHERE LOWER(TRIM(correo)) = ?', [correoLimpio], (err, result) => {
-        if (err) {
-            console.error("❌ Error en base de datos al validar Login:", err);
-            return res.status(500).send({ error: "Error interno del servidor al consultar credenciales." });
+        if (!correo || !clave) {
+            return res.status(400).send({ error: "Por favor, ingrese el correo electrónico y la contraseña." });
         }
 
-        // Si el correo no existe
-        if (result.length === 0) {
-            return res.status(401).send({ error: "El correo electrónico ingresado no existe." });
-        }
+        const correoLimpio = correo.toLowerCase().trim();
 
-        const usuario = result[0];
-
-        // Verificación de clave (Directa/Texto plano)
-        if (usuario.clave !== clave) {
-            return res.status(401).send({ error: "La contraseña es incorrecta." });
-        }
-
-        // Verificación del estado del usuario
-        if (usuario.estado && usuario.estado.trim().toLowerCase() !== 'activo') {
-            return res.status(403).send({ error: "Este usuario se encuentra inactivo. Comuníquese con el Administrador." });
-        }
-
-        // Registrar el inicio de sesión exitoso en la auditoría
-        const detallesLogin = `El usuario [${usuario.nombre}] inició sesión correctamente en el sistema central.`;
-        registrarBitacora(usuario.id_usuario, "LOGIN", usuario.nombre, detallesLogin);
-
-        // Envío de respuesta con la estructura exacta que tu App.js espera
-        return res.status(200).send({
-            success: true,
-            usuario: {
-                id_usuario: usuario.id_usuario,
-                nombre: usuario.nombre,
-                correo: usuario.correo,
-                rol: usuario.rol,
-                estado: usuario.estado
+        // Consulta usando BINARY o comparaciones limpias para evitar fallos de colación
+        db.query('SELECT * FROM usuarios WHERE LOWER(TRIM(correo)) = ?', [correoLimpio], (err, result) => {
+            if (err) {
+                console.error("❌ Error en la consulta SQL de Login:", err);
+                return res.status(500).send({ error: "Error interno en la base de datos al buscar el usuario." });
             }
+
+            if (!result || result.length === 0) {
+                return res.status(401).send({ error: "El correo electrónico ingresado no existe." });
+            }
+
+            const usuario = result[0];
+
+            if (usuario.clave !== clave) {
+                return res.status(401).send({ error: "La contraseña es incorrecta." });
+            }
+
+            if (usuario.estado && usuario.estado.trim().toLowerCase() !== 'activo') {
+                return res.status(403).send({ error: "Este usuario se encuentra inactivo. Comuníquese con el Administrador." });
+            }
+
+            // Envolvemos el registro de bitácora para que un error aquí no tumbe el login
+            try {
+                const detallesLogin = `El usuario [${usuario.nombre || 'Desconocido'}] inició sesión correctamente.`;
+                registrarBitacora(usuario.id_usuario, "LOGIN", usuario.nombre || "SISTEMA", detallesLogin);
+            } catch (bitacoraError) {
+                console.error("⚠️ Error no síncrono al intentar escribir la bitácora de Login:", bitacoraError);
+            }
+
+            // Estructura idónea para App.js
+            return res.status(200).send({
+                success: true,
+                usuario: {
+                    id_usuario: usuario.id_usuario,
+                    nombre: usuario.nombre,
+                    correo: usuario.correo,
+                    rol: usuario.rol,
+                    estado: usuario.estado
+                }
+            });
         });
-    });
+    } catch (globalError) {
+        console.error("❌ Error crítico global en el endpoint /login:", globalError);
+        return res.status(500).send({ error: "Fallo crítico en el enrutador de login." });
+    }
 });
 
 // === CREAR USUARIO ===
@@ -162,8 +167,9 @@ router.put("/actualizar", (req, res) => {
                     if (ant.rol !== rol) cambios.push(`Rol: '${ant.rol}' -> '${rol}'`);
                     if (ant.estado !== estado) cambios.push(`Estado: '${ant.estado}' -> '${estado}'`);
                     
+                    // CORRECCIÓN: Se cambió 'changes.join' por 'cambios.join' para evitar caídas en producción
                     const detalles = cambios.length > 0 
-                        ? `Modificado por [${operador}]. Cambios: ${changes.join(', ')}` 
+                        ? `Modificado por [${operador}]. Cambios: ${cambios.join(', ')}` 
                         : `Actualizado por [${operador}] sin cambios estructurales.`;
 
                     registrarBitacora(id_usuario, "ACTUALIZACION", operador, detalles);
