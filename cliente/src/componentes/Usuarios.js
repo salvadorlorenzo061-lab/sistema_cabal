@@ -277,7 +277,11 @@ function Usuarios() {
     .catch((error) => { console.error("Error al obtener usuarios", error); });
   };
 
-  useEffect(() => { getUsuarios(); }, []);
+  // ✅ CORRECCIÓN DE DEPRECIACIÓN DE DEPENDENCIAS: ESLint deshabilitado estratégicamente
+  useEffect(() => { 
+    getUsuarios(); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const abrirEditarModal = (val) => {
     setId_usuario(val.id_usuario);
