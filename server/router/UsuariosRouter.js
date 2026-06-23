@@ -2,26 +2,27 @@ const express = require("express");
 const db = require('../Conexion'); 
 const router = express.Router(); 
 
-// === 🛡️ FUNCIÓN AUXILIAR PARA REGISTRAR EN BITÁCORA ===
-const registrarBitacora = (id_usuario, tipo_movimiento, ejecutado_por, detalles, callback) => {
+// === 🛡️ FUNCIÓN AUXILIAR PARA REGISTRAR EN BITÁCORA (Sincronizada con Aiven) ===
+const registrarBitacora = (id_usuario, usuario_afectado, tipo_movimiento, ejecutado_por, detalles, callback) => {
+    // Agregada explícitamente la columna 'usuario_afectado' requerida en la BD
     const sqlBitacora = `
-        INSERT INTO bitacora (id_usuario, tipo_movimiento, ejecutado_por, detalles, fecha_movimiento) 
-        VALUES (?, ?, ?, ?, NOW())
+        INSERT INTO bitacora (id_usuario, usuario_afectado, tipo_movimiento, ejecutado_por, detalles, fecha_movimiento) 
+        VALUES (?, ?, ?, ?, ?, NOW())
     `;
     
-    db.query(sqlBitacora, [id_usuario, tipo_movimiento, ejecutado_por, detalles], (err, result) => {
+    db.query(sqlBitacora, [id_usuario, usuario_afectado, tipo_movimiento, ejecutado_por, detalles], (err, result) => {
         if (err) {
-            console.error("❌ Error crítico al insertar en la bitácora de base de datos:", err);
+            console.error("❌ Error crítico al insertar en la bitácora de base de datos:", err.message);
             if (callback) callback(err);
         } else {
-            console.log(`✅ Bitácora registrada con éxito: [${tipo_movimiento}] por [${ejecutado_por}] para Usuario ID ${id_usuario}`);
+            console.log(`✅ Bitácora registrada con éxito: [${tipo_movimiento}] por [${ejecutado_por}]`);
             if (callback) callback(null, result);
         }
     });
 };
 
 // =========================================================================
-// 🔐 ENDPOINT: INICIO DE SESIÓN (LOGIN) - CON PROTECCIÓN ANTI-CRASH (ERROR 500)
+// 🔐 ENDPOINT: INICIO DE SESIÓN (LOGIN)
 // =========================================================================
 router.post("/login", (req, res) => {
     try {
@@ -33,7 +34,6 @@ router.post("/login", (req, res) => {
 
         const correoLimpio = correo.toLowerCase().trim();
 
-        // Consulta usando BINARY o comparaciones limpias para evitar fallos de colación
         db.query('SELECT * FROM usuarios WHERE LOWER(TRIM(correo)) = ?', [correoLimpio], (err, result) => {
             if (err) {
                 console.error("❌ Error en la consulta SQL de Login:", err);
@@ -54,15 +54,20 @@ router.post("/login", (req, res) => {
                 return res.status(403).send({ error: "Este usuario se encuentra inactivo. Comuníquese con el Administrador." });
             }
 
-            // Envolvemos el registro de bitácora para que un error aquí no tumbe el login
+            // Registro seguro en la bitácora
             try {
                 const detallesLogin = `El usuario [${usuario.nombre || 'Desconocido'}] inició sesión correctamente.`;
-                registrarBitacora(usuario.id_usuario, "LOGIN", usuario.nombre || "SISTEMA", detallesLogin);
+                registrarBitacora(
+                    usuario.id_usuario, 
+                    usuario.nombre || "SISTEMA", // usuario_afectado
+                    "LOGIN", 
+                    usuario.nombre || "SISTEMA", // ejecutado_por
+                    detallesLogin
+                );
             } catch (bitacoraError) {
-                console.error("⚠️ Error no síncrono al intentar escribir la bitácora de Login:", bitacoraError);
+                console.error("⚠️ Error no síncrono en bitácora de Login:", bitacoraError);
             }
 
-            // Estructura idónea para App.js
             return res.status(200).send({
                 success: true,
                 usuario: {
@@ -106,7 +111,8 @@ router.post("/crear", (req, res) => {
                     const nuevoId = insertResult.insertId;
                     const detalles = `El usuario [${operador}] creó un nuevo perfil: ${nombre} con rol '${rol}'.`;
                     
-                    registrarBitacora(nuevoId, "INSERCION", operador, detalles);
+                    // Sincronizado enviando el campo 'nombre' como el usuario afectado
+                    registrarBitacora(nuevoId, nombre, "INSERCION", operador, detalles);
                     res.status(200).send("Usuario registrado con éxito!!!");
                 }
             }
@@ -117,7 +123,7 @@ router.post("/crear", (req, res) => {
 // === LISTAR USUARIOS ===
 router.get("/", (req, res) => {
     const sqlQuery = `
-        SELECT u.*, b.fecha_movimiento, b.tipo_movimiento, b.ejecutado_por, b.detalles
+        SELECT u.*, b.fecha_movimiento, b.tipo_movimiento, b.ejecutado_por, b.detalles, b.usuario_afectado
         FROM usuarios u
         LEFT JOIN (
             SELECT b1.*
@@ -167,12 +173,12 @@ router.put("/actualizar", (req, res) => {
                     if (ant.rol !== rol) cambios.push(`Rol: '${ant.rol}' -> '${rol}'`);
                     if (ant.estado !== estado) cambios.push(`Estado: '${ant.estado}' -> '${estado}'`);
                     
-                    // CORRECCIÓN: Se cambió 'changes.join' por 'cambios.join' para evitar caídas en producción
                     const detalles = cambios.length > 0 
                         ? `Modificado por [${operador}]. Cambios: ${cambios.join(', ')}` 
                         : `Actualizado por [${operador}] sin cambios estructurales.`;
 
-                    registrarBitacora(id_usuario, "ACTUALIZACION", operador, detalles);
+                    // Sincronizado enviando el nombre actual del usuario modificado
+                    registrarBitacora(id_usuario, nombre, "ACTUALIZACION", operador, detalles);
                     res.status(200).send("Usuario actualizado correctamente");
                 }
             }
@@ -180,14 +186,14 @@ router.put("/actualizar", (req, res) => {
     });
 });
 
-// === ELIMINAR USUARIO (Estructura tolerante a claves foráneas) ===
+// === ELIMINAR USUARIO ===
 router.delete("/delete/:id_usuario", (req, res) => {
     const { id_usuario } = req.params; 
     const operador = req.query.operador || "DESCONOCIDO"; 
     const rolOperador = req.query.rolOperador ? req.query.rolOperador.trim().toLowerCase() : "";
 
     if (rolOperador === "sub coordinador municipal") {
-        console.warn(`⚠️ ALERTA DE SEGURIDAD: El operador [${operador}] intentó borrar el ID ${id_usuario} sin permisos.`);
+        console.warn(`⚠️ ALERTA: El operador [${operador}] intentó borrar el ID ${id_usuario} sin permisos.`);
         return res.status(403).send("Acceso denegado: Tu rango de Sub-Coordinador Municipal no tiene autorización para destruir registros.");
     }
 
@@ -199,14 +205,13 @@ router.delete("/delete/:id_usuario", (req, res) => {
         const usuarioEliminado = searchResult[0];
         const detalles = `El operador [${operador}] eliminó de forma física al usuario: ${usuarioEliminado.nombre} con Rol: [${usuarioEliminado.rol}].`;
 
-        registrarBitacora(id_usuario, "ELIMINACION", operador, detalles, (bitacoraErr) => {
-            
+        // Sincronizado enviando el nombre del usuario que se va a eliminar
+        registrarBitacora(id_usuario, usuarioEliminado.nombre, "ELIMINACION", operador, detalles, (bitacoraErr) => {
             db.query('DELETE FROM usuarios WHERE id_usuario=?', [id_usuario], (deleteErr, result) => {
                 if (deleteErr) {
                     console.error("❌ Error al remover de la tabla usuarios:", deleteErr);
                     return res.status(500).send("Error al eliminar el registro central");
                 }
-                
                 return res.status(200).send("Usuario eliminado correctamente de la plataforma"); 
             });
         });

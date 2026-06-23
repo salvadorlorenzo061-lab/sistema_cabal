@@ -277,7 +277,6 @@ function Usuarios() {
     .catch((error) => { console.error("Error al obtener usuarios", error); });
   };
 
-  // ✅ CORRECCIÓN DE DEPRECIACIÓN DE DEPENDENCIAS: ESLint deshabilitado estratégicamente
   useEffect(() => { 
     getUsuarios(); 
     // eslint-disable-next-line react-hooks/exhaustive-deps
