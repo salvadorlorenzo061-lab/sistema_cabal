@@ -11,7 +11,7 @@ import Departamentos from './componentes/Departamentos';
 import Afiliados from './componentes/Afiliados';
 import Dashboard from './componentes/Dashboard'; 
 import Bitacora from './componentes/Bitacora'; 
-import Problemas from './componentes/Problemas'; // 👈 1. Nueva importación del módulo de problemas
+import Problemas from './componentes/Problemas'; 
 
 // Imagen corporativa
 import logoCabal from './img/1.png'; 
@@ -48,6 +48,11 @@ function App() {
   // Referencia para el control del temporizador de inactividad
   const timerRef = useRef(null);
 
+  // =========================================================================
+  // 🌐 CONFIGURACIÓN DE URL DE PRODUCCIÓN EN LA NUBE
+  // =========================================================================
+  const API_URL = "https://sistema-cabal.onrender.com/api/usuarios";
+
   // Carga inicial de sesión
   useEffect(() => {
     const sesionGuardada = localStorage.getItem('sesion_cabal');
@@ -74,7 +79,7 @@ function App() {
 
     const rol = user.rol.trim().toLowerCase();
 
-    switch (rol) {
+    switch (role) {
       case 'coordinador regional':
         return 10 * 60 * 1000; // 10 minutos (tienen más carga de reportes)
       case 'coordinador municipal':
@@ -108,7 +113,6 @@ function App() {
 
   // 🕒 ESCUCHADOR DE INTERACCIONES DE TODOS LOS ROLES
   useEffect(() => {
-    // Eventos que reinician el contador (clics, teclado, mover mouse, tocar pantalla de celular)
     const eventos = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
 
     if (user) {
@@ -122,12 +126,14 @@ function App() {
     };
   }, [user, verificarInactividad]);
 
+  // 🔐 CONTROLADOR DE INICIO DE SESIÓN CORREGIDO (CONEXIÓN EN LA NUBE)
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorLogin('');
 
     try {
-      const response = await fetch('http://192.168.1.11:3002/api/usuarios/login', {
+      // Reemplazada la IP local por la ruta de producción en Render
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo, clave })
@@ -142,7 +148,7 @@ function App() {
         setErrorLogin(data.error || 'Credenciales inválidas');
       }
     } catch (err) {
-      setErrorLogin('No hay conexión con el servidor central.');
+      setErrorLogin('No hay conexión con el servidor central en la nube.');
     }
   };
 
@@ -272,8 +278,6 @@ function App() {
                 </Link>
               )}
 
-              {/* 📊 2. ENLACE EN EL SIDEBAR PARA EL MÓDULO DE PROBLEMAS */}
-              {/* Nota: Incluí todos los roles para que los coordinadores de barrio/municipio/región lo gestionen. Ajusta los roles si es necesario. */}
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
                 <Link to="/problemas" className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center">
                   <span>⚠️</span> {isMenuOpen && <span className="ms-2">Problemas de Barrio</span>}
@@ -338,7 +342,6 @@ function App() {
                 </RutaProtegida>
               } />
 
-              {/* 🛡️ 3. RUTA PROTEGIDA PARA EL MÓDULO DE PROBLEMAS */}
               <Route path="/problemas" element={
                 <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
                   <Problemas />
