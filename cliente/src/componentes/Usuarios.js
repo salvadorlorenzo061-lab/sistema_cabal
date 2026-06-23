@@ -20,7 +20,11 @@ function Usuarios() {
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
-  const API_URL = "http://localhost:3002/api/usuarios";
+  // =========================================================================
+  // 🌐 CONFIGURACIÓN DE IP CENTRALIZADA (Reemplaza con la IP de tu PC)
+  // =========================================================================
+  const SERVIDOR_IP = "192.168.1.15"; // <-- COLOCA AQUÍ TU IP DE NETWORK
+  const API_URL = `http://${SERVIDOR_IP}:3002/api/usuarios`;
 
   // =========================================================================
   // 🔑 VARIABLES DE SESIÓN DINÁMICAS (Conexión directa con tu Auth global)
