@@ -21,10 +21,9 @@ function Usuarios() {
   const [showEditModal, setShowEditModal] = useState(false); 
 
   // =========================================================================
-  // 🌐 CONFIGURACIÓN DE IP CENTRALIZADA (Reemplaza con la IP de tu PC)
+  // 🌐 CONFIGURACIÓN DE URL DE PRODUCCIÓN EN LA NUBE
   // =========================================================================
-  const SERVIDOR_IP = "192.168.1.15"; // <-- COLOCA AQUÍ TU IP DE NETWORK
-  const API_URL = `http://${SERVIDOR_IP}:3002/api/usuarios`;
+  const API_URL = "https://sistema-cabal.onrender.com/api/usuarios";
 
   // =========================================================================
   // 🔑 VARIABLES DE SESIÓN DINÁMICAS (Conexión directa con tu Auth global)
@@ -41,13 +40,13 @@ function Usuarios() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("INMOBILIARIA S.A. GUATEMALA", 14, 20);
+    doc.text("PARTIDO CABAL GUATEMALA", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Departamento de Recursos Humanos y TI", 14, 25);
-    doc.text("Sistema Centralizado de Control de Lotes", 14, 30);
+    doc.text("Coordinación de TI y Organización Interna", 14, 25);
+    doc.text("Sistema Centralizado de Afiliaciones e Incidencias (Izabal)", 14, 30);
     doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
 
     doc.setFillColor(245, 247, 250); 
@@ -85,7 +84,7 @@ function Usuarios() {
       startY: 72,
       head: [['PARÁMETRO DE SEGURIDAD', 'VALOR / CREDENCIAL ASIGNADA']],
       body: [
-        ['CÓDIGO INTERNO DE EMPLEADO', `EMP-${val.id_usuario}2026`],
+        ['CÓDIGO INTERNO DE USUARIO', `USR-${val.id_usuario}2026`],
         ['NOMBRE COMPLETO', val.nombre ? val.nombre.toUpperCase() : 'NO REGISTRADO'],
         ['CORREO ELECTRÓNICO DE ACCESO', val.correo || 'NO REGISTRADO'],
         ['CONTRASEÑA ENCRIPTADA (BD)', '••••••••'],
@@ -139,7 +138,7 @@ function Usuarios() {
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
     doc.text("Nota de seguridad: Esta ficha contiene trazas e historial de acceso de uso confidencial.", 14, finalY);
-    doc.text("Inmobiliaria S.A. - Control de Auditoría Interna de Sistemas de Información.", 14, finalY + 4);
+    doc.text("Partido Cabal - Control de Auditoría Interna de Sistemas de Información.", 14, finalY + 4);
 
     const nombreArchivo = val.nombre ? val.nombre.replace(/\s+/g, '_') : 'Usuario';
     doc.save(`Ficha_Auditoria_${nombreArchivo}.pdf`);

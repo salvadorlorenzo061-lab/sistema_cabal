@@ -38,7 +38,8 @@ function Afiliados() {
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
-  const BASE_URL = "http://localhost:3002/api";
+  // 🌐 URL ACTUALIZADA A PRODUCCIÓN EN RENDER
+  const BASE_URL = "https://sistema-cabal.onrender.com/api";
   const API_URL = `${BASE_URL}/afiliados`;
 
   // Lectura correcta de ficheros locales a strings Base64

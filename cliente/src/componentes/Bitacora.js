@@ -17,7 +17,8 @@ function Bitacora() {
   const [paginasTotales, setPaginasTotales] = useState(1);
   const [totalRegistros, setTotalRegistros] = useState(0);
 
-  const API_URL = "http://localhost:3002/api/bitacora";
+  // URL del Backend actualizada para el entorno de producción
+  const API_URL = "https://sistema-cabal.onrender.com/api/bitacora";
 
   // Cargar datos desde el backend usando los filtros estructurados
   const getBitacora = useCallback(() => {
