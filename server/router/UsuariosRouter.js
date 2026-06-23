@@ -20,6 +20,61 @@ const registrarBitacora = (id_usuario, tipo_movimiento, ejecutado_por, detalles,
     });
 };
 
+// =========================================================================
+// 🔐 ENDPOINT: INICIO DE SESIÓN (LOGIN) 
+// =========================================================================
+router.post("/login", (req, res) => {
+    const { correo, clave } = req.body;
+
+    // Validación de campos vacíos
+    if (!correo || !clave) {
+        return res.status(400).send({ error: "Por favor, ingrese el correo electrónico y la contraseña." });
+    }
+
+    const correoLimpio = correo.toLowerCase().trim();
+
+    // Consulta con funciones de limpieza SQL para evitar fallos de formato
+    db.query('SELECT * FROM usuarios WHERE LOWER(TRIM(correo)) = ?', [correoLimpio], (err, result) => {
+        if (err) {
+            console.error("❌ Error en base de datos al validar Login:", err);
+            return res.status(500).send({ error: "Error interno del servidor al consultar credenciales." });
+        }
+
+        // Si el correo no existe
+        if (result.length === 0) {
+            return res.status(401).send({ error: "El correo electrónico ingresado no existe." });
+        }
+
+        const usuario = result[0];
+
+        // Verificación de clave (Directa/Texto plano)
+        if (usuario.clave !== clave) {
+            return res.status(401).send({ error: "La contraseña es incorrecta." });
+        }
+
+        // Verificación del estado del usuario
+        if (usuario.estado && usuario.estado.trim().toLowerCase() !== 'activo') {
+            return res.status(403).send({ error: "Este usuario se encuentra inactivo. Comuníquese con el Administrador." });
+        }
+
+        // Registrar el inicio de sesión exitoso en la auditoría
+        const detallesLogin = `El usuario [${usuario.nombre}] inició sesión correctamente en el sistema central.`;
+        registrarBitacora(usuario.id_usuario, "LOGIN", usuario.nombre, detallesLogin);
+
+        // Envío de respuesta con la estructura exacta que tu App.js espera
+        return res.status(200).send({
+            success: true,
+            usuario: {
+                id_usuario: usuario.id_usuario,
+                nombre: usuario.nombre,
+                correo: usuario.correo,
+                rol: usuario.rol,
+                estado: usuario.estado
+            }
+        });
+    });
+});
+
 // === CREAR USUARIO ===
 router.post("/crear", (req, res) => {
     const { nombre, correo, clave, rol, fecha_creacion, estado, ejecutado_por } = req.body;
@@ -108,7 +163,7 @@ router.put("/actualizar", (req, res) => {
                     if (ant.estado !== estado) cambios.push(`Estado: '${ant.estado}' -> '${estado}'`);
                     
                     const detalles = cambios.length > 0 
-                        ? `Modificado por [${operador}]. Cambios: ${cambios.join(', ')}` 
+                        ? `Modificado por [${operador}]. Cambios: ${changes.join(', ')}` 
                         : `Actualizado por [${operador}] sin cambios estructurales.`;
 
                     registrarBitacora(id_usuario, "ACTUALIZACION", operador, detalles);
@@ -125,7 +180,6 @@ router.delete("/delete/:id_usuario", (req, res) => {
     const operador = req.query.operador || "DESCONOCIDO"; 
     const rolOperador = req.query.rolOperador ? req.query.rolOperador.trim().toLowerCase() : "";
 
-    // Restricción jerárquica basada en Rol
     if (rolOperador === "sub coordinador municipal") {
         console.warn(`⚠️ ALERTA DE SEGURIDAD: El operador [${operador}] intentó borrar el ID ${id_usuario} sin permisos.`);
         return res.status(403).send("Acceso denegado: Tu rango de Sub-Coordinador Municipal no tiene autorización para destruir registros.");
@@ -139,11 +193,8 @@ router.delete("/delete/:id_usuario", (req, res) => {
         const usuarioEliminado = searchResult[0];
         const detalles = `El operador [${operador}] eliminó de forma física al usuario: ${usuarioEliminado.nombre} con Rol: [${usuarioEliminado.rol}].`;
 
-        // 1. Primero registramos la ELIMINACIÓN en la bitácora para que capture el ID antes de borrarlo.
-        // Si tu columna id_usuario en bitácora acepta valores NULL o no es una clave foránea RESTRICT, esto funcionará perfecto.
         registrarBitacora(id_usuario, "ELIMINACION", operador, detalles, (bitacoraErr) => {
             
-            // 2. Ejecutamos el DELETE definitivo una vez asegurado el registro en bitácora
             db.query('DELETE FROM usuarios WHERE id_usuario=?', [id_usuario], (deleteErr, result) => {
                 if (deleteErr) {
                     console.error("❌ Error al remover de la tabla usuarios:", deleteErr);
