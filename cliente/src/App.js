@@ -103,7 +103,7 @@ function App() {
     timerRef.current = setTimeout(() => {
       handleLogout();
       Swal.fire({
-        title: 'Sesión Expirada',
+        title: 'SesSession Expirada',
         text: `Tu sesión como ${user.rol.toUpperCase()} se ha cerrado automáticamente por inactividad para proteger los datos de control central.`,
         icon: 'warning',
         confirmButtonColor: '#1e3a8a',
@@ -136,18 +136,26 @@ function App() {
       const response = await fetch(`${USUARIOS_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo, clave })
+        body: JSON.stringify({ correo: correo.toLowerCase().trim(), clave })
       });
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
-        setUser(data.usuario);
-        localStorage.setItem('sesion_cabal', JSON.stringify(data.usuario));
+      if (response.ok) {
+        // Soporta formatos flexibles: data.usuario o la raíz directa de los datos
+        const usuarioValido = data.usuario ? data.usuario : (data.id_usuario ? data : null);
+
+        if (usuarioValido) {
+          setUser(usuarioValido);
+          localStorage.setItem('sesion_cabal', JSON.stringify(usuarioValido));
+        } else {
+          setErrorLogin('Estructura de usuario no reconocida por el servidor central.');
+        }
       } else {
-        setErrorLogin(data.error || 'Credenciales inválidas');
+        setErrorLogin(data.message || data.error || 'Credenciales inválidas');
       }
     } catch (err) {
+      console.error("Error en conexión Login:", err);
       setErrorLogin('No hay conexión con el servidor central en la nube.');
     }
   };
@@ -272,13 +280,13 @@ function App() {
                 </Link>
               )}
 
-              {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
+              {['coordinador regional', 'coordinador municipal', 'sub coordinator municipal'].includes(miRol) && (
                 <Link to="/afiliados" className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center">
                   <span>👨‍⚖️</span> {isMenuOpen && <span className="ms-2">Afiliados</span>}
                 </Link>
               )}
 
-              {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
+              {['coordinador regional', 'coordinador municipal', 'sub coordinator municipal'].includes(miRol) && (
                 <Link to="/problemas" className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center">
                   <span>⚠️</span> {isMenuOpen && <span className="ms-2">Problemas de Barrio</span>}
                 </Link>
@@ -295,7 +303,7 @@ function App() {
           <div className={`p-4 ${isMenuOpen ? 'col-md-9 col-lg-10' : 'col'}`}>
             <Routes>
               <Route path="/" element={
-                (miRol === 'coordinador municipal' || miRol === 'sub coordinador municipal') 
+                (miRol === 'coordinador municipal' || miRol === 'sub coordinator municipal') 
                   ? <Navigate to="/afiliados" replace /> 
                   : <Navigate to="/home" replace />
               } />
@@ -337,19 +345,19 @@ function App() {
               } />
 
               <Route path="/afiliados" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinator municipal']}>
                   <Afiliados />
                 </RutaProtegida>
               } />
 
               <Route path="/problemas" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinator municipal']}>
                   <Problemas />
                 </RutaProtegida>
               } />
 
               <Route path="*" element={
-                <Navigate to={(miRol === 'coordinador municipal' || miRol === 'sub coordinador municipal') ? "/afiliados" : "/home"} replace />
+                <Navigate to={(miRol === 'coordinador municipal' || miRol === 'sub coordinator municipal') ? "/afiliados" : "/home"} replace />
               } />
             </Routes>
           </div>
