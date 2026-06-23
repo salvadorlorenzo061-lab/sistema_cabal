@@ -80,10 +80,9 @@ function App() {
 
     const rol = user.rol.trim().toLowerCase();
 
-    // ✨ Corregido: Se cambió 'role' por 'rol' para evitar el quiebre de la app
     switch (rol) {
       case 'coordinador regional':
-        return 10 * 60 * 1000; // 10 minutos (tienen más carga de reportes)
+        return 10 * 60 * 1000; // 10 minutos
       case 'coordinador municipal':
         return 5 * 60 * 1000;  // 5 minutos
       case 'sub coordinador municipal':
@@ -134,7 +133,6 @@ function App() {
     setErrorLogin('');
 
     try {
-      // Usamos el endpoint limpio apuntando directamente a tu UsuariosRouter en la nube
       const response = await fetch(`${USUARIOS_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

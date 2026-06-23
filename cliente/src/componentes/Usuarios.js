@@ -21,15 +21,26 @@ function Usuarios() {
   const [showEditModal, setShowEditModal] = useState(false); 
 
   // =========================================================================
-  // 🌐 CONFIGURACIÓN DE URL DE PRODUCCIÓN EN LA NUBE
+  // 🌐 CONFIGURACIÓN DE URL DE PRODUCCIÓN EN LA NUBE (RENDER)
   // =========================================================================
-  const API_URL = "https://sistema-cabal.onrender.com/api/usuarios";
+  const BASE_URL = "https://sistema-cabal.onrender.com/api";
+  const API_URL = `${BASE_URL}/usuarios`;
 
   // =========================================================================
   // 🔑 VARIABLES DE SESIÓN DINÁMICAS (Conexión directa con tu Auth global)
   // =========================================================================
-  const usuarioLogueado = "Usuario de Turno"; 
-  const miRol = "Sub Coordinador Municipal";      
+  const [usuarioLogueado, setUsuarioLogueado] = useState("SISTEMA");
+  const [miRol, setMiRol] = useState("");
+
+  // Recuperar la sesión real de localStorage al cargar el componente
+  useEffect(() => {
+    const sesionGuardada = localStorage.getItem('sesion_cabal');
+    if (sesionGuardada) {
+      const usuarioData = JSON.parse(sesionGuardada);
+      setUsuarioLogueado(usuarioData.nombre || "Usuario Activo");
+      setMiRol(usuarioData.rol || "");
+    }
+  }, []);
 
   // =========================================================================
   // 📄 REPORTE PROFESIONAL PDF INDIVIDUAL CON HISTORIAL DE AUDITORÍA
