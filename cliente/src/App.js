@@ -49,9 +49,10 @@ function App() {
   const timerRef = useRef(null);
 
   // =========================================================================
-  // 🌐 CONFIGURACIÓN DE URL DE PRODUCCIÓN EN LA NUBE
+  // 🌐 CONFIGURACIÓN DE URL DE PRODUCCIÓN EN LA NUBE (RENDER)
   // =========================================================================
-  const API_URL = "https://sistema-cabal.onrender.com/api/usuarios";
+  const BASE_URL = "https://sistema-cabal.onrender.com/api";
+  const USUARIOS_URL = `${BASE_URL}/usuarios`;
 
   // Carga inicial de sesión
   useEffect(() => {
@@ -79,7 +80,8 @@ function App() {
 
     const rol = user.rol.trim().toLowerCase();
 
-    switch (role) {
+    // ✨ Corregido: Se cambió 'role' por 'rol' para evitar el quiebre de la app
+    switch (rol) {
       case 'coordinador regional':
         return 10 * 60 * 1000; // 10 minutos (tienen más carga de reportes)
       case 'coordinador municipal':
@@ -87,7 +89,7 @@ function App() {
       case 'sub coordinador municipal':
         return 5 * 60 * 1000;  // 5 minutos
       default:
-        return 3 * 60 * 1000;  // 3 minutos para cualquier otro rol no especificado
+        return 3 * 60 * 1000;  // 3 minutos para cualquier otro rol
     }
   }, [user]);
 
@@ -132,8 +134,8 @@ function App() {
     setErrorLogin('');
 
     try {
-      // Reemplazada la IP local por la ruta de producción en Render
-      const response = await fetch(`${API_URL}/login`, {
+      // Usamos el endpoint limpio apuntando directamente a tu UsuariosRouter en la nube
+      const response = await fetch(`${USUARIOS_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo, clave })
