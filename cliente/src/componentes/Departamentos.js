@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 
 function Departamentos() {
   // =========================================================================
-  // 🔐 CONTROL DE USUARIO ACTIVO (Reemplazar con tus variables de sesión si aplica)
+  // 🔐 CONTROL DE USUARIO ACTIVO
   // =========================================================================
   const idUsuarioLogueado = 3; // Ejemplo: Erick Hernandez
   const nombreUsuarioLogueado = "Erick Hernandez";
@@ -24,7 +24,8 @@ function Departamentos() {
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
-  const API_URL = "http://localhost:3002/api/departamentos";
+  // 🌍 CORRECCIÓN: Se cambió 'localhost:3002' por la URL de producción para acceso móvil
+  const API_URL = "https://sistema-cabal.onrender.com/api/departamentos";
 
   // =========================================================================
   // 📄 REPORTE PROFESIONAL: FICHA DE DEPARTAMENTO
@@ -118,7 +119,6 @@ function Departamentos() {
       return; 
     }
 
-    // Enviamos el depto + datos de auditoría
     Axios.post(`${API_URL}/crear`, { 
       nombre_departamento, 
       estado,
@@ -153,7 +153,6 @@ function Departamentos() {
       return;
     }
 
-    // Enviamos los datos editados + operador activo
     Axios.put(`${API_URL}/actualizar`, { 
       id_departamento, 
       nombre_departamento, 
@@ -195,7 +194,6 @@ function Departamentos() {
       cancelButtonText: "Cancelar"
     }).then((result) => {
       if (result.isConfirmed) {
-        // Al ser DELETE, enviamos datos del operador mediante Query Params (?param=valor)
         Axios.delete(`${API_URL}/delete/${val.id_departamento}?id_usuario_operador=${idUsuarioLogueado}&nombre_usuario_operador=${nombreUsuarioLogueado}`)
         .then(() => {
           getDepartamentos();
@@ -232,7 +230,6 @@ function Departamentos() {
     setShowEditModal(true);
   };
 
-  // Filtrado seguro de búsqueda por nombre de departamento
   const departamentosFiltrados = departamentosList.filter((dep) => 
     dep.nombre_departamento?.toLowerCase().includes(busqueda.toLowerCase())
   );
