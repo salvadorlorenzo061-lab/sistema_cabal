@@ -29,7 +29,7 @@ function Problemas() {
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
-  const API_URL = "http://localhost:3002/api/problemas";
+  const API_URL = "https://sistema-cabal.onrender.com/api/problemas";
 
   // =========================================================================
   // 📄 REPORTE PROFESIONAL: FICHA TÉCNICA DEL PROBLEMA REPORTADO

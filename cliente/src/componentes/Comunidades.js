@@ -25,7 +25,7 @@ function Comunidades() {
   const USUARIO_ACTIVO_LOG = "OPERADOR IZABAL";
   const ID_USUARIO_LOG = 1;
 
-  const API_URL = "http://localhost:3002/api/comunidades";
+  const API_URL = "https://sistema-cabal.onrender.com/api/comunidades";
 
   // =========================================================================
   // 📄 REPORTE PROFESIONAL: FICHA DE COMUNIDAD
@@ -114,8 +114,8 @@ function Comunidades() {
   };
 
   const getCatalogos = () => {
-    Axios.get("http://localhost:3002/api/municipios/departamentos").then((res) => setDepartamentos(res.data)).catch(console.error);
-    Axios.get("http://localhost:3002/api/municipios").then((res) => setMunicipios(res.data)).catch(console.error);
+    Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => setDepartamentos(res.data)).catch(console.error);
+    Axios.get("https://sistema-cabal.onrender.com/api/municipios").then((res) => setMunicipios(res.data)).catch(console.error);
   };
 
   useEffect(() => {

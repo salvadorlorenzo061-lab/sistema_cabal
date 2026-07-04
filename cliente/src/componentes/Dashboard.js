@@ -9,7 +9,7 @@ function Dashboard() {
 
   useEffect(() => {
     // Consumimos tu endpoint actual de afiliados
-    Axios.get("http://localhost:3002/api/afiliados")
+    Axios.get("https://sistema-cabal.onrender.com/api/afiliados")
       .then((res) => {
         setAfiliados(res.data);
         setLoading(false);

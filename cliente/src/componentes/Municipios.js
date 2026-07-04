@@ -24,7 +24,7 @@ function Municipios() {
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
-  const API_URL = "http://localhost:3002/api/municipios";
+  const API_URL = "https://sistema-cabal.onrender.com/api/municipios";
 
   // =========================================================================
   // 📄 REPORTE PROFESIONAL: FICHA DE MUNICIPIO CON DEPARTAMENTO
