@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 function Dashboard() {
   const [afiliados, setAfiliados] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [chartsReady, setChartsReady] = useState(false);
 
   useEffect(() => {
     // Consumimos tu endpoint actual de afiliados
@@ -21,6 +22,11 @@ function Dashboard() {
       });
   }, []);
 
+  useEffect(() => {
+    const rafId = window.requestAnimationFrame(() => setChartsReady(true));
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
+
   if (loading) {
     return (
       <div className="container-fluid mt-4 px-2 px-md-3 text-center">
@@ -33,15 +39,16 @@ function Dashboard() {
   // =========================================================================
   // 📊 PROCESAMIENTO DE DATOS EN TIEMPO REAL (FRONTEND)
   // =========================================================================
+  const safeAfiliados = Array.isArray(afiliados) ? afiliados : [];
   
   // 1. Totalizadores rápidos
-  const totalAfiliados = afiliados.length;
+  const totalAfiliados = safeAfiliados.length;
   
-  const conCentroVotacion = afiliados.filter(a => a.lugar_votacion).length;
+  const conCentroVotacion = safeAfiliados.filter(a => a.lugar_votacion).length;
   
   // 2. Agrupación por Municipio para Gráfico de Barras
   const municipiosMap = {};
-  afiliados.forEach(a => {
+  safeAfiliados.forEach(a => {
     const muni = a.nombre_municipio || "No Especificado";
     municipiosMap[muni] = (municipiosMap[muni] || 0) + 1;
   });
@@ -52,7 +59,7 @@ function Dashboard() {
 
   // 3. Agrupación por Fecha (Mes/Año) para Gráfico de Línea temporal
   const fechasMap = {};
-  afiliados.forEach(a => {
+  safeAfiliados.forEach(a => {
     if (a.fecha_afiliacion) {
       const fecha = new Date(a.fecha_afiliacion);
       // Formato: "Año-Mes" (Ej: 2026-06)
@@ -109,8 +116,13 @@ function Dashboard() {
         <div className="col-lg-6 mb-4">
           <div className="card shadow-sm border-0 p-3 h-100">
             <h5 className="card-title text-muted fw-bold mb-3">📍 Afiliados por Municipio</h5>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+              {!chartsReady ? (
+                <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                  Preparando gráfico...
+                </div>
+              ) : (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
                 <BarChart data={datosMunicipios} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
@@ -120,6 +132,7 @@ function Dashboard() {
                   <Bar dataKey="Cantidad" fill="#2980b9" radius={[4, 4, 0, 0]} name="No. Afiliados" />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
@@ -128,8 +141,13 @@ function Dashboard() {
         <div className="col-lg-6 mb-4">
           <div className="card shadow-sm border-0 p-3 h-100">
             <h5 className="card-title text-muted fw-bold mb-3">📈 Tendencia Temporal de Afiliaciones</h5>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+              {!chartsReady ? (
+                <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                  Preparando gráfico...
+                </div>
+              ) : (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
                 <LineChart data={datosLineaTiempo} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="Fecha" tick={{ fontSize: 11 }} />
@@ -139,6 +157,7 @@ function Dashboard() {
                   <Line type="monotone" dataKey="Afiliados" stroke="#2ecc71" strokeWidth={3} activeDot={{ r: 8 }} name="Nuevos Registros" />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>

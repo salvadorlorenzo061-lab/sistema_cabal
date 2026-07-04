@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# Bloquea pushes que incluyan posibles secretos en commits salientes.
+# Se ejecuta automaticamente en cada git push.
+
+remote_name="$1"
+remote_url="$2"
+zero_hash="0000000000000000000000000000000000000000"
+found_secret=0
+
+# Patrones comunes de secretos
+secret_pattern="(AIVEN|AKIA[0-9A-Z]{16}|password[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,}|api[_-]?key[[:space:]]*[:=][[:space:]]*[^[:space:]]{10,}|token[[:space:]]*[:=][[:space:]]*[^[:space:]]{10,}|secret[[:space:]]*[:=][[:space:]]*[^[:space:]]{8,})"
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  # Si se borra una rama, no hay nada que escanear
+  if [ "$local_sha" = "$zero_hash" ]; then
+    continue
+  fi
+
+  # Rango de commits que van a salir en el push
+  if [ "$remote_sha" = "$zero_hash" ]; then
+    commit_range="$local_sha"
+  else
+    commit_range="$remote_sha..$local_sha"
+  fi
+
+  # Revisar lineas agregadas en el rango, excluyendo ejemplos
+  added_lines=$(git log -p --no-color "$commit_range" -- . \
+    ':(exclude)**/.env.example' \
+    ':(exclude)**/package-lock.json' \
+    ':(exclude)**/yarn.lock' 2>/dev/null | grep '^+' | grep -v '^+++')
+
+  if [ -n "$added_lines" ]; then
+    echo "$added_lines" | grep -Eiq "$secret_pattern"
+    if [ $? -eq 0 ]; then
+      found_secret=1
+      break
+    fi
+  fi
+done
+
+if [ "$found_secret" -eq 1 ]; then
+  echo ""
+  echo "ERROR: Push bloqueado por posible secreto detectado."
+  echo ""
+  echo "Revisa antes de volver a hacer push:"
+  echo "1) git diff -- server/Conexion.js"
+  echo "2) git log -p origin/desarrollo..desarrollo -- server/Conexion.js"
+  echo "3) Usa variables de entorno y .env.example sin valores reales"
+  echo ""
+  exit 1
+fi
+
+exit 0
