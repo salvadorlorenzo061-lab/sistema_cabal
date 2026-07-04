@@ -122,6 +122,10 @@ router.post("/crear", (req, res) => {
 
 // === LISTAR USUARIOS ===
 router.get("/", (req, res) => {
+    const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
+    const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
+    const offset = (pagina - 1) * limite;
+
     const sqlQuery = `
         SELECT u.*, b.fecha_movimiento, b.tipo_movimiento, b.ejecutado_por, b.detalles, b.usuario_afectado
         FROM usuarios u
@@ -134,15 +138,29 @@ router.get("/", (req, res) => {
                 GROUP BY id_usuario
             ) b2 ON b1.id_usuario = b2.id_usuario AND b1.fecha_movimiento = b2.max_fecha
         ) b ON u.id_usuario = b.id_usuario
+        ORDER BY u.id_usuario DESC
+        LIMIT ? OFFSET ?
     `;
 
-    db.query(sqlQuery, (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send("Error al obtener usuarios con auditoría");
-        } else {
-            res.send(result); 
+    db.query('SELECT COUNT(*) AS total FROM usuarios', (countErr, countResult) => {
+        if (countErr) {
+            console.error(countErr);
+            return res.status(500).send("Error al obtener usuarios con auditoría");
         }
+
+        db.query(sqlQuery, [limite, offset], (err, result) => {
+            if (err) {
+                console.error(err);
+                res.status(500).send("Error al obtener usuarios con auditoría");
+            } else {
+                res.send({
+                    data: result,
+                    total: countResult[0].total,
+                    paginasTotales: Math.ceil(countResult[0].total / limite),
+                    paginaActual: pagina
+                }); 
+            }
+        });
     });
 });
 

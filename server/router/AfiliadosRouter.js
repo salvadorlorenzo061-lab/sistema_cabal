@@ -20,21 +20,38 @@ const registrarAccionBitacora = (id_usuario, usuario_afectado, tipo_movimiento, 
 
 // === 1. LISTAR AFILIADOS ===
 router.get("/", (req, res) => {
+    const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
+    const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
+    const offset = (pagina - 1) * limite;
+
     const sqlQuery = `
         SELECT a.*, m.nombre_municipio, u.nombre AS nombre_usuario
         FROM afiliados a
         LEFT JOIN municipios m ON a.id_municipio = m.id_municipio
         LEFT JOIN usuarios u ON a.id_usuario = u.id_usuario
         ORDER BY a.id_afiliado DESC
+        LIMIT ? OFFSET ?
     `;
 
-    db.query(sqlQuery, (err, result) => {
-        if (err) {
-            console.error("Error MySQL en GET /:", err);
+    db.query('SELECT COUNT(*) AS total FROM afiliados', (countErr, countResult) => {
+        if (countErr) {
+            console.error("Error MySQL en count afiliados:", countErr);
             return res.status(500).json({ message: "Error al obtener el listado de afiliados." });
-        } else {
-            return res.send(result); 
         }
+
+        db.query(sqlQuery, [limite, offset], (err, result) => {
+            if (err) {
+                console.error("Error MySQL en GET /:", err);
+                return res.status(500).json({ message: "Error al obtener el listado de afiliados." });
+            } else {
+                return res.send({
+                    data: result,
+                    total: countResult[0].total,
+                    paginasTotales: Math.ceil(countResult[0].total / limite),
+                    paginaActual: pagina
+                }); 
+            }
+        });
     });
 });
 

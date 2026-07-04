@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import * as XLSX from 'xlsx';
+import PaginationBar from './PaginationBar';
 
 function Afiliados() {
   // =========================================================================
@@ -34,6 +35,9 @@ function Afiliados() {
   const [municipiosList, setMunicipios] = useState([]);
   const [usuariosList, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
@@ -314,8 +318,16 @@ function Afiliados() {
   };
 
   const getAfiliados = useCallback(() => {
-    Axios.get(API_URL).then((res) => setAfiliados(res.data)).catch(err => console.error(err));
-  }, [API_URL]);
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+      .then((res) => {
+        const payload = res.data;
+        const data = Array.isArray(payload) ? payload : (payload.data || []);
+        setAfiliados(data);
+        setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+        setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+      })
+      .catch(err => console.error(err));
+  }, [API_URL, pagina]);
 
   const getCatalogos = useCallback(() => {
     Axios.get(`${BASE_URL}/municipios`).then((res) => setMunicipios(res.data)).catch(err => console.error(err));
@@ -377,6 +389,14 @@ function Afiliados() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* TABLA PRINCIPAL */}
       <div className="table-responsive">

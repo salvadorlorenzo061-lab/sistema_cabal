@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Usuarios() {
   const [id_usuario, setId_usuario] = useState("");
@@ -16,6 +17,9 @@ function Usuarios() {
   
   const [usuariosList, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
@@ -272,15 +276,21 @@ function Usuarios() {
   };
 
   const getUsuarios = () => {
-    Axios.get(API_URL)
-    .then((response) => { setUsuarios(response.data); })
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    .then((response) => {
+      const payload = response.data;
+      const data = Array.isArray(payload) ? payload : (payload.data || []);
+      setUsuarios(data);
+      setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+      setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+    })
     .catch((error) => { console.error("Error al obtener usuarios", error); });
   };
 
   useEffect(() => { 
     getUsuarios(); 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pagina]);
 
   const abrirEditarModal = (val) => {
     setId_usuario(val.id_usuario);
@@ -325,6 +335,14 @@ function Usuarios() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* Tabla Desplegable */}
       <div className="table-responsive">

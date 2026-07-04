@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Comunidades() {
   const [id_comunidad, setId_comunidad] = useState("");
@@ -17,6 +18,9 @@ function Comunidades() {
   const [municipiosList, setMunicipios] = useState([]);
   const [departamentosList, setDepartamentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
@@ -110,7 +114,15 @@ function Comunidades() {
   };
 
   const getComunidades = () => {
-    Axios.get(API_URL).then((res) => setComunidades(res.data)).catch(console.error);
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+      .then((res) => {
+        const payload = res.data;
+        const data = Array.isArray(payload) ? payload : (payload.data || []);
+        setComunidades(data);
+        setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+        setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+      })
+      .catch(console.error);
   };
 
   const getCatalogos = () => {
@@ -121,7 +133,7 @@ function Comunidades() {
   useEffect(() => {
     getComunidades();
     getCatalogos();
-  }, []);
+  }, [pagina]);
 
   const add = () => {
     if (!nombre_comunidad.trim() || !id_municipio) {
@@ -233,6 +245,14 @@ function Comunidades() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
 
       {/* TABLA */}
       <div className="table-responsive">

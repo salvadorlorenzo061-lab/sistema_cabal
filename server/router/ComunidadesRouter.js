@@ -68,6 +68,10 @@ router.post("/crear", (req, res) => {
 // 🔍 GET: LISTAR COMUNIDADES
 // ==========================================
 router.get("/", (req, res) => {
+    const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
+    const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
+    const offset = (pagina - 1) * limite;
+
     const sqlQuery = `
         SELECT 
             c.id_comunidad, 
@@ -82,13 +86,27 @@ router.get("/", (req, res) => {
         LEFT JOIN municipios m ON c.id_municipio = m.id_municipio
         LEFT JOIN departamentos d ON m.id_departamento = d.id_departamento
         ORDER BY d.nombre_departamento ASC, m.nombre_municipio ASC, c.nombre_comunidad ASC
+        LIMIT ? OFFSET ?
     `;
-    db.query(sqlQuery, (err, result) => {
-        if (err) {
-            console.error("🚨 Error en GET de comunidades:", err);
+
+    db.query('SELECT COUNT(*) AS total FROM comunidades', (countErr, countResult) => {
+        if (countErr) {
+            console.error("🚨 Error contando comunidades:", countErr);
             return res.status(500).send("Error al cargar el catálogo de comunidades");
         }
-        res.send(result); 
+
+        db.query(sqlQuery, [limite, offset], (err, result) => {
+            if (err) {
+                console.error("🚨 Error en GET de comunidades:", err);
+                return res.status(500).send("Error al cargar el catálogo de comunidades");
+            }
+            res.send({
+                data: result,
+                total: countResult[0].total,
+                paginasTotales: Math.ceil(countResult[0].total / limite),
+                paginaActual: pagina
+            }); 
+        });
     });
 });
 

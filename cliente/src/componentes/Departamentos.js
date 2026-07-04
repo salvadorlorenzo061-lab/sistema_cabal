@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Departamentos() {
   // =========================================================================
@@ -21,6 +22,9 @@ function Departamentos() {
   const [departamentosList, setDepartamentosList] = useState([]); 
   
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
@@ -214,14 +218,20 @@ function Departamentos() {
   };
 
   const getDepartamentos = () => {
-    Axios.get(API_URL)
-    .then((response) => { setDepartamentosList(response.data); })
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    .then((response) => {
+      const payload = response.data;
+      const data = Array.isArray(payload) ? payload : (payload.data || []);
+      setDepartamentosList(data);
+      setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+      setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+    })
     .catch((error) => { console.error("Error al obtener departamentos", error); });
   };
 
   useEffect(() => { 
     getDepartamentos();
-  }, []);
+  }, [pagina]);
 
   const abrirEditarModal = (val) => {
     setId_departamento(val.id_departamento);
@@ -264,6 +274,14 @@ function Departamentos() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* TABLA DE DATOS */}
       <div className="table-responsive">

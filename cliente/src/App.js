@@ -39,6 +39,8 @@ const RutaProtegida = ({ user, rolesPermitidos, children }) => {
 function App() {
   // Por defecto iniciamos con menú cerrado en móviles para mejorar la UX inicial
   const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 768);
+  const isMobile = window.innerWidth <= 768;
+  const sidebarMobileWidth = window.innerWidth <= 360 ? '200px' : window.innerWidth <= 430 ? '220px' : '240px';
 
   // Estados de autenticación
   const [user, setUser] = useState(null);
@@ -229,13 +231,17 @@ function App() {
         
         {/* 📱 NAVBAR SUPERIOR (SOLO EN PANTALLAS MÓVILES <= 768px) */}
         <div className="d-flex d-md-none bg-primary text-white justify-content-between align-items-center p-3 shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2 flex-grow-1">
             <img src={logoCabal} alt="Logo" className="bg-white p-1 rounded" style={{ maxWidth: '35px' }} />
             <span className="fw-bold tracking-wider" style={{ fontSize: '0.9rem' }}>CABAL IZABAL</span>
+            <button
+              className="btn btn-outline-light px-3 py-2 fw-bold rounded-pill shadow-sm text-nowrap ms-auto"
+              onClick={toggleMenu}
+              style={{ minWidth: '155px', fontSize: '0.9rem' }}
+            >
+              {isMenuOpen ? '✕ Ocultar menú' : '☰ Mostrar menú'}
+            </button>
           </div>
-          <button className="btn btn-outline-light px-3 py-1" onClick={toggleMenu}>
-            {isMenuOpen ? '✕ Cerrar' : '☰ Menú'}
-          </button>
         </div>
 
         <div className="row g-0 flex-nowrap" style={{ minHeight: '100vh' }}>
@@ -253,31 +259,43 @@ function App() {
               left: window.innerWidth <= 768 && !isMenuOpen ? '-100%' : '0',
               top: 0,
               height: '100vh',
-              width: window.innerWidth <= 768 ? '280px' : (isMenuOpen ? '260px' : '70px'),
-              minWidth: window.innerWidth <= 768 ? '280px' : (isMenuOpen ? '260px' : '70px'),
+              width: isMobile ? sidebarMobileWidth : (isMenuOpen ? '260px' : '70px'),
+              minWidth: isMobile ? sidebarMobileWidth : (isMenuOpen ? '260px' : '70px'),
             }}
           >
-            {/* Cabecera del Menú (Oculta en versión icono de escritorio) */}
-            <div className="text-center mb-4 mt-2">
-              <img 
-                src={logoCabal} 
-                alt="Logo Partido Cabal" 
-                className="img-fluid rounded bg-white p-1 shadow-sm" 
-                style={{ 
-                  maxWidth: (isMenuOpen || window.innerWidth <= 768) ? '100px' : '40px', 
-                  transition: 'max-width 0.3s' 
-                }} 
-              />
-              {(isMenuOpen || window.innerWidth <= 768) && (
-                <div className="mt-2 animate__animated animate__fadeIn">
-                  <span className="fw-bold tracking-wider text-white d-block" style={{ fontSize: '0.85rem' }}>PARTIDO CABAL</span>
-                  <small className="text-white-50" style={{ fontSize: '0.7rem' }}>IZABAL</small>
-                </div>
-              )}
+            {/* Cabecera del Menú */}
+            <div className="d-flex align-items-start justify-content-between gap-2 mb-4 mt-2 px-2 flex-nowrap">
+              <div className="text-center flex-grow-1">
+                <img 
+                  src={logoCabal} 
+                  alt="Logo Partido Cabal" 
+                  className="img-fluid rounded bg-white p-1 shadow-sm" 
+                  style={{ 
+                    maxWidth: isMobile ? '80px' : (isMenuOpen ? '100px' : '40px'), 
+                    transition: 'max-width 0.3s' 
+                  }} 
+                />
+                {(isMenuOpen || isMobile) && (
+                  <div className="mt-2 animate__animated animate__fadeIn">
+                    <span className="fw-bold tracking-wider text-white d-block" style={{ fontSize: '0.85rem' }}>PARTIDO CABAL</span>
+                    <small className="text-white-50" style={{ fontSize: '0.7rem' }}>IZABAL</small>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="btn btn-danger border-0 fw-bold shadow-sm ms-auto d-flex align-items-center justify-content-center"
+                style={{ width: isMobile ? '40px' : (isMenuOpen ? 'auto' : '44px'), minWidth: '40px', height: '40px', padding: isMobile ? '0' : (isMenuOpen ? '0.45rem 0.75rem' : '0') }}
+                title="Cerrar sesión"
+              >
+                <span>🚪</span>
+                {!isMobile && isMenuOpen && <span className="ms-2">Cerrar</span>}
+              </button>
             </div>
 
             {/* Caja de Datos de Sesión Activa */}
-            {(isMenuOpen || window.innerWidth <= 768) && (
+            {(isMenuOpen || isMobile) && (
               <div className="text-center rounded p-2 mb-3 shadow-sm border border-white-10" style={{ backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.8rem' }}>
                 <span className="d-block text-white-50">Usuario Activo:</span>
                 <strong className="text-white d-block text-truncate">{user.nombre.toUpperCase()}</strong>
@@ -293,7 +311,7 @@ function App() {
             {(isMenuOpen || window.innerWidth <= 768) && <h5 className="fw-bold mb-2 text-white-50 px-2" style={{ fontSize: '0.8rem' }}>⚙️ MÓDULOS</h5>}
 
             {/* Navegación y Enlaces */}
-            <nav className="nav flex-column w-100 gap-1 flex-grow-1 overflow-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+            <nav className="nav flex-column w-100 gap-1 flex-grow-1 overflow-auto sidebar-menu-scroll" style={{ maxHeight: 'calc(100vh - 300px)', minHeight: 0 }}>
               
               {['coordinador regional'].includes(miRol) && (
                 <Link to="/home" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
@@ -344,9 +362,6 @@ function App() {
               )}
             </nav>
 
-            <button onClick={handleLogout} className="mt-auto btn btn-danger border-0 fw-bold p-2 text-start d-flex align-items-center w-100 shadow-sm rounded">
-              <span>🚪</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Cerrar Sesión</span>}
-            </button>
           </div>
 
           {/* 🌫️ FONDO OSCURO COMPLEMENTARIO (Sólo móvil para cerrar el menú haciendo clic afuera) */}

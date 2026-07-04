@@ -4,19 +4,36 @@ const router = express.Router();
 
 // === LISTAR TODOS LOS DEPARTAMENTOS ===
 router.get("/", (req, res) => {
+    const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
+    const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
+    const offset = (pagina - 1) * limite;
+
     const sqlQuery = `
         SELECT id_departamento, nombre_departamento, estado 
         FROM departamentos 
         ORDER BY nombre_departamento ASC
+        LIMIT ? OFFSET ?
     `;
 
-    db.query(sqlQuery, (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send("Error al obtener departamentos");
-        } else {
-            res.send(result); 
+    db.query('SELECT COUNT(*) AS total FROM departamentos', (countErr, countResult) => {
+        if (countErr) {
+            console.error(countErr);
+            return res.status(500).send("Error al obtener departamentos");
         }
+
+        db.query(sqlQuery, [limite, offset], (err, result) => {
+            if (err) {
+                console.error(err);
+                res.status(500).send("Error al obtener departamentos");
+            } else {
+                res.send({
+                    data: result,
+                    total: countResult[0].total,
+                    paginasTotales: Math.ceil(countResult[0].total / limite),
+                    paginaActual: pagina
+                }); 
+            }
+        });
     });
 });
 

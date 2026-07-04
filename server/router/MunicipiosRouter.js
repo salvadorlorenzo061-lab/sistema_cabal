@@ -50,20 +50,37 @@ router.post("/crear", (req, res) => {
 
 // === LISTAR MUNICIPIOS (CON INNER JOIN PARA TRAER EL NOMBRE DEL DEPARTAMENTO) ===
 router.get("/", (req, res) => {
+    const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
+    const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
+    const offset = (pagina - 1) * limite;
+
     const sqlQuery = `
         SELECT m.id_municipio, m.nombre_municipio, m.estado, m.id_departamento, d.nombre_departamento 
         FROM municipios m
         INNER JOIN departamentos d ON m.id_departamento = d.id_departamento
         ORDER BY d.nombre_departamento ASC, m.nombre_municipio ASC
+        LIMIT ? OFFSET ?
     `;
 
-    db.query(sqlQuery, (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send("Error al obtener municipios");
-        } else {
-            res.send(result); 
+    db.query('SELECT COUNT(*) AS total FROM municipios', (countErr, countResult) => {
+        if (countErr) {
+            console.error(countErr);
+            return res.status(500).send("Error al obtener municipios");
         }
+
+        db.query(sqlQuery, [limite, offset], (err, result) => {
+            if (err) {
+                console.error(err);
+                res.status(500).send("Error al obtener municipios");
+            } else {
+                res.send({
+                    data: result,
+                    total: countResult[0].total,
+                    paginasTotales: Math.ceil(countResult[0].total / limite),
+                    paginaActual: pagina
+                }); 
+            }
+        });
     });
 });
 

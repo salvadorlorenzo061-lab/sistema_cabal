@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Problemas() {
   // =========================================================================
@@ -25,6 +26,9 @@ function Problemas() {
   const [problemasList, setProblemasList] = useState([]);
   const [municipiosList, setMunicipiosList] = useState([]); 
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
@@ -237,8 +241,14 @@ function Problemas() {
   };
 
   const getProblemas = () => {
-    Axios.get(API_URL)
-    .then((response) => { setProblemasList(response.data); })
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    .then((response) => {
+      const payload = response.data;
+      const data = Array.isArray(payload) ? payload : (payload.data || []);
+      setProblemasList(data);
+      setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+      setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+    })
     .catch((error) => { console.error("Error al obtener problemas", error); });
   };
 
@@ -251,7 +261,7 @@ function Problemas() {
   useEffect(() => { 
     getProblemas(); 
     getMunicipios();
-  }, []);
+  }, [pagina]);
 
   const abrirEditarModal = (val) => {
     setId_problema(val.id_problema);
@@ -300,6 +310,14 @@ function Problemas() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* TABLA DE DATOS */}
       <div className="table-responsive">
