@@ -12,7 +12,7 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -20,6 +20,9 @@ const db = mysql.createConnection({
   port: DB_PORT,
   connectTimeout: 10000,
   enableKeepAlive: true,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
   
   // 🛡️ Configuración SSL directa y segura (Evita que colapse el handshake con Aiven)
   ssl: { 
@@ -27,14 +30,15 @@ const db = mysql.createConnection({
   }
 });
 
-// Conectar a la base de datos
-db.connect((err) => {
+// Validar conexión inicial a la base de datos
+db.getConnection((err, connection) => {
   if (err) {
     console.error('❌ Error crítico al conectar a la base de datos de Aiven:', err);
     return;
   }
   const destino = `${process.env.DB_HOST}:${DB_PORT}/${DB_NAME}`;
   console.log(`✅ Conectado exitosamente a la base de datos MySQL en: ${destino}`);
+  connection.release();
 });
 
 module.exports = db;
