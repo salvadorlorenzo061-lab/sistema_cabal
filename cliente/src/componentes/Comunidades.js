@@ -224,7 +224,7 @@ function Comunidades() {
   );
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-2 px-md-3'>
       {/* CABECERA */}
       <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
         <div className="col-md-4">

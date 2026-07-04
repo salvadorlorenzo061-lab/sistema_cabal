@@ -178,6 +178,7 @@ function App() {
   };
 
   const miRol = user?.rol ? user.rol.trim().toLowerCase() : '';
+  const sidebarModuleClass = 'nav-link btn btn-outline-light border-0 fw-bold text-start text-white d-flex align-items-center rounded sidebar-module-link';
 
   // 🚪 PANTALLA DE LOGIN RESPONSIVA
   if (!user) {
@@ -248,7 +249,7 @@ function App() {
           
           {/* 🏢 BARRA LATERAL HÍBRIDA (Móviles: Flotante con Z-Index / Escritorio: Columna Estándar) */}
           <div 
-            className={`shadow p-3 d-flex flex-column transition-all`}
+            className={`shadow p-1 d-flex flex-column transition-all`}
             style={{ 
               backgroundColor: '#1e3a8a', 
               color: '#ffffff',
@@ -264,7 +265,7 @@ function App() {
             }}
           >
             {/* Cabecera del Menú */}
-            <div className="d-flex align-items-start justify-content-between gap-2 mb-4 mt-2 px-2 flex-nowrap">
+            <div className="d-flex align-items-start justify-content-between gap-2 mb-3 mt-1 px-0 flex-nowrap">
               <div className="text-center flex-grow-1">
                 <img 
                   src={logoCabal} 
@@ -304,60 +305,60 @@ function App() {
             )}
 
             {/* Botón de contracción visible únicamente en Pantalla de Escritorio (Tablet/PC) */}
-            <button className="btn btn-light text-primary fw-bold mb-4 w-100 shadow-sm d-none d-md-block" onClick={toggleMenu}>
+            <button className="btn btn-light text-primary fw-bold mb-3 w-100 shadow-sm d-none d-md-block" onClick={toggleMenu}>
               {isMenuOpen ? '◀ Contraer' : '▶'}
             </button>
 
-            {(isMenuOpen || window.innerWidth <= 768) && <h5 className="fw-bold mb-2 text-white-50 px-2" style={{ fontSize: '0.8rem' }}>⚙️ MÓDULOS</h5>}
+            {(isMenuOpen || window.innerWidth <= 768) && <h5 className="fw-bold mb-1 text-white-50 px-0" style={{ fontSize: '0.8rem' }}>⚙️ MÓDULOS</h5>}
 
             {/* Navegación y Enlaces */}
-            <nav className="nav flex-column w-100 gap-1 flex-grow-1 overflow-auto sidebar-menu-scroll" style={{ maxHeight: 'calc(100vh - 300px)', minHeight: 0 }}>
+            <nav className="nav flex-column w-100 gap-0 flex-grow-1 overflow-auto sidebar-menu-scroll" style={{ maxHeight: 'calc(100vh - 300px)', minHeight: 0 }}>
               
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/home" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>📊</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Dashboard</span>}
+                <Link to="/home" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">📊</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Dashboard</span>}
                 </Link>
               )}
 
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/usuarios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>👥</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Usuarios</span>}
+                <Link to="/usuarios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">👥</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Usuarios</span>}
                 </Link>
               )}
 
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/bitacora" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>🛡️</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Bitácora</span>}
+                <Link to="/bitacora" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">🛡️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Bitácora</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal'].includes(miRol) && (
                 <>
-                  <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                    <span>📑</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Municipios</span>}
+                  <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                    <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Municipios</span>}
                   </Link>
 
-                  <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                    <span>📍</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Aldeas / Caseríos</span>}
+                  <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                    <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Aldeas / Caseríos</span>}
                   </Link>
                 </>
               )}
               
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/departamentos" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>🏕</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Departamentos</span>}
+                <Link to="/departamentos" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">🏕</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Departamentos</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
-                <Link to="/afiliados" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>👨‍⚖️</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Afiliados</span>}
+                <Link to="/afiliados" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Afiliados</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
-                <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>⚠️</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Problemas de Barrio</span>}
+                <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Problemas de Barrio</span>}
                 </Link>
               )}
             </nav>
@@ -374,7 +375,7 @@ function App() {
 
           {/* 📄 CONTENEDOR DEL CONTENIDO PRINCIPAL DINÁMICO */}
           <div 
-            className="flex-grow-1 p-3 p-md-4" 
+            className="flex-grow-1 p-1 p-md-2" 
             style={{ 
               overflowY: 'auto', 
               maxHeight: '100vh',

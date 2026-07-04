@@ -171,7 +171,7 @@ function Bitacora() {
   };
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-1 px-md-2'>
       
       {/* SECCIÓN DE CABECERA PRINCIPAL */}
       <div className="bg-dark p-3 rounded shadow-sm text-white mb-3">

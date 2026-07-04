@@ -308,7 +308,7 @@ function Usuarios() {
   );
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-1 px-md-2'>
       {/* Encabezado Principal */}
       <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
         <div className="col-md-4">

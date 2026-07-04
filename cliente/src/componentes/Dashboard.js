@@ -22,7 +22,7 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="container mt-5 text-center">
+      <div className="container-fluid mt-4 px-2 px-md-3 text-center">
         <div className="spinner-border text-primary" role="status"></div>
         <p className="mt-2">Cargando métricas del sistema...</p>
       </div>
@@ -65,7 +65,7 @@ function Dashboard() {
   }));
 
   return (
-    <div className="container mt-4">
+    <div className="container-fluid mt-3 px-2 px-md-3">
       <h3 className="mb-4 text-dark fw-bold">📊 DASHBOARD DE CONTROL -PARTIDO CABAL .</h3>
 
       {/* 📈 TARJETAS DE MÉTRICAS RÁPIDAS (KPIs) */}
