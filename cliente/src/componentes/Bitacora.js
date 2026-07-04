@@ -29,7 +29,7 @@ function Bitacora() {
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
         pagina: pagina,
-        limite: 30 // Traer de 30 en 30 es ideal para rendimiento
+        limite: 10 // Mostrar los primeros 10 registros por página
       }
     })
     .then((response) => { 

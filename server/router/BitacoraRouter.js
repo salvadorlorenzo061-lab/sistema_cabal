@@ -4,7 +4,7 @@ const router = express.Router();
 
 // === 1. OBTENER REGISTROS DE BITÁCORA CON FILTRADO Y PAGINACIÓN DESDE BD ===
 router.get("/", (req, res) => {
-    const { busqueda, tipo, fechaInicio, fechaFin, pagina = 1, limite = 50 } = req.query;
+    const { busqueda, tipo, fechaInicio, fechaFin, pagina = 1, limite = 10 } = req.query;
     
     let offset = (parseInt(pagina) - 1) * parseInt(limite);
     let condiciones = [];
