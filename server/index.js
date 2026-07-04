@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const db = require('./Conexion');
 
 // Inicialización de la aplicación Express
 const app = express();
@@ -41,6 +42,28 @@ app.get('/health', (_req, res) => {
         ok: true,
         service: process.env.SERVICE_NAME || 'sistema_cabal-api',
         environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Health check de base de datos para validar conexión y nombre de esquema activo
+app.get('/health/db', (_req, res) => {
+    db.query('SELECT DATABASE() AS database_name, NOW() AS server_time', (err, rows) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                service: process.env.SERVICE_NAME || 'sistema_cabal-api',
+                dbConfigured: process.env.DB_NAME || 'defaultdb',
+                error: err.code || err.message
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            service: process.env.SERVICE_NAME || 'sistema_cabal-api',
+            dbConfigured: process.env.DB_NAME || 'defaultdb',
+            dbConnected: rows?.[0]?.database_name || null,
+            serverTime: rows?.[0]?.server_time || null
+        });
     });
 });
 
