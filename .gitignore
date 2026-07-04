@@ -1,3 +1,10 @@
 node_modules/
 *.msi
 *.exe
+.env
+.env.*
+!.env.example
+!server/.env.example
+!cliente/.env.example
+server/.env
+cliente/.env

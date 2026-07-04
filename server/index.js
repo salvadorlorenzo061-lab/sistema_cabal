@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 
 // Inicialización de la aplicación Express
 const app = express();
@@ -33,6 +34,15 @@ app.use('/api/departamentos', departamentosRouter);
 app.use('/api/afiliados', afiliadosRouter); 
 app.use('/api/bitacora', bitacoraRouter); 
 app.use('/api/problemas', problemasRouter); 
+
+// Health check para Render y verificación rápida de identidad del servicio
+app.get('/health', (_req, res) => {
+    res.status(200).json({
+        ok: true,
+        service: process.env.SERVICE_NAME || 'sistema_cabal-api',
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
 
 // =========================================================================
 // 🚀 ARRANQUE DEL SERVIDOR
