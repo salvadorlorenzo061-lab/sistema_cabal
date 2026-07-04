@@ -237,7 +237,10 @@ function Municipios() {
 
   const getDepartamentos = () => {
     Axios.get(`${API_URL}/departamentos`)
-    .then((response) => { setDepartamentos(response.data); })
+    .then((response) => {
+      const payload = response.data;
+      setDepartamentos(Array.isArray(payload) ? payload : (payload.data || []));
+    })
     .catch((error) => { console.error("Error al obtener departamentos", error); });
   };
 

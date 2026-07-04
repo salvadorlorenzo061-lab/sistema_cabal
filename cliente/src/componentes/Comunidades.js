@@ -126,8 +126,14 @@ function Comunidades() {
   };
 
   const getCatalogos = () => {
-    Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => setDepartamentos(res.data)).catch(console.error);
-    Axios.get("https://sistema-cabal.onrender.com/api/municipios").then((res) => setMunicipios(res.data)).catch(console.error);
+    Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => {
+      const payload = res.data;
+      setDepartamentos(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(console.error);
+    Axios.get("https://sistema-cabal.onrender.com/api/municipios").then((res) => {
+      const payload = res.data;
+      setMunicipios(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(console.error);
   };
 
   useEffect(() => {

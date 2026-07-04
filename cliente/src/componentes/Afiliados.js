@@ -330,8 +330,14 @@ function Afiliados() {
   }, [API_URL, pagina]);
 
   const getCatalogos = useCallback(() => {
-    Axios.get(`${BASE_URL}/municipios`).then((res) => setMunicipios(res.data)).catch(err => console.error(err));
-    Axios.get(`${BASE_URL}/usuarios`).then((res) => setUsuarios(res.data)).catch(err => console.error(err));
+    Axios.get(`${BASE_URL}/municipios`).then((res) => {
+      const payload = res.data;
+      setMunicipios(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(err => console.error(err));
+    Axios.get(`${BASE_URL}/usuarios`).then((res) => {
+      const payload = res.data;
+      setUsuarios(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(err => console.error(err));
   }, [BASE_URL]);
 
   useEffect(() => { 

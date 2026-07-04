@@ -254,7 +254,10 @@ function Problemas() {
 
   const getMunicipios = () => {
     Axios.get(`${API_URL}/municipios`)
-    .then((response) => { setMunicipiosList(response.data); })
+    .then((response) => {
+      const payload = response.data;
+      setMunicipiosList(Array.isArray(payload) ? payload : (payload.data || []));
+    })
     .catch((error) => { console.error("Error al obtener municipios", error); });
   };
 

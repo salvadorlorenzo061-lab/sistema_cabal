@@ -11,7 +11,8 @@ function Dashboard() {
     // Consumimos tu endpoint actual de afiliados
     Axios.get("https://sistema-cabal.onrender.com/api/afiliados")
       .then((res) => {
-        setAfiliados(res.data);
+        const payload = res.data;
+        setAfiliados(Array.isArray(payload) ? payload : (payload.data || []));
         setLoading(false);
       })
       .catch((err) => {
