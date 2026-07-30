@@ -14,7 +14,7 @@ import Bitacora from './componentes/Bitacora';
 import Problemas from './componentes/Problemas'; 
 
 // Imagen corporativa
-import logoCabal from './img/1.png'; 
+import logoCabal from './img/4.jpeg'; 
 
 // =========================================================================
 // 🛡️ COMPONENTE CONTROLADOR DE RUTAS POR ROL
