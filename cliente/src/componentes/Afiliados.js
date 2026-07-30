@@ -372,7 +372,7 @@ function Afiliados() {
       {/* CABECERA */}
       <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
         <div className="col-md-3">
-          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE AFILIADOS</h4>
+          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE COCODES</h4>
         </div>
         <div className="col-md-4">
           <div className="input-group">
@@ -411,10 +411,10 @@ function Afiliados() {
             <tr>
               <th>FOTO</th>
               <th>DPI</th>
-              <th>EMPADRONAMIENTO</th>
+              <th>NUMERO CELULAR</th>
               <th>NOMBRE COMPLETO</th>
               <th>TELÉFONO</th>
-              <th>CENTRO DE VOTACIÓN</th>
+              <th>NOMBRE COCODE</th>
               <th>MUNICIPIO</th>
               <th className="text-center">OPERACIÓN</th>
             </tr>
@@ -447,7 +447,7 @@ function Afiliados() {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center text-muted py-3">No se encontraron afiliados coincidentes.</td>
+                <td colSpan="8" className="text-center text-muted py-3">No se encontraron cocodes coincidentes.</td>
               </tr>
             )}
           </tbody>
@@ -460,7 +460,7 @@ function Afiliados() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-success text-white">
-                <h5 className="modal-title fw-bold">Registrar Nuevo Afiliado</h5>
+                <h5 className="modal-title fw-bold">REGISTRAR NUEVO COCODE</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => { setShowRegModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
@@ -470,7 +470,7 @@ function Afiliados() {
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" placeholder="Ingrese DPI" />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Número de Empadronamiento: *</label>
+                    <label className="form-label fw-bold">Número de celular: *</label>
                     <input type="text" value={num_empadronamiento} onChange={(e) => setNum_empadronamiento(e.target.value)} className="form-control" placeholder="Ingrese número de padrón" />
                   </div>
                 </div>
@@ -485,7 +485,7 @@ function Afiliados() {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Lugar / Centro de Votación:</label>
+                  <label className="form-label fw-bold">Nombre cocode:</label>
                   <input type="text" value={lugar_votacion} onChange={(e) => setLugar_votacion(e.target.value)} className="form-control" placeholder="Ej: Escuela Oficial" />
                 </div>
                 <div className="row">
@@ -507,7 +507,7 @@ function Afiliados() {
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Usuario Coordinador (Asignado): *</label>
+                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado): *</label>
                     <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
@@ -549,7 +549,7 @@ function Afiliados() {
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Número de Empadronamiento: *</label>
+                    <label className="form-label fw-bold">Número de celular: *</label>
                     <input type="text" value={num_empadronamiento} onChange={(e) => setNum_empadronamiento(e.target.value)} className="form-control" />
                   </div>
                 </div>
@@ -564,7 +564,7 @@ function Afiliados() {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Lugar / Centro de Votación:</label>
+                  <label className="form-label fw-bold">Nombre COCODE:</label>
                   <input type="text" value={lugar_votacion} onChange={(e) => setLugar_votacion(e.target.value)} className="form-control" />
                 </div>
                 <div className="row">
@@ -586,7 +586,7 @@ function Afiliados() {
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Usuario Coordinador (Asignado): *</label>
+                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado): *</label>
                     <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
@@ -595,7 +595,7 @@ function Afiliados() {
                 </div>
                 <div className="row align-items-center">
                   <div className="col-md-8 mb-3">
-                    <label className="form-label fw-bold">Fotografía del Afiliado (Opcional):</label>
+                    <label className="form-label fw-bold">Fotografía de COCODE (Opcional):</label>
                     <input type="file" accept="image/*" onChange={handleFotoChange} className="form-control" />
                   </div>
                   <div className="col-md-4 mb-3 text-center">
