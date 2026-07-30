@@ -188,7 +188,7 @@ function App() {
           <div className="text-center mb-4">
 
             <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded shadow-sm mb-3" style={{ height: '90px', width: 'auto' }} />
-            <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>SISTEMA DE OBRAS PUBLICAS</h4>
+            <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>SISTEMA DE OBRAS MUNICIPALES</h4>
             <small className="text-muted tracking-wider fw-bold d-block mt-1" style={{ fontSize: '0.75rem' }}>JALAPA ADMINISTRACION 2024-2028</small>
           </div>
 
