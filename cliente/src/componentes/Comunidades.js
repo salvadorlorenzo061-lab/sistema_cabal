@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Axios from "axios";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
@@ -113,7 +113,8 @@ function Comunidades() {
     doc.save(`${tName}_${cName.replace(/\s+/g, '_')}.pdf`);
   };
 
-  const getComunidades = () => {
+  // ⚡ ENUELTO EN USECALLBACK PARA ESTABILIZAR LA REFERENCIA Y SATISFACER A ESLINT
+  const getComunidades = useCallback(() => {
     Axios.get(API_URL, { params: { pagina, limite: 10 } })
       .then((res) => {
         const payload = res.data;
@@ -123,7 +124,7 @@ function Comunidades() {
         setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
       })
       .catch(console.error);
-  };
+  }, [pagina]);
 
   const getCatalogos = () => {
     Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => {
@@ -139,7 +140,7 @@ function Comunidades() {
   useEffect(() => {
     getComunidades();
     getCatalogos();
-  }, [pagina]);
+  }, [getComunidades]);
 
   const add = () => {
     if (!nombre_comunidad.trim() || !id_municipio) {
@@ -151,7 +152,7 @@ function Comunidades() {
       tipo, 
       estado, 
       id_municipio: parseInt(id_municipio, 10),
-      ejecutado_por: USUARIO_ACTIVO_LOG, // Pasados para el tracking automático
+      ejecutado_por: USUARIO_ACTIVO_LOG, 
       id_usuario: ID_USUARIO_LOG
     })
     .then(() => {
@@ -194,7 +195,6 @@ function Comunidades() {
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
-        // Pasamos el operador vía Query String para que el DELETE lo tome
         Axios.delete(`${API_URL}/delete/${val.id_comunidad}?ejecutado_por=${USUARIO_ACTIVO_LOG}&id_usuario=${ID_USUARIO_LOG}`)
         .then(() => {
           getComunidades();
@@ -354,7 +354,7 @@ function Comunidades() {
         </div>
       )}
 
-      {/* MODAL DE EDICIÓN (Optimizado el cambio de jerarquía) */}
+      {/* MODAL DE EDICIÓN */}
       {showEditModal && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog">
@@ -366,7 +366,6 @@ function Comunidades() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label fw-bold">Departamento:</label>
-                  {/* ⚡ CORREGIDO: Al cambiar el depto en edición, limpiamos el municipio para obligar a seleccionar uno válido de la nueva lista */}
                   <select value={id_departamento} onChange={(e) => { setId_departamento(e.target.value); setId_municipio(""); }} className="form-select">
                     <option value="">-- Elija un departamento --</option>
                     {departamentosList.map(dep => <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre_departamento}</option>)}
