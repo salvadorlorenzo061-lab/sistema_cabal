@@ -187,8 +187,8 @@ function App() {
         <div className="card shadow p-4 border-0 w-100" style={{ maxWidth: '400px', borderRadius: '15px' }}>
           <div className="text-center mb-4">
             <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded-circle shadow-sm mb-3" style={{ maxWidth: '95px' }} />
-            <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>PARTIDO CABAL</h4>
-            <small className="text-muted tracking-wider fw-bold d-block mt-1" style={{ fontSize: '0.75rem' }}>IZABAL - CONTROL CENTRAL</small>
+            <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>SISTEMA DE OBRAS PUBLICAS</h4>
+            <small className="text-muted tracking-wider fw-bold d-block mt-1" style={{ fontSize: '0.75rem' }}>JALAPA ADMINISTRACION 2024-2028</small>
           </div>
 
           {errorLogin && <div className="alert alert-danger py-2 text-center animate__animated animate__fadeIn" style={{ fontSize: '0.85rem' }}>⚠️ {errorLogin}</div>}
