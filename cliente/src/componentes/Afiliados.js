@@ -516,7 +516,7 @@ function Afiliados() {
                 </div>
                 <div className="row align-items-center">
                   <div className="col-md-8 mb-3">
-                    <label className="form-label fw-bold">Fotografía del Afiliado (Opcional):</label>
+                    <label className="form-label fw-bold">Fotografía presindente COCODE (Opcional):</label>
                     <input type="file" accept="image/*" onChange={handleFotoChange} className="form-control" />
                   </div>
                   <div className="col-md-4 mb-3 text-center">
@@ -526,7 +526,7 @@ function Afiliados() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowRegModal(false); limpiarCampos(); }}>Cancelar</button>
-                <button type="button" className="btn btn-success fw-bold" onClick={add}>Guardar Afiliado</button>
+                <button type="button" className="btn btn-success fw-bold" onClick={add}>Guardar Presidente COCODE</button>
               </div>
             </div>
           </div>
@@ -539,7 +539,7 @@ function Afiliados() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-warning text-dark">
-                <h5 className="modal-title fw-bold">Actualizar Afiliado #{id_afiliado}</h5>
+                <h5 className="modal-title fw-bold">Actualizar Cocode #{id_afiliado}</h5>
                 <button type="button" className="btn-close" onClick={() => { setShowEditModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
