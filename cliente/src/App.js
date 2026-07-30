@@ -186,7 +186,7 @@ function App() {
       <div className="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center p-3">
         <div className="card shadow p-4 border-0 w-100" style={{ maxWidth: '400px', borderRadius: '15px' }}>
           <div className="text-center mb-4">
-            <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded-circle shadow-sm mb-3" style={{ maxWidth: '95px' }} />
+       <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded-circle shadow-sm mb-3" style={{ width: '130px', height: '130px', objectFit: 'contain' }} />
             <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>SISTEMA DE OBRAS PUBLICAS</h4>
             <small className="text-muted tracking-wider fw-bold d-block mt-1" style={{ fontSize: '0.75rem' }}>JALAPA ADMINISTRACION 2024-2028</small>
           </div>
