@@ -104,14 +104,14 @@ function Afiliados() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("PARTIDO CABAL, IZABAL", 14, 20);
+    doc.text("MUNICIPALIDAD DE JALAPA, ADMINISTRACION 2024-2028", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Departamento de Registro de Afiliados", 14, 25);
-    doc.text("Sistema Centralizado de Control de Lotes", 14, 30);
-    doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
+    doc.text("DEPARTAMENTO DE REGISTRO DE COCODES", 14, 25);
+    doc.text("SISTEMA CENTALIZADO DE CONTROL OBRAS MUNICIPALES", 14, 30);
+    doc.text(`GENERADO POR: DIRECTOR DE OBRAS `, 14, 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
@@ -119,11 +119,11 @@ function Afiliados() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(41, 128, 185);  
-    doc.text("EXPEDIENTE DE AFILIADO", 133, 18);
+    doc.text("EXPEDIENTE DE COCODE", 133, 18);
     
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0); 
-    doc.text(`ID AFILIADO: #${val.id_afiliado}`, 133, 24); 
+    doc.text(`ID COCODE: #${val.id_afiliado}`, 133, 24); 
     
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
@@ -184,8 +184,8 @@ function Afiliados() {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
-    doc.text("Nota de seguridad: Esta ficha contiene datos privados e historial confidencial del afiliado.", 14, finalY);
-    doc.text("Partido Cabal - Control Interno de Información.", 14, finalY + 4); 
+    doc.text("Nota de seguridad: Esta ficha contiene datos privados e historial confidencial del cocode.", 14, finalY);
+    doc.text("Obras Municipales - ADMINISTRACION 2024-2028.", 14, finalY + 4); 
 
     doc.save(`Ficha_Afiliado_${val.nombre_completo.replace(/\s+/g, '_')}.pdf`);
   };
@@ -207,13 +207,13 @@ function Afiliados() {
     Axios.post(`${API_URL}/crear`, { 
       dpi: dpi.trim(), 
       num_empadronamiento: num_empadronamiento.trim(),
-      lugar_votacion: lugar_votacion.trim(),
+      lugar: lugar_votacion.trim(),
       nombre_completo: nombre_completo.trim(), 
       telefono: telefono.trim(), 
       direccion: direccion.trim(), 
       barrio_colonia: barrio_colonia.trim(), 
       id_municipio: Number(id_municipio), 
-      fecha_afiliacion: fechaEnvio, 
+      fecha: fechaEnvio, 
       id_usuario: Number(id_usuario), 
       foto: foto || null,
       operador_id: usuarioLogueado.id_usuario,
@@ -224,7 +224,7 @@ function Afiliados() {
       getAfiliados();
       limpiarCampos();
       setShowRegModal(false);
-      Swal.fire({ icon: "success", title: 'Afiliado registrado correctamente', showConfirmButton: false, timer: 2500 });
+      Swal.fire({ icon: "success", title: 'Cocode registrado correctamente', showConfirmButton: false, timer: 2500 });
     })
     .catch((error) => {
       console.error(error);
@@ -239,7 +239,7 @@ function Afiliados() {
   // === ACCIÓN: ACTUALIZAR AFILIADO ===
   const actualizar = () => {
     if (!dpi.trim() || !num_empadronamiento.trim() || !nombre_completo.trim() || !id_municipio || !id_usuario) {
-      Swal.fire({ icon: 'warning', title: 'Campos obligatorios vacíos', text: 'El DPI y Empadronamiento son campos requeridos.' });
+      Swal.fire({ icon: 'warning', title: 'Campos obligatorios vacíos', text: 'El DPI y Numero de cel son campos requeridos.' });
       return;
     }
 
@@ -255,7 +255,7 @@ function Afiliados() {
       direccion: direccion.trim(), 
       barrio_colonia: barrio_colonia.trim(), 
       id_municipio: Number(id_municipio), 
-      fecha_afiliacion: fechaFormateada, 
+      fecha: fechaFormateada, 
       id_usuario: Number(id_usuario), 
       foto: foto || null,
       operador_id: usuarioLogueado.id_usuario,
@@ -391,7 +391,7 @@ function Afiliados() {
             📥 DESCARGAR EXCEL
           </button>
           <button className="btn btn-success fw-bold flex-fill" onClick={() => { limpiarCampos(); setShowRegModal(true); }}>
-            ➕ AGREGAR AFILIADO
+            ➕ AGREGAR COCODE
           </button>
         </div>
       </div>
