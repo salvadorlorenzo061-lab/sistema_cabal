@@ -120,7 +120,7 @@ function App() {
       handleLogout();
       Swal.fire({
         title: 'Sesión Expirada',
-        text: `Tu sesión como ${user.rol.toUpperCase()} se ha cerrado automáticamente por inactividad para proteger los datos de control central.`,
+        text: `SE HA CERRADO AUTOMATICAMENTE SESION.`,
         icon: 'warning',
         confirmButtonColor: '#1e3a8a',
         confirmButtonText: 'Entrar de nuevo'
