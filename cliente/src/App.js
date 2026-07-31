@@ -236,7 +236,7 @@ function App() {
         <div className="d-flex d-md-none bg-primary text-white justify-content-between align-items-center p-3 shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
           <div className="d-flex align-items-center gap-2 flex-grow-1">
             <img src={logoCabal} alt="Logo" className="bg-white p-1 rounded" style={{ maxWidth: '35px' }} />
-            <span className="fw-bold tracking-wider" style={{ fontSize: '0.9rem' }}>CABAL IZABAL</span>
+            <span className="fw-bold tracking-wider" style={{ fontSize: '0.9rem' }}>CABAL JALAPA</span>
             <button
               className="btn btn-outline-light px-3 py-2 fw-bold rounded-pill shadow-sm text-nowrap ms-auto"
               onClick={toggleMenu}

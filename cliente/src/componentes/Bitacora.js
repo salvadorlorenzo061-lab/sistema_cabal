@@ -84,7 +84,7 @@ function Bitacora() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text("REPORTE MAESTRO DE AUDITORÍA Y BITÁCORA DE SISTEMAS", 14, 21);
-    doc.text(`Fecha de Emisión: ${new Date().toLocaleString()} | Región: Izabal | Vista: Página ${pagina}`, 14, 26);
+    doc.text(`Fecha de Emisión: ${new Date().toLocaleString()} | Región: Jalapa | Vista: Página ${pagina}`, 14, 26);
 
     const dataTabla = bitacoraList.map((reg) => [
       reg.id_bitacora,

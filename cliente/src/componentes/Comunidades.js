@@ -26,7 +26,7 @@ function Comunidades() {
   const [showEditModal, setShowEditModal] = useState(false); 
 
   // Variables Mock de usuario (Vincúlalas al Contexto o Redux de tu sesión activa en el futuro)
-  const USUARIO_ACTIVO_LOG = "OPERADOR IZABAL";
+  const USUARIO_ACTIVO_LOG = "OPERADOR JALAPA";
   const ID_USUARIO_LOG = 1;
 
   const API_URL = "https://sistema-cabal.onrender.com/api/comunidades";

@@ -87,13 +87,13 @@ router.post("/crear", (req, res) => {
 
         // Inserción del nuevo afiliado (el padrón/empadronamiento ya no forma parte del flujo del sistema)
         const sqlInsert = `
-            INSERT INTO afiliados (dpi, num_empadronamiento, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO afiliados (dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         db.query(
             sqlInsert,
-            [dpi, '', lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null],
+            [dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null],
             (insertErr) => {
                 if (insertErr) {
                     console.error("Error MySQL en /crear:", insertErr);
