@@ -41,13 +41,13 @@ function Departamentos() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA CENTRAL CABAL", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Control y Catálogo Geográfico Regional", 14, 25);
-    doc.text("Infraestructura y Cobertura de Operaciones", 14, 30);
+    doc.text("JALAPA", 14, 25);
+    doc.text("ADMINISTRACION 2024-2028", 14, 30);
     doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
 
     // 🔒 BLOQUE DE CONTROL
