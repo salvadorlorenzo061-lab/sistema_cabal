@@ -317,49 +317,49 @@ function App() {
               
               {['coordinador regional'].includes(miRol) && (
                 <Link to="/home" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">📊</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Dashboard</span>}
+                  <span className="sidebar-module-icon">📊</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">DASHBOARD</span>}
                 </Link>
               )}
 
               {['coordinador regional'].includes(miRol) && (
                 <Link to="/usuarios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">👥</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Usuarios</span>}
+                  <span className="sidebar-module-icon">👥</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">USUARIOS</span>}
                 </Link>
               )}
 
               {['coordinador regional'].includes(miRol) && (
                 <Link to="/bitacora" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">🛡️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Bitácora</span>}
+                  <span className="sidebar-module-icon">🛡️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">BITACORA</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal'].includes(miRol) && (
                 <>
                   <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                    <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Municipios</span>}
+                    <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">MUNICIPIOS</span>}
                   </Link>
 
                   <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                    <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Aldeas / Caseríos</span>}
+                    <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ALDEAS / CASERIOS</span>}
                   </Link>
                 </>
               )}
               
               {['coordinador regional'].includes(miRol) && (
                 <Link to="/departamentos" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">🏕</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Departamentos</span>}
+                  <span className="sidebar-module-icon">🏕</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">DEPARTAMENTOS</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
                 <Link to="/afiliados" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Afiliados</span>}
+                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">COCODE</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
                 <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">Problemas de Barrio</span>}
+                  <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS</span>}
                 </Link>
               )}
             </nav>
