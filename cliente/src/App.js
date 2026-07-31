@@ -41,6 +41,7 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 768);
   const isMobile = window.innerWidth <= 768;
   const sidebarMobileWidth = window.innerWidth <= 360 ? '200px' : window.innerWidth <= 430 ? '220px' : '240px';
+  const sidebarDesktopExpandedWidth = window.innerWidth <= 1366 ? '220px' : '240px';
 
   // Estados de autenticación
   const [user, setUser] = useState(null);
@@ -229,7 +230,7 @@ function App() {
   // 🏛️ INTERFAZ PRINCIPAL COMPLEMENTADA CON ESTRUCTURA MÓVIL (NAVBAR + SIDEBAR FLOTANTE)
   return (
     <Router>
-      <div className="container-fluid p-0 overflow-hidden" style={{ minHeight: '100vh' }}>
+      <div className="container-fluid p-0" style={{ minHeight: '100vh' }}>
         
         {/* 📱 NAVBAR SUPERIOR (SOLO EN PANTALLAS MÓVILES <= 768px) */}
         <div className="d-flex d-md-none bg-primary text-white justify-content-between align-items-center p-3 shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
@@ -261,8 +262,9 @@ function App() {
               left: window.innerWidth <= 768 && !isMenuOpen ? '-100%' : '0',
               top: 0,
               height: '100vh',
-              width: isMobile ? sidebarMobileWidth : (isMenuOpen ? '260px' : '70px'),
-              minWidth: isMobile ? sidebarMobileWidth : (isMenuOpen ? '260px' : '70px'),
+              width: isMobile ? sidebarMobileWidth : (isMenuOpen ? sidebarDesktopExpandedWidth : '70px'),
+              minWidth: isMobile ? sidebarMobileWidth : (isMenuOpen ? sidebarDesktopExpandedWidth : '70px'),
+              flexShrink: 0,
             }}
           >
             {/* Cabecera del Menú */}
@@ -376,11 +378,13 @@ function App() {
 
           {/* 📄 CONTENEDOR DEL CONTENIDO PRINCIPAL DINÁMICO */}
           <div 
-            className="flex-grow-1 p-1 p-md-2" 
+            className="flex-grow-1 p-1 p-md-2 app-main-content" 
             style={{ 
               overflowY: 'auto', 
+              overflowX: 'auto',
               maxHeight: '100vh',
               width: '100%',
+              minWidth: 0,
               backgroundColor: '#f8f9fa'
             }}
           >

@@ -248,7 +248,7 @@ function Departamentos() {
     <div className='container-fluid mt-3 px-2 px-md-3'>
       
       {/* CABECERA DE LA PANTALLA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
           <h3 className="m-0 text-dark fw-bold">GESTIÓN DE DEPARTAMENTOS</h3>
           <small className="text-muted">Operador activo: <strong>{nombreUsuarioLogueado}</strong></small>
@@ -284,7 +284,7 @@ function Departamentos() {
       />
       
       {/* TABLA DE DATOS */}
-      <div className="table-responsive">
+      <div className="table-responsive module-table-wrap">
         <table className="table table-striped table-bordered align-middle shadow-sm">
           <thead className="table-dark">
             <tr>
@@ -306,7 +306,7 @@ function Departamentos() {
                     </span>
                   </td>
                   <td>
-                    <div className="d-flex justify-content-center">
+                    <div className="module-action-buttons">
                       <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold text-white">ACTUALIZAR</button>
                       <button type="button" onClick={() => deleteDepartamento(val)} className="btn btn-danger btn-sm mx-1 fw-bold">ELIMINAR</button>
                       <button type="button" onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>

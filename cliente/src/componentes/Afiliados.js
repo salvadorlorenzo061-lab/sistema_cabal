@@ -370,7 +370,7 @@ function Afiliados() {
   return (
     <div className='container-fluid mt-3 px-2 px-md-3'>
       {/* CABECERA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-3">
           <h4 className="m-0 text-dark fw-bold">GESTIÓN DE COCODES</h4>
         </div>
@@ -386,7 +386,7 @@ function Afiliados() {
             />
           </div>
         </div>
-        <div className="col-md-5 text-end d-flex gap-2">
+        <div className="col-md-5 text-end module-toolbar-actions">
           <button className="btn btn-outline-success fw-bold flex-fill" onClick={descargarExcel}>
             📥 DESCARGAR EXCEL
           </button>
@@ -405,7 +405,7 @@ function Afiliados() {
       />
       
       {/* TABLA PRINCIPAL */}
-      <div className="table-responsive">
+      <div className="table-responsive module-table-wrap">
         <table className="table table-striped table-bordered align-middle shadow-sm">
           <thead className="table-dark">
             <tr>
@@ -437,7 +437,7 @@ function Afiliados() {
                   <td><small>{val.lugar_votacion || "No asignado"}</small></td>
                   <td><span className="badge bg-info text-dark">{val.nombre_municipio || "N/A"}</span></td>
                   <td>
-                    <div className="d-flex justify-content-center">
+                    <div className="module-action-buttons">
                       <select
                         className="form-select form-select-sm fw-bold text-center bg-light border-secondary"
                         style={{ width: '130px', cursor: 'pointer' }}

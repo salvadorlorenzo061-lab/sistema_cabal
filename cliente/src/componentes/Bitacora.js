@@ -175,14 +175,14 @@ function Bitacora() {
       
       {/* SECCIÓN DE CABECERA PRINCIPAL */}
       <div className="bg-dark p-3 rounded shadow-sm text-white mb-3">
-        <div className="row align-items-center">
+        <div className="row align-items-center module-toolbar">
           <div className="col-md-7">
             <h3 className="m-0 fw-bold">🛡️ BITÁCORA DE AUDITORÍA</h3>
             <small className="text-white-50">
               Historial inmutable — Encontrados <strong>{totalRegistros} movimientos</strong> bajo los criterios actuales.
             </small>
           </div>
-          <div className="col-md-5 text-end">
+          <div className="col-md-5 text-end module-toolbar-actions">
             <button className="btn btn-primary fw-bold" onClick={descargarInformeGeneral}>
               📊 EXPORTAR VISTA ACTUAL A PDF
             </button>
@@ -240,7 +240,7 @@ function Bitacora() {
       </div>
       
       {/* TABLA DE RESULTADOS */}
-      <div className="table-responsive shadow-sm rounded mb-3">
+      <div className="table-responsive module-table-wrap shadow-sm rounded mb-3">
         <table className="table table-hover table-bordered align-middle m-0">
           <thead className="table-secondary text-center">
             <tr>

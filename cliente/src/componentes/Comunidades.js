@@ -232,7 +232,7 @@ function Comunidades() {
   return (
     <div className='container-fluid mt-3 px-2 px-md-3'>
       {/* CABECERA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
           <h3 className="m-0 text-dark fw-bold">ALDEAS Y CASERÍOS</h3>
         </div>
@@ -261,7 +261,7 @@ function Comunidades() {
       />
 
       {/* TABLA */}
-      <div className="table-responsive">
+      <div className="table-responsive module-table-wrap">
         <table className="table table-striped table-bordered align-middle shadow-sm">
           <thead className="table-dark">
             <tr>
@@ -288,9 +288,11 @@ function Comunidades() {
                   </span>
                 </td>
                 <td className="text-center">
-                  <button onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold">EDITAR</button>
-                  <button onClick={() => deleteComunidad(val)} className="btn btn-danger btn-sm mx-1 fw-bold">BORRAR</button>
-                  <button onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
+                  <div className="module-action-buttons">
+                    <button onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm fw-bold">EDITAR</button>
+                    <button onClick={() => deleteComunidad(val)} className="btn btn-danger btn-sm fw-bold">BORRAR</button>
+                    <button onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm fw-bold">📄 PDF</button>
+                  </div>
                 </td>
               </tr>
             ))}

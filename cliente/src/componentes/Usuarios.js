@@ -310,7 +310,7 @@ function Usuarios() {
   return (
     <div className='container-fluid mt-3 px-1 px-md-2'>
       {/* Encabezado Principal */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
           <h3 className="m-0 text-dark fw-bold">GESTIÓN DE USUARIOS</h3>
         </div>
@@ -345,7 +345,7 @@ function Usuarios() {
       />
       
       {/* Tabla Desplegable */}
-      <div className="table-responsive">
+      <div className="table-responsive module-table-wrap">
         <table className="table table-striped table-bordered align-middle shadow-sm">
           <thead className="table-dark">
             <tr>
@@ -379,7 +379,7 @@ function Usuarios() {
                     </span>
                   </td>
                   <td>
-                    <div className="d-flex justify-content-center">
+                    <div className="module-action-buttons">
                       <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold">ACTUALIZAR</button>
                       
                       {miRol.trim().toLowerCase() !== "sub coordinador municipal" && (
