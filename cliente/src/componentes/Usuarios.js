@@ -426,9 +426,9 @@ function Usuarios() {
                   <label className="form-label fw-bold">Rol de Usuario:</label>
                   <select value={rol} onChange={(e) => setRol(e.target.value)} className="form-select">
                     <option value="" disabled>-- Seleccione un Rol --</option>
-                    <option value="Coordinador Regional">Coordinador Regional</option>
-                    <option value="Coordinador Municipal">Coordinador Municipal</option>
-                    <option value="Sub Coordinador Municipal">Sub Coordinador Municipal</option>
+                    <option value="Coordinador Regional">DIRECTOR</option>
+                    <option value="Coordinador Municipal">SUBDIRECTOR I</option>
+                    <option value="Sub Coordinador Municipal">SUBDIRECTOR II</option>
                   </select>
                 </div>
                 <div className="mb-3">
