@@ -79,7 +79,7 @@ function Bitacora() {
     const doc = new jsPDF({ orientation: "landscape" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("PARTIDO CABAL GUATEMALA", 14, 15);
+    doc.text("JALAPA", 14, 15);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
@@ -127,7 +127,7 @@ function Bitacora() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text("Partido Cabal - Control de Seguridad Informática (Izabal)", 14, 25);
+    doc.text("SISTEMA DE REGISTROS DE OBRAS MUNICIPALES JALAPA 2024-2026", 14, 25);
 
     doc.setFillColor(240, 244, 248);
     doc.rect(135, 12, 61, 22, "F");
