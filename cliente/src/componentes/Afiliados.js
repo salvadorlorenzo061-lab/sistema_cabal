@@ -17,6 +17,8 @@ function Afiliados() {
     rol: "Coordinador Regional"
   };
 
+  const fechaHoy = new Date().toISOString().split('T')[0];
+
   const [id_afiliado, setId_afiliado] = useState("");
   const [dpi, setDpi] = useState("");
   const [nombre_completo, setNombre_completo] = useState("");
@@ -24,11 +26,11 @@ function Afiliados() {
   const [direccion, setDireccion] = useState("");
   const [barrio_colonia, setBarrio_colonia] = useState("");
   const [id_municipio, setId_municipio] = useState("");
-  const [fecha_afiliacion, setFecha_afiliacion] = useState("");
+  const [fecha_afiliacion, setFecha_afiliacion] = useState(fechaHoy);
   const [id_usuario, setId_usuario] = useState("");
   const [foto, setFoto] = useState(""); 
   
-  const [num_empadronamiento, setNum_empadronamiento] = useState("");
+  
   const [lugar_votacion, setLugar_votacion] = useState("");
 
   const [afiliadosList, setAfiliados] = useState([]);
@@ -73,7 +75,7 @@ function Afiliados() {
     const datosExcel = afiliadosFiltrados.map((afi) => ({
       "ID": afi.id_afiliado,
       "DPI / DOCUMENTO": afi.dpi,
-      "NO.": afi.num_empadronamiento || "N/A",
+      
       "NOMBRE COMPLETO": afi.nombre_completo?.toUpperCase(),
       "TELÉFONO": afi.telefono,
       "DIRECCIÓN DE RESIDENCIA": afi.direccion || "No registrada",
@@ -161,7 +163,6 @@ function Afiliados() {
       body: [
         ['CÓDIGO ÚNICO', `AFI-${val.id_afiliado}`],
         ['DOCUMENTO DE IDENTIDAD (DPI)', val.dpi],
-        ['NÚMERO DE CELULAR', val.num_empadronamiento || 'No registrado'],
         ['LUGAR DE VOTACIÓN', val.lugar_votacion ? val.lugar_votacion.toUpperCase() : 'No asignado'],
         ['NOMBRE COMPLETO', val.nombre_completo.toUpperCase()],
         ['TELÉFONO DE CONTACTO', val.telefono],
@@ -187,18 +188,18 @@ function Afiliados() {
     doc.text("Nota de seguridad: Esta ficha contiene datos privados e historial confidencial del cocode.", 14, finalY);
     doc.text("Obras Municipales - ADMINISTRACION 2024-2028.", 14, finalY + 4); 
 
-    doc.save(`Ficha_Afiliado_${val.nombre_completo.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`Ficha_${val.nombre_completo.replace(/\s+/g, '_')}.pdf`);
   };
 
   // === ACCIÓN: AGREGAR AFILIADO ===
   const add = () => {
     const fechaEnvio = fecha_afiliacion.trim() || new Date().toISOString().split('T')[0];
 
-    if (!dpi.trim() || !num_empadronamiento.trim() || !nombre_completo.trim() || !telefono.trim() || !id_municipio || !id_usuario) {
+    if (!dpi.trim() || !nombre_completo.trim() || !telefono.trim() || !id_municipio || !id_usuario) {
       Swal.fire({
         icon: "warning",
         title: 'DATOS INCOMPLETOS',
-        text: 'Por favor, complete los campos obligatorios incluyendo el Empadronamiento (*).',
+        text: 'Por favor, complete los campos obligatorios.',
         timer: 3000
       });
       return; 
@@ -206,14 +207,13 @@ function Afiliados() {
 
     Axios.post(`${API_URL}/crear`, { 
       dpi: dpi.trim(), 
-      num_empadronamiento: num_empadronamiento.trim(),
-      lugar: lugar_votacion.trim(),
+      lugar_votacion: lugar_votacion.trim(),
       nombre_completo: nombre_completo.trim(), 
       telefono: telefono.trim(), 
       direccion: direccion.trim(), 
       barrio_colonia: barrio_colonia.trim(), 
       id_municipio: Number(id_municipio), 
-      fecha: fechaEnvio, 
+      fecha_afiliacion: fechaEnvio, 
       id_usuario: Number(id_usuario), 
       foto: foto || null,
       operador_id: usuarioLogueado.id_usuario,
@@ -238,8 +238,8 @@ function Afiliados() {
 
   // === ACCIÓN: ACTUALIZAR AFILIADO ===
   const actualizar = () => {
-    if (!dpi.trim() || !num_empadronamiento.trim() || !nombre_completo.trim() || !id_municipio || !id_usuario) {
-      Swal.fire({ icon: 'warning', title: 'Campos obligatorios vacíos', text: 'El DPI y Numero de cel son campos requeridos.' });
+    if (!dpi.trim() || !nombre_completo.trim() || !id_municipio || !id_usuario) {
+      Swal.fire({ icon: 'warning', title: 'Campos obligatorios vacíos', text: 'El DPI son campos requeridos.' });
       return;
     }
 
@@ -248,14 +248,13 @@ function Afiliados() {
     Axios.put(`${API_URL}/actualizar`, { 
       id_afiliado: Number(id_afiliado),
       dpi: dpi.trim(), 
-      num_empadronamiento: num_empadronamiento.trim(),
       lugar_votacion: lugar_votacion.trim(),
       nombre_completo: nombre_completo.trim(), 
       telefono: telefono.trim(), 
       direccion: direccion.trim(), 
       barrio_colonia: barrio_colonia.trim(), 
       id_municipio: Number(id_municipio), 
-      fecha: fechaFormateada, 
+      fecha_afiliacion: fechaFormateada, 
       id_usuario: Number(id_usuario), 
       foto: foto || null,
       operador_id: usuarioLogueado.id_usuario,
@@ -313,8 +312,8 @@ function Afiliados() {
   const limpiarCampos = () => {
     setId_afiliado(""); setDpi(""); setNombre_completo(""); setTelefono("");
     setDireccion(""); setBarrio_colonia(""); setId_municipio("");
-    setFecha_afiliacion(""); setId_usuario(""); setFoto("");
-    setNum_empadronamiento(""); setLugar_votacion("");
+    setFecha_afiliacion(fechaHoy); setId_usuario(""); setFoto("");
+  
   };
 
   const getAfiliados = useCallback(() => {
@@ -356,15 +355,14 @@ function Afiliados() {
     setFecha_afiliacion(val.fecha_afiliacion ? val.fecha_afiliacion.split('T')[0] : "");
     setId_usuario(val.id_usuario);
     setFoto(val.foto || "");
-    setNum_empadronamiento(val.num_empadronamiento || "");
+    
     setLugar_votacion(val.lugar_votacion || "");
     setShowEditModal(true);
   };
 
   const afiliadosFiltrados = afiliadosList.filter((afi) => 
     afi.nombre_completo?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    afi.dpi?.includes(busqueda) ||
-    afi.num_empadronamiento?.includes(busqueda)
+    afi.dpi?.includes(busqueda)
   );
 
   return (
@@ -380,7 +378,7 @@ function Afiliados() {
             <input 
               type="text" 
               className="form-control" 
-              placeholder="Buscar por nombre, DPI o padrón..." 
+              placeholder="Buscar por nombre o DPI..." 
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -411,7 +409,6 @@ function Afiliados() {
             <tr>
               <th>FOTO</th>
               <th>DPI</th>
-              <th>NUMERO CELULAR</th>
               <th>NOMBRE COMPLETO</th>
               <th>TELÉFONO</th>
               <th>NOMBRE COCODE</th>
@@ -431,7 +428,6 @@ function Afiliados() {
                     )}
                   </td>
                   <td><strong>{val.dpi}</strong></td>
-                  <td className="text-primary fw-bold">{val.num_empadronamiento || "N/A"}</td>
                   <td>{val.nombre_completo}</td>
                   <td>{val.telefono}</td>
                   <td><small>{val.lugar_votacion || "No asignado"}</small></td>
@@ -490,10 +486,7 @@ function Afiliados() {
                     <label className="form-label fw-bold">Documento (DPI): *</label>
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" placeholder="Ingrese DPI" />
                   </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Número de celular: *</label>
-                    <input type="text" value={num_empadronamiento} onChange={(e) => setNum_empadronamiento(e.target.value)} className="form-control" placeholder="Ingrese número de padrón" />
-                  </div>
+                 
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -508,6 +501,15 @@ function Afiliados() {
                 <div className="mb-3">
                   <label className="form-label fw-bold">Nombre cocode:</label>
                   <input type="text" value={lugar_votacion} onChange={(e) => setLugar_votacion(e.target.value)} className="form-control" placeholder="Ej: Escuela Oficial" />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Fecha de registro:</label>
+                  <input
+                    type="date"
+                    value={fecha_afiliacion}
+                    onChange={(e) => setFecha_afiliacion(e.target.value)}
+                    className="form-control"
+                  />
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -569,10 +571,6 @@ function Afiliados() {
                     <label className="form-label fw-bold">Documento (DPI): *</label>
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" />
                   </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Número de celular: *</label>
-                    <input type="text" value={num_empadronamiento} onChange={(e) => setNum_empadronamiento(e.target.value)} className="form-control" />
-                  </div>
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -587,6 +585,15 @@ function Afiliados() {
                 <div className="mb-3">
                   <label className="form-label fw-bold">Nombre COCODE:</label>
                   <input type="text" value={lugar_votacion} onChange={(e) => setLugar_votacion(e.target.value)} className="form-control" />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Fecha de registro:</label>
+                  <input
+                    type="date"
+                    value={fecha_afiliacion}
+                    onChange={(e) => setFecha_afiliacion(e.target.value)}
+                    className="form-control"
+                  />
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
