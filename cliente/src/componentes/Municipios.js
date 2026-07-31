@@ -77,7 +77,7 @@ function Municipios() {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
-    doc.text(`Departamento:           ${val.nombre_departamento ? val.nombre_departamento.toUpperCase() : 'NO ASIGNADO'}`, 14, 56);
+    doc.text(`Departamento:        ${val.nombre_departamento ? val.nombre_departamento.toUpperCase() : 'NO ASIGNADO'}`, 14, 56);
     doc.text(`Nombre del Municipio:   ${val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'S/N'}`, 14, 62);
     doc.text(`Estado de Operación:    ${val.estado ? val.estado.toUpperCase() : ''}`, 14, 68); 
 
@@ -202,7 +202,6 @@ function Municipios() {
       cancelButtonText: "Cancelar"
     }).then((result) => {
       if (result.isConfirmed) {
-        // Al usar DELETE, enviamos los datos del usuario mediante Query string (?param=valor)
         Axios.delete(`${API_URL}/delete/${val.id_municipio}?id_usuario_operador=${idUsuarioLogueado}&nombre_usuario_operador=${nombreUsuarioLogueado}`)
         .then(() => {
           getMunicipios();
