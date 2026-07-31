@@ -74,14 +74,14 @@ function Dashboard() {
 
   return (
     <div className="container-fluid mt-3 px-2 px-md-3">
-      <h3 className="mb-4 text-dark fw-bold">📊 DASHBOARD DE CONTROL -PARTIDO CABAL .</h3>
+      <h3 className="mb-4 text-dark fw-bold">📊 DASHBOARD DE CONTROL -OBRAS MUNICIPALES .</h3>
 
       {/* 📈 TARJETAS DE MÉTRICAS RÁPIDAS (KPIs) */}
       <div className="row mb-4">
         <div className="col-md-4 mb-3">
           <div className="card border-0 bg-primary text-white shadow-sm h-100">
             <div className="card-body d-flex flex-column justify-content-center py-4">
-              <h6 className="text-uppercase fw-bold text-white-50">Total Afiliados</h6>
+              <h6 className="text-uppercase fw-bold text-white-50">TOTAL COCODES</h6>
               <h2 className="display-5 fw-bold m-0">{totalAfiliados}</h2>
               <small className="mt-2 text-white-50">Registrados globalmente</small>
             </div>
@@ -91,9 +91,9 @@ function Dashboard() {
         <div className="col-md-4 mb-3">
           <div className="card border-0 bg-success text-white shadow-sm h-100">
             <div className="card-body d-flex flex-column justify-content-center py-4">
-              <h6 className="text-uppercase fw-bold text-white-50">Padrones Asignados</h6>
+              <h6 className="text-uppercase fw-bold text-white-50">PROYECTOS ASIGNADOS</h6>
               <h2 className="display-5 fw-bold m-0">{conCentroVotacion}</h2>
-              <small className="mt-2 text-white-50">Con centro de votación activo</small>
+              <small className="mt-2 text-white-50">LUGAR</small>
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@ function Dashboard() {
         {/* Gráfico de Barras: Municipios */}
         <div className="col-lg-6 mb-4">
           <div className="card shadow-sm border-0 p-3 h-100">
-            <h5 className="card-title text-muted fw-bold mb-3">📍 Afiliados por Municipio</h5>
+            <h5 className="card-title text-muted fw-bold mb-3">📍 COCODES POR MUNICIPIOS</h5>
             <div style={{ width: '100%', height: 300, minWidth: 0 }}>
               {!chartsReady ? (
                 <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
@@ -140,7 +140,7 @@ function Dashboard() {
         {/* Gráfico de Línea: Historial Temporal */}
         <div className="col-lg-6 mb-4">
           <div className="card shadow-sm border-0 p-3 h-100">
-            <h5 className="card-title text-muted fw-bold mb-3">📈 Tendencia Temporal de Afiliaciones</h5>
+            <h5 className="card-title text-muted fw-bold mb-3">📈 TENDENCIA TEMPORAL</h5>
             <div style={{ width: '100%', height: 300, minWidth: 0 }}>
               {!chartsReady ? (
                 <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
