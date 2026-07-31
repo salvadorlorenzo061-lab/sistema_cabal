@@ -279,8 +279,8 @@ function App() {
                 />
                 {(isMenuOpen || isMobile) && (
                   <div className="mt-2 animate__animated animate__fadeIn">
-                    <span className="fw-bold tracking-wider text-white d-block" style={{ fontSize: '0.85rem' }}>PARTIDO CABAL</span>
-                    <small className="text-white-50" style={{ fontSize: '0.7rem' }}>IZABAL</small>
+                    <span className="fw-bold tracking-wider text-white d-block" style={{ fontSize: '0.85rem' }}>SIOM</span>
+                    <small className="text-white-50" style={{ fontSize: '0.7rem' }}>JALAPA 2024-2028</small>
                   </div>
                 )}
               </div>

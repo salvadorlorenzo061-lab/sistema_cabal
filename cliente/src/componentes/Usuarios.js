@@ -55,14 +55,14 @@ function Usuarios() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("PARTIDO CABAL GUATEMALA", 14, 20);
+    doc.text("JALAPA 2024-2028", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
     doc.text("Coordinación de TI y Organización Interna", 14, 25);
-    doc.text("Sistema Centralizado de Afiliaciones e Incidencias (Izabal)", 14, 30);
-    doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
+    doc.text("SISTEMA DE REGISTRO DE OBRAS MUNICIPALES, JALAPA", 14, 30);
+    doc.text(`GENERADO: DIRECTOR DE OBRAS MUNICIPALES`, 14, 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
@@ -153,7 +153,7 @@ function Usuarios() {
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
     doc.text("Nota de seguridad: Esta ficha contiene trazas e historial de acceso de uso confidencial.", 14, finalY);
-    doc.text("Partido Cabal - Control de Auditoría Interna de Sistemas de Información.", 14, finalY + 4);
+    doc.text("DIRECTOR DE  OBRAS MUNICIPALES ADMINISTRACION -2024-2028 .", 14, finalY + 4);
 
     const nombreArchivo = val.nombre ? val.nombre.replace(/\s+/g, '_') : 'Usuario';
     doc.save(`Ficha_Auditoria_${nombreArchivo}.pdf`);

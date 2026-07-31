@@ -71,15 +71,15 @@ function Afiliados() {
     }
 
     const datosExcel = afiliadosFiltrados.map((afi) => ({
-      "ID AFILIADO": afi.id_afiliado,
+      "ID": afi.id_afiliado,
       "DPI / DOCUMENTO": afi.dpi,
-      "NO. EMPADRONAMIENTO": afi.num_empadronamiento || "N/A",
+      "NO.": afi.num_empadronamiento || "N/A",
       "NOMBRE COMPLETO": afi.nombre_completo?.toUpperCase(),
       "TELÉFONO": afi.telefono,
       "DIRECCIÓN DE RESIDENCIA": afi.direccion || "No registrada",
       "BARRIO / COLONIA": afi.barrio_colonia || "No registrado",
       "MUNICIPIO": afi.nombre_municipio || "N/A",
-      "CENTRO DE VOTACIÓN": afi.lugar_votacion || "No asignado",
+      "LUGAR": afi.lugar_votacion || "No asignado",
       "FECHA AFILIACIÓN": afi.fecha_afiliacion ? new Date(afi.fecha_afiliacion).toLocaleDateString() : "N/A",
       "REGISTRADO POR": afi.nombre_usuario || "Sistema"
     }));
@@ -161,14 +161,14 @@ function Afiliados() {
       body: [
         ['CÓDIGO ÚNICO', `AFI-${val.id_afiliado}`],
         ['DOCUMENTO DE IDENTIDAD (DPI)', val.dpi],
-        ['NÚMERO DE EMPADRONAMIENTO', val.num_empadronamiento || 'No registrado'],
+        ['NÚMERO DE CELULAR', val.num_empadronamiento || 'No registrado'],
         ['LUGAR DE VOTACIÓN', val.lugar_votacion ? val.lugar_votacion.toUpperCase() : 'No asignado'],
         ['NOMBRE COMPLETO', val.nombre_completo.toUpperCase()],
         ['TELÉFONO DE CONTACTO', val.telefono],
         ['DIRECCIÓN DE RESIDENCIA', val.direccion || 'No registrada'],
         ['BARRIO / COLONIA', val.barrio_colonia || 'No registrado'],
         ['MUNICIPIO ASOCIADO', val.nombre_municipio || 'No especificado'],
-        ['FECHA DE AFILIACIÓN', val.fecha_afiliacion ? new Date(val.fecha_afiliacion).toLocaleDateString() : 'No registrada'],
+        ['FECHA', val.fecha_afiliacion ? new Date(val.fecha_afiliacion).toLocaleDateString() : 'No registrada'],
         ['REGISTRADO POR USUARIO', val.nombre_usuario || 'Sistema'],
       ],
       theme: 'striped',
@@ -438,9 +438,30 @@ function Afiliados() {
                   <td><span className="badge bg-info text-dark">{val.nombre_municipio || "N/A"}</span></td>
                   <td>
                     <div className="d-flex justify-content-center">
-                      <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold text-white">ACTUALIZAR</button>
-                      <button type="button" onClick={() => deleteAfiliado(val)} className="btn btn-danger btn-sm mx-1 fw-bold">ELIMINAR</button>
-                      <button type="button" onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
+                      <select
+                        className="form-select form-select-sm fw-bold text-center bg-light border-secondary"
+                        style={{ width: '130px', cursor: 'pointer' }}
+                        defaultValue=""
+                        onChange={(e) => {
+                          const accion = e.target.value;
+                          if (!accion) return;
+
+                          if (accion === 'actualizar') {
+                            abrirEditarModal(val);
+                          } else if (accion === 'eliminar') {
+                            deleteAfiliado(val);
+                          } else if (accion === 'pdf') {
+                            descargarPDFIndividual(val);
+                          }
+
+                          e.target.value = "";
+                        }}
+                      >
+                        <option value="" disabled>⚙️ Acciones</option>
+                        <option value="actualizar" className="text-info fw-bold">✏️ Actualizar</option>
+                        <option value="eliminar" className="text-danger fw-bold">🗑️ Eliminar</option>
+                        <option value="pdf" className="text-secondary fw-bold">📄 PDF</option>
+                      </select>
                     </div>
                   </td>
                 </tr>
