@@ -132,17 +132,22 @@
 }
 
 .module-table-wrap .table {
-  min-width: 760px;
+  min-width: 640px;
+  margin-bottom: 0;
 }
 
 .module-table-wrap .table thead th {
   text-align: center;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .module-table-wrap .table tbody td,
 .module-table-wrap .table tbody th {
   vertical-align: middle;
+  padding: 0.4rem 0.45rem;
+  font-size: 0.84rem;
+  line-height: 1.2;
 }
 
 .module-table-centered thead th,
@@ -152,11 +157,28 @@
 }
 
 .module-action-select {
-  width: 148px;
+  width: 130px;
+  min-width: 130px;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
   cursor: pointer;
+  font-size: 0.78rem;
+  height: 30px;
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+}
+
+.module-table-wrap .badge {
+  font-size: 0.7rem;
+  padding: 0.22rem 0.38rem;
+}
+
+.module-table-centered th:last-child,
+.module-table-centered td:last-child {
+  width: 150px;
+  min-width: 150px;
+  white-space: nowrap;
 }
 
 .module-action-buttons {
@@ -178,7 +200,7 @@
 
 @media (max-width: 768px) {
   .module-table-wrap .table {
-    min-width: 680px;
+    min-width: 620px;
   }
 }
 
@@ -209,11 +231,11 @@
 
   .module-table-wrap .table {
     font-size: 0.86rem;
-    min-width: 700px;
+    min-width: 640px;
   }
 
   .module-table-wrap .table > :not(caption) > * > * {
-    padding: 0.4rem 0.45rem;
+    padding: 0.34rem 0.4rem;
     vertical-align: middle;
   }
 
@@ -227,7 +249,14 @@
   }
 
   .module-table-wrap .badge {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
+  }
+
+  .module-action-select {
+    width: 120px;
+    min-width: 120px;
+    font-size: 0.75rem;
+    height: 28px;
   }
 
   .container-fluid.mt-3 {
