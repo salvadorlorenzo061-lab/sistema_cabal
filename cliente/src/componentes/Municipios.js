@@ -262,7 +262,7 @@ function Municipios() {
   );
 
   return (
-    <div className='container-fluid mt-3 px-2 px-md-3'>
+    <div className='container-fluid mt-3 px-4' style={{ width: '100%', maxWidth: '100%' }}>
       
       {/* CABECERA DE LA PANTALLA */}
       <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
@@ -301,15 +301,15 @@ function Municipios() {
       />
       
       {/* TABLA DE DATOS */}
-      <div className="table-responsive module-table-wrap">
-        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
+      <div className="table-responsive w-100">
+        <table className="table table-striped table-bordered align-middle shadow-sm" style={{ width: '100%', tableLayout: 'auto' }}>
           <thead className="table-dark">
             <tr>
-              <th>ID MUNICIPIO</th>
-              <th>DEPARTAMENTO</th>
-              <th>NOMBRE MUNICIPIO</th>
-              <th>ESTADO</th>
-              <th className="text-center">OPERACIÓN</th>
+              <th style={{ width: '15%' }}>ID MUNICIPIO</th>
+              <th style={{ width: '25%' }}>DEPARTAMENTO</th>
+              <th style={{ width: '30%' }}>NOMBRE MUNICIPIO</th>
+              <th style={{ width: '15%' }}>ESTADO</th>
+              <th className="text-center" style={{ width: '15%' }}>OPERACIÓN</th>
             </tr>
           </thead>
           <tbody>
