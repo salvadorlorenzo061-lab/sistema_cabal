@@ -224,7 +224,7 @@ function Afiliados() {
       getAfiliados();
       limpiarCampos();
       setShowRegModal(false);
-      Swal.fire({ icon: "success", title: 'Cocode registrado correctamente', showConfirmButton: false, timer: 2500 });
+      Swal.fire({ icon: "success", title: 'Se creó correctamente COCODE', showConfirmButton: false, timer: 2500 });
     })
     .catch((error) => {
       console.error(error);
@@ -265,7 +265,7 @@ function Afiliados() {
       getAfiliados();
       limpiarCampos();
       setShowEditModal(false);
-      Swal.fire({ title: '¡Éxito!', text: 'Registro actualizado de manera directa', icon: 'success', timer: 2500, showConfirmButton: false });
+      Swal.fire({ title: '¡Éxito!', text: 'Se actualizó correctamente COCODE', icon: 'success', timer: 2500, showConfirmButton: false });
     })
     .catch((error) => {
       console.error(error);
@@ -298,7 +298,7 @@ function Afiliados() {
         })
         .then(() => {
           getAfiliados();
-          Swal.fire('¡Eliminado!', 'El registro fue removido.', 'success');
+          Swal.fire('¡Eliminado!', 'Se eliminó correctamente COCODE', 'success');
         })
         .catch(err => {
           console.error(err);

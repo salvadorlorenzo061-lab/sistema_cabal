@@ -85,7 +85,7 @@ router.post("/crear", (req, res) => {
             });
         }
 
-        // Inserción del nuevo afiliado (el padrón/empadronamiento ya no forma parte del flujo del sistema)
+        // Inserción del nuevo afiliado
         const sqlInsert = `
             INSERT INTO afiliados (dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
