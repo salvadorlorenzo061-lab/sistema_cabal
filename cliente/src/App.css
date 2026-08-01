@@ -135,6 +135,30 @@
   min-width: 760px;
 }
 
+.module-table-wrap .table thead th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.module-table-wrap .table tbody td,
+.module-table-wrap .table tbody th {
+  vertical-align: middle;
+}
+
+.module-table-centered thead th,
+.module-table-centered tbody td,
+.module-table-centered tbody th {
+  text-align: center;
+}
+
+.module-action-select {
+  width: 148px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  cursor: pointer;
+}
+
 .module-action-buttons {
   display: flex;
   justify-content: center;

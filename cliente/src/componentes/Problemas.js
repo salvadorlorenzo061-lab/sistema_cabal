@@ -324,7 +324,7 @@ function Problemas() {
       
       {/* TABLA DE DATOS */}
       <div className="table-responsive module-table-wrap">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>ID</th>
@@ -353,12 +353,30 @@ function Problemas() {
                       {val.estado ? val.estado.toUpperCase() : 'N/A'}
                     </span>
                   </td>
-                  <td>
-                    <div className="module-action-buttons">
-                      <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold text-white">ACTUALIZAR</button>
-                      <button type="button" onClick={() => deleteProblema(val)} className="btn btn-danger btn-sm mx-1 fw-bold">ELIMINAR</button>
-                      <button type="button" onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
-                    </div>
+                  <td className="text-center">
+                    <select
+                      className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const accion = e.target.value;
+                        if (!accion) return;
+
+                        if (accion === 'actualizar') {
+                          abrirEditarModal(val);
+                        } else if (accion === 'eliminar') {
+                          deleteProblema(val);
+                        } else if (accion === 'pdf') {
+                          descargarPDFIndividual(val);
+                        }
+
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="" disabled>⚙️ Acciones</option>
+                      <option value="actualizar">✏️ Actualizar</option>
+                      <option value="eliminar">🗑️ Eliminar</option>
+                      <option value="pdf">📄 PDF</option>
+                    </select>
                   </td>
                 </tr>
               ))

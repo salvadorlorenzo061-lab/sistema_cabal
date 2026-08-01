@@ -262,7 +262,7 @@ function Comunidades() {
 
       {/* TABLA */}
       <div className="table-responsive module-table-wrap">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>ID</th>
@@ -288,11 +288,29 @@ function Comunidades() {
                   </span>
                 </td>
                 <td className="text-center">
-                  <div className="module-action-buttons">
-                    <button onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm fw-bold">EDITAR</button>
-                    <button onClick={() => deleteComunidad(val)} className="btn btn-danger btn-sm fw-bold">BORRAR</button>
-                    <button onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm fw-bold">📄 PDF</button>
-                  </div>
+                  <select
+                    className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const accion = e.target.value;
+                      if (!accion) return;
+
+                      if (accion === 'actualizar') {
+                        abrirEditarModal(val);
+                      } else if (accion === 'eliminar') {
+                        deleteComunidad(val);
+                      } else if (accion === 'pdf') {
+                        descargarPDFIndividual(val);
+                      }
+
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="" disabled>⚙️ Acciones</option>
+                    <option value="actualizar">✏️ Actualizar</option>
+                    <option value="eliminar">🗑️ Eliminar</option>
+                    <option value="pdf">📄 PDF</option>
+                  </select>
                 </td>
               </tr>
             ))}

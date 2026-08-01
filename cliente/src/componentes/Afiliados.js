@@ -112,7 +112,7 @@ function Afiliados() {
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
     doc.text("DEPARTAMENTO DE REGISTRO DE COCODES", 14, 25);
-    doc.text("SISTEMA CENTALIZADO DE CONTROL OBRAS MUNICIPALES", 14, 30);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 30);
     doc.text(`GENERADO POR: DIRECTOR DE OBRAS `, 14, 35);
 
     doc.setFillColor(245, 247, 250); 
@@ -404,7 +404,7 @@ function Afiliados() {
       
       {/* TABLA PRINCIPAL */}
       <div className="table-responsive module-table-wrap">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>FOTO</th>
@@ -435,8 +435,7 @@ function Afiliados() {
                   <td>
                     <div className="module-action-buttons">
                       <select
-                        className="form-select form-select-sm fw-bold text-center bg-light border-secondary"
-                        style={{ width: '130px', cursor: 'pointer' }}
+                        className="form-select form-select-sm fw-bold text-center bg-light border-secondary module-action-select"
                         defaultValue=""
                         onChange={(e) => {
                           const accion = e.target.value;
