@@ -8,7 +8,7 @@ import PaginationBar from './PaginationBar';
 
 function Municipios() {
   // =========================================================================
-  // 🔐 CONTROL DE USUARIO ACTIVO (Vincular con tu gestor de estados globales o login)
+  // 🔐 CONTROL DE USUARIO ACTIVO
   // =========================================================================
   const idUsuarioLogueado = 3; 
   const nombreUsuarioLogueado = "Erick Hernandez";
@@ -36,7 +36,6 @@ function Municipios() {
   const descargarPDFIndividual = (val) => {
     const doc = new jsPDF();
 
-    // 🏢 ENCABEZADO INSTITUCIONAL
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
@@ -49,7 +48,6 @@ function Municipios() {
     doc.text("Infraestructura y Cobertura de Operaciones", 14, 30);
     doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
 
-    // 🔒 BLOQUE DE CONTROL
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
 
@@ -69,7 +67,6 @@ function Municipios() {
     doc.setDrawColor(200, 200, 200);
     doc.line(14, 42, 196, 42); 
 
-    // 👤 RESUMEN
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(40, 40, 40);
@@ -81,7 +78,6 @@ function Municipios() {
     doc.text(`Nombre del Municipio:   ${val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'S/N'}`, 14, 62);
     doc.text(`Estado de Operación:    ${val.estado ? val.estado.toUpperCase() : ''}`, 14, 68); 
 
-    // 📊 TABLA 1: DATOS ESTRUCTURADOS
     autoTable(doc, {
       startY: 74,
       head: [['PARÁMETRO', 'DETALLE EN BASE DE DATOS']],
@@ -100,7 +96,6 @@ function Municipios() {
       }
     });
 
-    // 🔒 PIE DE PÁGINA
     const finalY = doc.lastAutoTable.finalY + 15;
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
@@ -112,7 +107,7 @@ function Municipios() {
   };
 
   // =========================================================================
-  //   CONTROLADORES DE BASE DE DATOS (CRUD + BITÁCORA)
+  //   CONTROLADORES DE BASE DE DATOS
   // =========================================================================
   const add = () => {
     if (!nombre_municipio.trim() || !estado.trim() || !id_departamento) {
@@ -262,15 +257,15 @@ function Municipios() {
   );
 
   return (
-    <div className='container-fluid mt-3 px-4' style={{ width: '100%', maxWidth: '100%' }}>
+    <div className='container-fluid mt-3 px-3' style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
       
       {/* CABECERA DE LA PANTALLA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
-        <div className="col-md-4">
-          <h3 className="m-0 text-dark fw-bold">GESTIÓN DE MUNICIPIOS</h3>
+      <div className="row mb-3 align-items-center bg-light p-3 rounded shadow-sm">
+        <div className="col-md-4 mb-2 mb-md-0">
+          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE MUNICIPIOS</h4>
           <small className="text-muted">Operador activo: <strong>{nombreUsuarioLogueado}</strong></small>
         </div>
-        <div className="col-md-5">
+        <div className="col-md-5 mb-2 mb-md-0">
           <div className="input-group">
             <span className="input-group-text bg-primary text-white">🔍</span>
             <input 
@@ -301,12 +296,12 @@ function Municipios() {
       />
       
       {/* TABLA DE DATOS */}
-      <div className="table-responsive w-100">
-        <table className="table table-striped table-bordered align-middle shadow-sm" style={{ width: '100%', tableLayout: 'auto' }}>
+      <div className="table-responsive">
+        <table className="table table-striped table-bordered align-middle shadow-sm w-150" style={{ tableLayout: 'fixed', width: '100%' }}>
           <thead className="table-dark">
             <tr>
-              <th style={{ width: '15%' }}>ID MUNICIPIO</th>
-              <th style={{ width: '25%' }}>DEPARTAMENTO</th>
+              <th style={{ width: '12%' }}>ID MUNICIPIO</th>
+              <th style={{ width: '28%' }}>DEPARTAMENTO</th>
               <th style={{ width: '30%' }}>NOMBRE MUNICIPIO</th>
               <th style={{ width: '15%' }}>ESTADO</th>
               <th className="text-center" style={{ width: '15%' }}>OPERACIÓN</th>
@@ -326,7 +321,8 @@ function Municipios() {
                   </td>
                   <td className="text-center">
                     <select
-                      className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
+                      className="form-select form-select-sm fw-bold bg-light border-secondary mx-auto"
+                      style={{ maxWidth: '130px' }}
                       defaultValue=""
                       onChange={(e) => {
                         const accion = e.target.value;
