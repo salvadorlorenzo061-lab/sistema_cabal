@@ -132,22 +132,27 @@
 }
 
 .module-table-wrap .table {
-  min-width: 640px;
+  min-width: 560px;
   margin-bottom: 0;
 }
 
 .module-table-wrap .table thead th {
   text-align: center;
   vertical-align: middle;
-  white-space: nowrap;
+  white-space: normal;
+  font-size: 0.76rem;
+  line-height: 1.1;
+  padding: 0.36rem 0.34rem;
 }
 
 .module-table-wrap .table tbody td,
 .module-table-wrap .table tbody th {
   vertical-align: middle;
-  padding: 0.4rem 0.45rem;
-  font-size: 0.84rem;
-  line-height: 1.2;
+  padding: 0.32rem 0.34rem;
+  font-size: 0.76rem;
+  line-height: 1.12;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .module-table-centered thead th,
@@ -157,27 +162,27 @@
 }
 
 .module-action-select {
-  width: 130px;
-  min-width: 130px;
+  width: 112px;
+  min-width: 112px;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
   cursor: pointer;
-  font-size: 0.78rem;
-  height: 30px;
+  font-size: 0.7rem;
+  height: 26px;
   padding-top: 0.15rem;
   padding-bottom: 0.15rem;
 }
 
 .module-table-wrap .badge {
-  font-size: 0.7rem;
-  padding: 0.22rem 0.38rem;
+  font-size: 0.62rem;
+  padding: 0.18rem 0.32rem;
 }
 
 .module-table-centered th:last-child,
 .module-table-centered td:last-child {
-  width: 150px;
-  min-width: 150px;
+  width: 124px;
+  min-width: 124px;
   white-space: nowrap;
 }
 
@@ -200,7 +205,7 @@
 
 @media (max-width: 768px) {
   .module-table-wrap .table {
-    min-width: 620px;
+    min-width: 540px;
   }
 }
 
@@ -230,12 +235,12 @@
   }
 
   .module-table-wrap .table {
-    font-size: 0.86rem;
-    min-width: 640px;
+    font-size: 0.8rem;
+    min-width: 560px;
   }
 
   .module-table-wrap .table > :not(caption) > * > * {
-    padding: 0.34rem 0.4rem;
+    padding: 0.28rem 0.3rem;
     vertical-align: middle;
   }
 
@@ -249,14 +254,14 @@
   }
 
   .module-table-wrap .badge {
-    font-size: 0.68rem;
+    font-size: 0.6rem;
   }
 
   .module-action-select {
-    width: 120px;
-    min-width: 120px;
-    font-size: 0.75rem;
-    height: 28px;
+    width: 104px;
+    min-width: 104px;
+    font-size: 0.68rem;
+    height: 24px;
   }
 
   .container-fluid.mt-3 {

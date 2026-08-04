@@ -257,15 +257,15 @@ function Municipios() {
   );
 
   return (
-    <div className='container-fluid mt-3 px-3' style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+    <div className='container-fluid mt-3 px-1 px-md-2'>
       
       {/* CABECERA DE LA PANTALLA */}
-      <div className="row mb-3 align-items-center bg-light p-3 rounded shadow-sm">
-        <div className="col-md-4 mb-2 mb-md-0">
-          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE MUNICIPIOS</h4>
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
+        <div className="col-md-4">
+          <h3 className="m-0 text-dark fw-bold">GESTIÓN DE MUNICIPIOS</h3>
           <small className="text-muted">Operador activo: <strong>{nombreUsuarioLogueado}</strong></small>
         </div>
-        <div className="col-md-5 mb-2 mb-md-0">
+        <div className="col-md-5">
           <div className="input-group">
             <span className="input-group-text bg-primary text-white">🔍</span>
             <input 
@@ -296,15 +296,15 @@ function Municipios() {
       />
       
       {/* TABLA DE DATOS */}
-      <div className="table-responsive">
-        <table className="table table-striped table-bordered align-middle shadow-sm w-150" style={{ tableLayout: 'fixed', width: '100%' }}>
+      <div className="table-responsive module-table-wrap">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
-              <th style={{ width: '12%' }}>ID MUNICIPIO</th>
-              <th style={{ width: '28%' }}>DEPARTAMENTO</th>
-              <th style={{ width: '30%' }}>NOMBRE MUNICIPIO</th>
-              <th style={{ width: '15%' }}>ESTADO</th>
-              <th className="text-center" style={{ width: '15%' }}>OPERACIÓN</th>
+              <th>ID MUNICIPIO</th>
+              <th>DEPARTAMENTO</th>
+              <th>NOMBRE MUNICIPIO</th>
+              <th>ESTADO</th>
+              <th className="text-center">OPERACIÓN</th>
             </tr>
           </thead>
           <tbody>
@@ -321,8 +321,7 @@ function Municipios() {
                   </td>
                   <td className="text-center">
                     <select
-                      className="form-select form-select-sm fw-bold bg-light border-secondary mx-auto"
-                      style={{ maxWidth: '130px' }}
+                      className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
                       defaultValue=""
                       onChange={(e) => {
                         const accion = e.target.value;
