@@ -8,3 +8,5 @@ node_modules/
 !cliente/.env.example
 server/.env
 cliente/.env
+.vercel
+.env*

@@ -1,5 +1,0 @@
-{
-  "installCommand": "cd cliente && npm install",
-  "buildCommand": "cd cliente && CI=false npm run build",
-  "outputDirectory": "cliente/build"
-}
