@@ -380,10 +380,11 @@ function App() {
           <div 
             className="flex-grow-1 p-1 p-md-2 app-main-content" 
             style={{ 
-              overflowY: 'auto', 
-              overflowX: 'auto',
-              maxHeight: '100vh',
-              width: '100%',
+              overflowY: isMobile ? 'auto' : 'visible', 
+              overflowX: isMobile ? 'auto' : 'hidden',
+              maxHeight: isMobile ? '100vh' : 'none',
+              width: 'auto',
+              flex: '1 1 0',
               minWidth: 0,
               backgroundColor: '#f8f9fa'
             }}

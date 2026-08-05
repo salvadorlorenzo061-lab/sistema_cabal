@@ -136,6 +136,17 @@
   padding-right: 0;
 }
 
+@media (min-width: 769px) {
+  .app-main-content {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .module-table-wrap {
+    overflow: visible !important;
+  }
+}
+
 /* CORRECCIÓN APLICADA PARA AJUSTAR AL 100% SIN SCROLL */
 .module-table-wrap .table {
   width: 100%;
@@ -213,6 +224,18 @@
 }
 
 @media (max-width: 768px) {
+  .app-main-content {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-height: 100vh !important;
+  }
+
+  .module-table-wrap {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .module-table-wrap .table {
     min-width: 100%;
   }
