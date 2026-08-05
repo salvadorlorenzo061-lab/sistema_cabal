@@ -10,8 +10,16 @@ function Municipios() {
   // =========================================================================
   // 🔐 CONTROL DE USUARIO ACTIVO
   // =========================================================================
-  const idUsuarioLogueado = 3; 
-  const nombreUsuarioLogueado = "Erick Hernandez";
+  const sesionActiva = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('sesion_cabal') || 'null');
+    } catch (_) {
+      return null;
+    }
+  })();
+
+  const idUsuarioLogueado = Number(sesionActiva?.id_usuario) || 0;
+  const nombreUsuarioLogueado = sesionActiva?.nombre || "SISTEMA";
 
   const [id_municipio, setId_municipio] = useState("");
   const [nombre_municipio, setNombre_municipio] = useState("");

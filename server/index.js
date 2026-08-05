@@ -33,6 +33,7 @@ app.use('/api/municipios', municipiosRouter);
 app.use('/api/comunidades', comunidadesRouter); 
 app.use('/api/departamentos', departamentosRouter);
 app.use('/api/afiliados', afiliadosRouter); 
+app.use('/api/cocodes', afiliadosRouter);
 app.use('/api/bitacora', bitacoraRouter); 
 app.use('/api/problemas', problemasRouter); 
 

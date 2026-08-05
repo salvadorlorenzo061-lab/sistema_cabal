@@ -10,8 +10,16 @@ function Problemas() {
   // =========================================================================
   // 🔐 CONTROL DE USUARIO ACTIVO (Vincular con tu gestor de estados globales o login)
   // =========================================================================
-  const idUsuarioLogueado = 3; 
-  const nombreUsuarioLogueado = "Erick Hernandez";
+  const sesionActiva = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('sesion_cabal') || 'null');
+    } catch (_) {
+      return null;
+    }
+  })();
+
+  const idUsuarioLogueado = Number(sesionActiva?.id_usuario) || 0;
+  const nombreUsuarioLogueado = sesionActiva?.nombre || "SISTEMA";
 
   // Estados de la entidad Problemas
   const [id_problema, setId_problema] = useState("");
@@ -21,6 +29,8 @@ function Problemas() {
   const [id_municipio, setId_municipio] = useState("");
   const [estado, setEstado] = useState("Pendiente"); 
   const [id_afiliado, setId_afiliado] = useState("");
+  const [foto, setFoto] = useState("");
+  const [mostrarCargaFoto, setMostrarCargaFoto] = useState(false);
   const [cocodesList, setCocodesList] = useState([]);
 
   // Listas para catálogos y grilla
@@ -54,7 +64,7 @@ function Problemas() {
     doc.setTextColor(90, 90, 90);
     doc.text("Gestión Compartida y Reportes Comunitarios", 14, 25);
     doc.text("Atención Ciudadana e Infraestructura Regional", 14, 30);
-    doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
+    doc.text(`Generado por: ${nombreUsuarioLogueado}`, 14, 35);
 
     // 🔒 BLOQUE DE CONTROL
     doc.setFillColor(245, 247, 250); 
@@ -88,9 +98,19 @@ function Problemas() {
     doc.text(`Ubicación:           ${val.barrio_colonia ? val.barrio_colonia.toUpperCase() : 'NO ESPECIFICADO'}, ${val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'N/A'}`, 14, 62);
     doc.text(`Estado Actual:       ${val.estado ? val.estado.toUpperCase() : ''}`, 14, 68); 
 
+    let startYTable = 74;
+    if (val.foto) {
+      try {
+        doc.addImage(val.foto, 'JPEG', 14, 74, 28, 28);
+        startYTable = 106;
+      } catch (e) {
+        console.error("No se pudo renderizar la foto del ticket en PDF", e);
+      }
+    }
+
     // 📊 TABLA 1: DATOS ESTRUCTURADOS
     autoTable(doc, {
-      startY: 74,
+      startY: startYTable,
       head: [['PARÁMETRO', 'DETALLE EN BASE DE DATOS']],
       body: [
         ['ID ÚNICO DEL PROBLEMA', `#${val.id_problema}`],
@@ -101,6 +121,7 @@ function Problemas() {
         ['FECHA DE REGISTRO', new Date(val.fecha_reporte).toLocaleString()],
         ['COCODE REPORTANTE', val.nombre_cocode ? `${val.nombre_cocode} (DPI: ${val.dpi_cocode || 'N/A'})` : (val.id_afiliado ? `ID #${val.id_afiliado}` : 'N/A')],
         ['ESTADO OPERATIVO', val.estado ? val.estado.toUpperCase() : 'N/A'],
+        ['EVIDENCIA FOTOGRÁFICA', val.foto ? 'ADJUNTA EN EL TICKET' : 'NO ADJUNTA'],
       ],
       theme: 'striped',
       headStyles: { fillColor: [231, 76, 60], fontSize: 9.5, halign: 'left' },
@@ -143,6 +164,7 @@ function Problemas() {
       id_municipio, 
       estado, 
       id_afiliado,
+      foto: foto || null,
       id_usuario_operador: idUsuarioLogueado,
       nombre_usuario_operador: nombreUsuarioLogueado
     })
@@ -182,6 +204,7 @@ function Problemas() {
       id_municipio, 
       estado, 
       id_afiliado,
+      foto: foto || null,
       id_usuario_operador: idUsuarioLogueado,
       nombre_usuario_operador: nombreUsuarioLogueado
     })
@@ -240,6 +263,23 @@ function Problemas() {
     setId_municipio("");
     setEstado("Pendiente"); 
     setId_afiliado("");
+    setFoto("");
+    setMostrarCargaFoto(false);
+  };
+
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire({ icon: 'error', title: 'Archivo muy pesado', text: 'La imagen no debe superar los 2MB.' });
+      e.target.value = null;
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => setFoto(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const getProblemas = () => {
@@ -286,6 +326,8 @@ function Problemas() {
     setId_municipio(val.id_municipio || "");
     setEstado(val.estado || "Pendiente");
     setId_afiliado(val.id_afiliado || "");
+    setFoto(val.foto || "");
+    setMostrarCargaFoto(Boolean(val.foto));
     setShowEditModal(true);
   };
 
@@ -491,6 +533,31 @@ function Problemas() {
                     <option value="Finalizado">Finalizado</option>
                   </select>
                 </div>
+
+                <div className="mb-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => setMostrarCargaFoto((prev) => !prev)}
+                  >
+                    {mostrarCargaFoto ? 'Ocultar carga de fotografía' : 'Subir fotografía (opcional)'}
+                  </button>
+                </div>
+
+                {mostrarCargaFoto && (
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Fotografía del Problema:</label>
+                    <input type="file" accept="image/*" className="form-control" onChange={handleFotoChange} />
+                    {foto && (
+                      <img
+                        src={foto}
+                        alt="Evidencia del problema"
+                        className="img-fluid mt-2 rounded border"
+                        style={{ maxHeight: '180px', objectFit: 'cover' }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowRegModal(false); limpiarCampos(); }}>Cancelar</button>
@@ -583,6 +650,31 @@ function Problemas() {
                     <option value="Finalizado">Finalizado</option>
                   </select>
                 </div>
+
+                <div className="mb-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => setMostrarCargaFoto((prev) => !prev)}
+                  >
+                    {mostrarCargaFoto ? 'Ocultar carga de fotografía' : 'Subir fotografía (opcional)'}
+                  </button>
+                </div>
+
+                {mostrarCargaFoto && (
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Fotografía del Problema:</label>
+                    <input type="file" accept="image/*" className="form-control" onChange={handleFotoChange} />
+                    {foto && (
+                      <img
+                        src={foto}
+                        alt="Evidencia del problema"
+                        className="img-fluid mt-2 rounded border"
+                        style={{ maxHeight: '180px', objectFit: 'cover' }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowEditModal(false); limpiarCampos(); }}>Cancelar</button>

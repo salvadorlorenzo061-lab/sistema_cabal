@@ -18,7 +18,7 @@ const registrarAccionBitacora = (id_usuario, usuario_afectado, tipo_movimiento, 
     });
 };
 
-// === 1. LISTAR AFILIADOS ===
+// === 1. LISTAR COCODES ===
 router.get("/", (req, res) => {
     const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
     const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
@@ -35,14 +35,14 @@ router.get("/", (req, res) => {
 
     db.query('SELECT COUNT(*) AS total FROM afiliados', (countErr, countResult) => {
         if (countErr) {
-            console.error("Error MySQL en count afiliados:", countErr);
-            return res.status(500).json({ message: "Error al obtener el listado de afiliados." });
+            console.error("Error MySQL en count cocodes:", countErr);
+            return res.status(500).json({ message: "Error al obtener el listado de cocodes." });
         }
 
         db.query(sqlQuery, [limite, offset], (err, result) => {
             if (err) {
                 console.error("Error MySQL en GET /:", err);
-                return res.status(500).json({ message: "Error al obtener el listado de afiliados." });
+                return res.status(500).json({ message: "Error al obtener el listado de cocodes." });
             } else {
                 return res.send({
                     data: result,
@@ -55,7 +55,7 @@ router.get("/", (req, res) => {
     });
 });
 
-// === 2. CREAR AFILIADO ===
+// === 2. CREAR COCODE ===
 router.post("/crear", (req, res) => {
     const { 
         dpi, lugar_votacion, nombre_completo, 
@@ -81,11 +81,11 @@ router.post("/crear", (req, res) => {
         if (rowsDpi.length > 0) {
             const registradoPor = rowsDpi[0].nombre_coordinador || "un usuario del sistema";
             return res.status(400).json({ 
-                message: `El afiliado con DPI '${dpi}' no se puede crear porque ya está registrado. Fue ingresado por el usuario/coordinador: ${registradoPor}.` 
+                message: `El cocode con DPI '${dpi}' no se puede crear porque ya está registrado. Fue ingresado por el usuario/coordinador: ${registradoPor}.` 
             });
         }
 
-        // Inserción del nuevo afiliado
+        // Inserción del nuevo cocode
         const sqlInsert = `
             INSERT INTO afiliados (dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -97,20 +97,20 @@ router.post("/crear", (req, res) => {
             (insertErr) => {
                 if (insertErr) {
                     console.error("Error MySQL en /crear:", insertErr);
-                    return res.status(500).json({ message: "Error interno al registrar el afiliado en la base de datos." });
+                    return res.status(500).json({ message: "Error interno al registrar el cocode en la base de datos." });
                 }
 
                 // 📝 GUARDAR EN BITÁCORA TRAS ÉXITO
                 const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] afilió exitosamente a: ${nombre_completo.toUpperCase()} con DPI: ${dpi}.`;
                 registrarAccionBitacora(operador_id, nombre_completo, "ALTA_AFILIADO", operador_nombre, detalles);
 
-                return res.status(200).send("Afiliado registrado con éxito");
+                return res.status(200).send("Cocode registrado con éxito");
             }
         );
     });
 });
 
-// === 3. ACTUALIZAR AFILIADO ===
+// === 3. ACTUALIZAR COCODE ===
 router.put("/actualizar", (req, res) => {
     const { 
         id_afiliado, dpi, lugar_votacion, nombre_completo, 
@@ -134,13 +134,13 @@ router.put("/actualizar", (req, res) => {
         if (rowsDpi.length > 0) {
             const registradoPor = rowsDpi[0].nombre_coordinador || "un usuario del sistema";
             return res.status(400).json({ 
-                message: `No se puede actualizar. El número de DPI '${dpi}' ya le pertenece a otro afiliado, el cual fue ingresado por: ${registradoPor}.` 
+                message: `No se puede actualizar. El número de DPI '${dpi}' ya le pertenece a otro cocode, el cual fue ingresado por: ${registradoPor}.` 
             });
         }
 
         // Respaldo de los datos anteriores para la auditoría de cambios
         db.query("SELECT nombre_completo, dpi FROM afiliados WHERE id_afiliado = ?", [id_afiliado], (errOld, rowsOld) => {
-            if (errOld || rowsOld.length === 0) return res.status(404).json({ message: "Afiliado no encontrado." });
+            if (errOld || rowsOld.length === 0) return res.status(404).json({ message: "Cocode no encontrado." });
             const viejo = rowsOld[0];
 
             const sqlUpdate = `
@@ -151,42 +151,42 @@ router.put("/actualizar", (req, res) => {
             db.query(sqlUpdate, [dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null, id_afiliado], (upErr) => {
                 if (upErr) {
                     console.error("Error al actualizar:", upErr);
-                    return res.status(500).json({ message: "Error interno al guardar los cambios del afiliado." });
+                    return res.status(500).json({ message: "Error interno al guardar los cambios del cocode." });
                 }
 
                 // 📝 GUARDAR EN BITÁCORA TRAS ÉXITO
-                const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] actualizó al afiliado ID #${id_afiliado}. Datos anteriores -> Nombre: '${viejo.nombre_completo}', DPI: '${viejo.dpi}'. Datos nuevos -> Nombre: '${nombre_completo}', DPI: '${dpi}'.`;
+                const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] actualizó al cocode ID #${id_afiliado}. Datos anteriores -> Nombre: '${viejo.nombre_completo}', DPI: '${viejo.dpi}'. Datos nuevos -> Nombre: '${nombre_completo}', DPI: '${dpi}'.`;
                 registrarAccionBitacora(operador_id, nombre_completo, "CAMBIO_AFILIADO", operador_nombre, detalles);
 
-                return res.status(200).send("Afiliado actualizado con éxito");
+                return res.status(200).send("Cocode actualizado con éxito");
             });
         });
     });
 });
 
-// === 4. ELIMINAR AFILIADO ===
+// === 4. ELIMINAR COCODE ===
 router.delete("/delete/:id_afiliado", (req, res) => {
     const { id_afiliado } = req.params;
     const { operador_id, operador_nombre, operador_rol } = req.query;
 
     db.query("SELECT nombre_completo, dpi FROM afiliados WHERE id_afiliado = ?", [id_afiliado], (err, rows) => {
         if (err || rows.length === 0) {
-            return res.status(404).json({ message: "El afiliado no existe en la base de datos." });
+            return res.status(404).json({ message: "El cocode no existe en la base de datos." });
         }
         const afiliadoNombre = rows[0].nombre_completo;
         const afiliadoDpi = rows[0].dpi;
 
         db.query("DELETE FROM afiliados WHERE id_afiliado = ?", [id_afiliado], (delErr) => {
             if (delErr) {
-                console.error("Error al eliminar afiliado:", delErr);
-                return res.status(500).json({ message: "No se pudo eliminar el afiliado, puede tener registros dependientes." });
+                console.error("Error al eliminar cocode:", delErr);
+                return res.status(500).json({ message: "No se pudo eliminar el cocode, puede tener registros dependientes." });
             }
 
             // 📝 GUARDAR EN BITÁCORA TRAS ÉXITO
-            const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] eliminó permanentemente del sistema al afiliado: ${afiliadoNombre.toUpperCase()} (DPI: ${afiliadoDpi}, ID: #${id_afiliado}).`;
+            const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] eliminó permanentemente del sistema al cocode: ${afiliadoNombre.toUpperCase()} (DPI: ${afiliadoDpi}, ID: #${id_afiliado}).`;
             registrarAccionBitacora(operador_id, afiliadoNombre, "BAJA_AFILIADO", operador_nombre, detalles);
 
-            return res.status(200).send("Afiliado removido con éxito");
+            return res.status(200).send("Cocode removido con éxito");
         });
     });
 });

@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Dashboard() {
-  const [afiliados, setAfiliados] = useState([]);
+  const [cocodes, setCocodes] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [problemas, setProblemas] = useState([]);
   const [comunidades, setComunidades] = useState([]);
@@ -20,7 +20,7 @@ function Dashboard() {
     const normalizeList = (payload) => (Array.isArray(payload) ? payload : (payload?.data || []));
 
     Promise.allSettled([
-      Axios.get(`${API_BASE}/afiliados`),
+      Axios.get(`${API_BASE}/afiliados`, { params: { pagina: 1, limite: 5000 } }),
       Axios.get(`${API_BASE}/usuarios`),
       Axios.get(`${API_BASE}/problemas`),
       Axios.get(`${API_BASE}/comunidades`),
@@ -28,9 +28,9 @@ function Dashboard() {
       Axios.get(`${API_BASE}/bitacora`)
     ])
       .then((results) => {
-        const [afiliadosRes, usuariosRes, problemasRes, comunidadesRes, municipiosRes, bitacoraRes] = results;
+        const [cocodesRes, usuariosRes, problemasRes, comunidadesRes, municipiosRes, bitacoraRes] = results;
 
-        setAfiliados(afiliadosRes.status === 'fulfilled' ? normalizeList(afiliadosRes.value.data) : []);
+        setCocodes(cocodesRes.status === 'fulfilled' ? normalizeList(cocodesRes.value.data) : []);
         setUsuarios(usuariosRes.status === 'fulfilled' ? normalizeList(usuariosRes.value.data) : []);
         setProblemas(problemasRes.status === 'fulfilled' ? normalizeList(problemasRes.value.data) : []);
         setComunidades(comunidadesRes.status === 'fulfilled' ? normalizeList(comunidadesRes.value.data) : []);
@@ -60,7 +60,7 @@ function Dashboard() {
   // =========================================================================
   // 📊 PROCESAMIENTO DE DATOS EN TIEMPO REAL (FRONTEND)
   // =========================================================================
-  const safeAfiliados = Array.isArray(afiliados) ? afiliados : [];
+  const safeCocodes = Array.isArray(cocodes) ? cocodes : [];
   const safeUsuarios = Array.isArray(usuarios) ? usuarios : [];
   const safeProblemas = Array.isArray(problemas) ? problemas : [];
   const safeComunidades = Array.isArray(comunidades) ? comunidades : [];
@@ -109,7 +109,7 @@ function Dashboard() {
     });
   };
 
-  const afiliadosPeriodo = filtrarPorPeriodo(safeAfiliados, ['fecha_afiliacion', 'created_at', 'fecha_creacion']);
+  const cocodesPeriodo = filtrarPorPeriodo(safeCocodes, ['fecha_afiliacion', 'created_at', 'fecha_creacion']);
   const usuariosPeriodo = filtrarPorPeriodo(safeUsuarios, ['fecha_creacion', 'created_at']);
   const problemasPeriodo = filtrarPorPeriodo(safeProblemas, ['fecha_reporte', 'fecha_creacion', 'created_at']);
   const bitacoraPeriodo = filtrarPorPeriodo(safeBitacora, ['fecha_movimiento', 'created_at']);
@@ -122,7 +122,7 @@ function Dashboard() {
   };
   
   // 1. Totalizadores rápidos
-  const totalCocodes = afiliadosPeriodo.length;
+  const totalCocodes = cocodesPeriodo.length;
   const totalUsuarios = usuariosPeriodo.length;
   const usuariosActivos = usuariosPeriodo.filter((u) => (u.estado || '').toLowerCase() === 'activo').length;
   const totalProblemas = problemasPeriodo.length;
@@ -130,15 +130,21 @@ function Dashboard() {
     const estado = (p.estado || '').toLowerCase();
     return estado === 'pendiente' || estado === 'activo';
   }).length;
+  const ticketsPendientes = problemasPeriodo.filter((p) => (p.estado || '').toLowerCase() === 'pendiente').length;
+  const ticketsActivos = problemasPeriodo.filter((p) => {
+    const estado = (p.estado || '').toLowerCase();
+    return estado === 'activo' || estado === 'trabajando' || estado === 'seguimiento';
+  }).length;
+  const ticketsFinalizados = problemasPeriodo.filter((p) => (p.estado || '').toLowerCase() === 'finalizado').length;
   const totalComunidades = safeComunidades.length;
   const totalMunicipiosCatalogo = safeMunicipios.length;
   const totalMovimientos = bitacoraPeriodo.length;
 
-  const conNombreCocode = afiliadosPeriodo.filter(a => a.lugar_votacion && String(a.lugar_votacion).trim() !== '').length;
+  const conNombreCocode = cocodesPeriodo.filter(a => a.lugar_votacion && String(a.lugar_votacion).trim() !== '').length;
   
   // 2. Agrupación por Municipio para Gráfico de Barras
   const municipiosMap = {};
-  afiliadosPeriodo.forEach(a => {
+  cocodesPeriodo.forEach(a => {
     const muni = a.nombre_municipio || "No Especificado";
     municipiosMap[muni] = (municipiosMap[muni] || 0) + 1;
   });
@@ -149,7 +155,7 @@ function Dashboard() {
 
   // 3. Agrupación por Fecha (Mes/Año) para Gráfico de Línea temporal
   const fechasMap = {};
-  afiliadosPeriodo.forEach(a => {
+  cocodesPeriodo.forEach(a => {
     if (a.fecha_afiliacion) {
       const fecha = new Date(a.fecha_afiliacion);
       // Formato: "Año-Mes" (Ej: 2026-06)
@@ -227,6 +233,38 @@ function Dashboard() {
               <h6>INCIDENCIAS ABIERTAS</h6>
               <h2>{problemasActivos}</h2>
               <small>{totalProblemas} problemas registrados</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-md-4">
+          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-warning">
+            <div className="card-body">
+              <h6>TICKETS PENDIENTES</h6>
+              <h2>{ticketsPendientes}</h2>
+              <small>Esperando asignación/arranque</small>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-4">
+          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-primary">
+            <div className="card-body">
+              <h6>TICKETS ACTIVOS</h6>
+              <h2>{ticketsActivos}</h2>
+              <small>Activo, trabajando y seguimiento</small>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-4">
+          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-success">
+            <div className="card-body">
+              <h6>TICKETS FINALIZADOS</h6>
+              <h2>{ticketsFinalizados}</h2>
+              <small>Incidencias cerradas</small>
             </div>
           </div>
         </div>

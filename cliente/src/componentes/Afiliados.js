@@ -11,10 +11,18 @@ function Afiliados() {
   // =========================================================================
   // 🔐 CONTROL DE SESIÓN (Enlazado dinámicamente)
   // =========================================================================
+  const sesionActiva = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('sesion_cabal') || 'null');
+    } catch (_) {
+      return null;
+    }
+  })();
+
   const usuarioLogueado = {
-    id_usuario: 3, 
-    nombre: "Erick Hernandez", 
-    rol: "Coordinador Regional"
+    id_usuario: Number(sesionActiva?.id_usuario) || 0,
+    nombre: sesionActiva?.nombre || "SISTEMA",
+    rol: sesionActiva?.rol || "Operador"
   };
 
   const fechaHoy = new Date().toISOString().split('T')[0];
