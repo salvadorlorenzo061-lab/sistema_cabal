@@ -368,6 +368,28 @@
   color: #64748b;
 }
 
+.dashboard-period-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-period-filter .btn {
+  min-width: 78px;
+  font-weight: 700;
+}
+
+.dashboard-period-badge {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .dashboard-kpi {
   border-radius: 12px;
 }

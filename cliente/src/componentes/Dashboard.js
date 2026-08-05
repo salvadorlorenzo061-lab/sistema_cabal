@@ -10,6 +10,7 @@ function Dashboard() {
   const [comunidades, setComunidades] = useState([]);
   const [municipios, setMunicipios] = useState([]);
   const [bitacora, setBitacora] = useState([]);
+  const [periodo, setPeriodo] = useState('todo');
   const [loading, setLoading] = useState(true);
   const [chartsReady, setChartsReady] = useState(false);
 
@@ -65,25 +66,79 @@ function Dashboard() {
   const safeComunidades = Array.isArray(comunidades) ? comunidades : [];
   const safeMunicipios = Array.isArray(municipios) ? municipios : [];
   const safeBitacora = Array.isArray(bitacora) ? bitacora : [];
+
+  const inicioDelDia = (fecha) => new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+  const hoy = new Date();
+  const hoyInicio = inicioDelDia(hoy);
+  const hoyFin = new Date(hoyInicio);
+  hoyFin.setDate(hoyFin.getDate() + 1);
+
+  const inicioSemana = new Date(hoyInicio);
+  inicioSemana.setDate(hoyInicio.getDate() - hoyInicio.getDay());
+  const finSemana = new Date(inicioSemana);
+  finSemana.setDate(inicioSemana.getDate() + 7);
+
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+
+  const parseFecha = (valor) => {
+    if (!valor) return null;
+    const date = new Date(valor);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const obtenerFecha = (row, keys) => {
+    for (const key of keys) {
+      const date = parseFecha(row?.[key]);
+      if (date) return date;
+    }
+    return null;
+  };
+
+  const filtrarPorPeriodo = (lista, keys) => {
+    if (periodo === 'todo') return lista;
+
+    return lista.filter((row) => {
+      const fecha = obtenerFecha(row, keys);
+      if (!fecha) return false;
+
+      if (periodo === 'hoy') return fecha >= hoyInicio && fecha < hoyFin;
+      if (periodo === 'semana') return fecha >= inicioSemana && fecha < finSemana;
+      if (periodo === 'mes') return fecha >= inicioMes && fecha < finMes;
+      return true;
+    });
+  };
+
+  const afiliadosPeriodo = filtrarPorPeriodo(safeAfiliados, ['fecha_afiliacion', 'created_at', 'fecha_creacion']);
+  const usuariosPeriodo = filtrarPorPeriodo(safeUsuarios, ['fecha_creacion', 'created_at']);
+  const problemasPeriodo = filtrarPorPeriodo(safeProblemas, ['fecha_reporte', 'fecha_creacion', 'created_at']);
+  const bitacoraPeriodo = filtrarPorPeriodo(safeBitacora, ['fecha_movimiento', 'created_at']);
+
+  const etiquetaPeriodo = {
+    todo: 'Todo el historial',
+    hoy: 'Hoy',
+    semana: 'Semana actual',
+    mes: 'Mes actual'
+  };
   
   // 1. Totalizadores rápidos
-  const totalCocodes = safeAfiliados.length;
-  const totalUsuarios = safeUsuarios.length;
-  const usuariosActivos = safeUsuarios.filter((u) => (u.estado || '').toLowerCase() === 'activo').length;
-  const totalProblemas = safeProblemas.length;
-  const problemasActivos = safeProblemas.filter((p) => {
+  const totalCocodes = afiliadosPeriodo.length;
+  const totalUsuarios = usuariosPeriodo.length;
+  const usuariosActivos = usuariosPeriodo.filter((u) => (u.estado || '').toLowerCase() === 'activo').length;
+  const totalProblemas = problemasPeriodo.length;
+  const problemasActivos = problemasPeriodo.filter((p) => {
     const estado = (p.estado || '').toLowerCase();
     return estado === 'pendiente' || estado === 'activo';
   }).length;
   const totalComunidades = safeComunidades.length;
   const totalMunicipiosCatalogo = safeMunicipios.length;
-  const totalMovimientos = safeBitacora.length;
+  const totalMovimientos = bitacoraPeriodo.length;
 
-  const conNombreCocode = safeAfiliados.filter(a => a.lugar_votacion && String(a.lugar_votacion).trim() !== '').length;
+  const conNombreCocode = afiliadosPeriodo.filter(a => a.lugar_votacion && String(a.lugar_votacion).trim() !== '').length;
   
   // 2. Agrupación por Municipio para Gráfico de Barras
   const municipiosMap = {};
-  safeAfiliados.forEach(a => {
+  afiliadosPeriodo.forEach(a => {
     const muni = a.nombre_municipio || "No Especificado";
     municipiosMap[muni] = (municipiosMap[muni] || 0) + 1;
   });
@@ -94,7 +149,7 @@ function Dashboard() {
 
   // 3. Agrupación por Fecha (Mes/Año) para Gráfico de Línea temporal
   const fechasMap = {};
-  safeAfiliados.forEach(a => {
+  afiliadosPeriodo.forEach(a => {
     if (a.fecha_afiliacion) {
       const fecha = new Date(a.fecha_afiliacion);
       // Formato: "Año-Mes" (Ej: 2026-06)
@@ -109,7 +164,7 @@ function Dashboard() {
 
   // 4. Resumen por estado de problemas
   const problemasEstadoMap = {};
-  safeProblemas.forEach((p) => {
+  problemasPeriodo.forEach((p) => {
     const estado = (p.estado || 'Sin estado').toString().toUpperCase();
     problemasEstadoMap[estado] = (problemasEstadoMap[estado] || 0) + 1;
   });
@@ -118,13 +173,21 @@ function Dashboard() {
     Cantidad: problemasEstadoMap[estado]
   }));
 
-  const ultimosMovimientos = [...safeBitacora].slice(0, 5);
+  const ultimosMovimientos = [...bitacoraPeriodo].slice(0, 5);
 
   return (
     <div className="container-fluid mt-3 px-2 px-md-3 dashboard-shell">
       <div className="dashboard-header mb-3 mb-md-4">
         <h3 className="m-0 fw-bold">PANEL EJECUTIVO DEL SISTEMA</h3>
         <small>Visión consolidada de cocodes, incidencias, cobertura territorial y actividad operativa.</small>
+
+        <div className="dashboard-period-filter mt-3">
+          <button type="button" className={`btn btn-sm ${periodo === 'hoy' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('hoy')}>Hoy</button>
+          <button type="button" className={`btn btn-sm ${periodo === 'semana' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('semana')}>Semana</button>
+          <button type="button" className={`btn btn-sm ${periodo === 'mes' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('mes')}>Mes</button>
+          <button type="button" className={`btn btn-sm ${periodo === 'todo' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('todo')}>Todo</button>
+          <span className="dashboard-period-badge">Corte: {etiquetaPeriodo[periodo]}</span>
+        </div>
       </div>
 
       <div className="row g-3 mb-4">
