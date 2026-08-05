@@ -14,6 +14,20 @@ router.get("/municipios", (req, res) => {
     });
 });
 
+// === OBTENER CATÁLOGO DE COCODES (AUXILIAR PARA TICKETS) ===
+router.get("/cocodes", (req, res) => {
+    db.query(
+        "SELECT id_afiliado, dpi, nombre_completo FROM afiliados ORDER BY nombre_completo ASC",
+        (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send("Error al obtener el catálogo de cocodes");
+            }
+            return res.send(result);
+        }
+    );
+});
+
 // === CREAR INCIDENCIAS / PROBLEMAS (CON BITÁCORA) ===
 router.post("/crear", (req, res) => {
     const { titulo, descripcion, barrio_colonia, id_municipio, estado, id_afiliado, id_usuario_operador, nombre_usuario_operador } = req.body;
@@ -32,7 +46,7 @@ router.post("/crear", (req, res) => {
             db.query('SELECT nombre_municipio FROM municipios WHERE id_municipio = ?', [id_municipio], (errMuni, resMuni) => {
                 const muniNombre = resMuni && resMuni.length > 0 ? resMuni[0].nombre_municipio : `ID: ${id_municipio}`;
                 const nuevoId = insertResult.insertId;
-                const detalles = `Se reportó la incidencia '${titulo.toUpperCase()}' en el barrio/colonia '${barrio_colonia.toUpperCase()}', ${muniNombre.toUpperCase()}. Registrado con estado inicial '${estado.toUpperCase()}' por afiliado ID #${id_afiliado} (ID Registro: #${nuevoId}).`;
+                const detalles = `Se reportó la incidencia '${titulo.toUpperCase()}' en el barrio/colonia '${barrio_colonia.toUpperCase()}', ${muniNombre.toUpperCase()}. Registrado con estado inicial '${estado.toUpperCase()}' por COCODE ID #${id_afiliado} (Ticket: TCK-${new Date().getFullYear()}-${String(nuevoId).padStart(6, '0')}).`;
 
                 const sqlBitacora = `
                     INSERT INTO bitacora (id_usuario, tipo_movimiento, ejecutado_por, detalles) 
@@ -55,9 +69,22 @@ router.get("/", (req, res) => {
     const offset = (pagina - 1) * limite;
 
     const sqlQuery = `
-        SELECT p.id_problema, p.titulo, p.descripcion, p.barrio_colonia, p.id_municipio, p.estado, p.fecha_reporte, p.id_afiliado, m.nombre_municipio
+        SELECT
+            p.id_problema,
+            CONCAT('TCK-', DATE_FORMAT(p.fecha_reporte, '%Y'), '-', LPAD(p.id_problema, 6, '0')) AS ticket_codigo,
+            p.titulo,
+            p.descripcion,
+            p.barrio_colonia,
+            p.id_municipio,
+            p.estado,
+            p.fecha_reporte,
+            p.id_afiliado,
+            m.nombre_municipio,
+            a.nombre_completo AS nombre_cocode,
+            a.dpi AS dpi_cocode
         FROM problemas p
         INNER JOIN municipios m ON p.id_municipio = m.id_municipio
+        LEFT JOIN afiliados a ON p.id_afiliado = a.id_afiliado
         ORDER BY p.fecha_reporte DESC
         LIMIT ? OFFSET ?
     `;
@@ -115,7 +142,7 @@ router.put("/actualizar", (req, res) => {
                 if (registroViejo.estado !== estado) cambios.push(`Estado: '${registroViejo.estado}' -> '${estado.toUpperCase()}'`);
                 if (registroViejo.barrio_colonia !== barrio_colonia) cambios.push(`Barrio/Colonia: '${registroViejo.barrio_colonia}' -> '${barrio_colonia.toUpperCase()}'`);
                 if (registroViejo.id_municipio !== parseInt(id_municipio)) cambios.push(`Muni ID: '${registroViejo.id_municipio}' -> '${id_municipio}'`);
-                if (registroViejo.id_afiliado !== parseInt(id_afiliado)) cambios.push(`Afiliado ID: '${registroViejo.id_afiliado}' -> '${id_afiliado}'`);
+                if (registroViejo.id_afiliado !== parseInt(id_afiliado)) cambios.push(`COCODE ID: '${registroViejo.id_afiliado}' -> '${id_afiliado}'`);
 
                 const detallesString = cambios.length > 0 
                     ? `Modificado por ${nombre_usuario_operador}. Cambios en problema ID #${id_problema}: ${cambios.join(', ')}`

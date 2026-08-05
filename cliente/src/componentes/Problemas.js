@@ -21,6 +21,7 @@ function Problemas() {
   const [id_municipio, setId_municipio] = useState("");
   const [estado, setEstado] = useState("Pendiente"); 
   const [id_afiliado, setId_afiliado] = useState("");
+  const [cocodesList, setCocodesList] = useState([]);
 
   // Listas para catálogos y grilla
   const [problemasList, setProblemasList] = useState([]);
@@ -34,6 +35,7 @@ function Problemas() {
   const [showEditModal, setShowEditModal] = useState(false); 
 
   const API_URL = "https://sistema-cabal.onrender.com/api/problemas";
+  const API_BASE_URL = API_URL.replace(/\/problemas$/, "");
 
   // =========================================================================
   // 📄 REPORTE PROFESIONAL: FICHA TÉCNICA DEL PROBLEMA REPORTADO
@@ -61,11 +63,11 @@ function Problemas() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(231, 76, 60);  // Color rojo/alerta institucional para problemas
-    doc.text("REPORTE DE INCIDENCIA", 133, 18);
+    doc.text("TICKET DE INCIDENCIA", 133, 18);
     
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0); 
-    doc.text(`ID REPORTADO: #${val.id_problema}`, 133, 24); 
+    doc.text(`${val.ticket_codigo || `TCK-${new Date(val.fecha_reporte).getFullYear()}-${String(val.id_problema).padStart(6, '0')}`}`, 133, 24); 
     
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
@@ -97,7 +99,7 @@ function Problemas() {
         ['BARRIO / COLONIA', val.barrio_colonia ? val.barrio_colonia.toUpperCase() : 'N/A'],
         ['MUNICIPIO AFECTADO', val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'N/A'],
         ['FECHA DE REGISTRO', new Date(val.fecha_reporte).toLocaleString()],
-        ['ID AFILIADO REPORTANTE', val.id_afiliado ? `#${val.id_afiliado}` : 'N/A'],
+        ['COCODE REPORTANTE', val.nombre_cocode ? `${val.nombre_cocode} (DPI: ${val.dpi_cocode || 'N/A'})` : (val.id_afiliado ? `ID #${val.id_afiliado}` : 'N/A')],
         ['ESTADO OPERATIVO', val.estado ? val.estado.toUpperCase() : 'N/A'],
       ],
       theme: 'striped',
@@ -261,9 +263,19 @@ function Problemas() {
     .catch((error) => { console.error("Error al obtener municipios", error); });
   };
 
+  const getCocodes = () => {
+    Axios.get(`${API_BASE_URL}/afiliados`, { params: { pagina: 1, limite: 500 } })
+    .then((response) => {
+      const payload = response.data;
+      setCocodesList(Array.isArray(payload) ? payload : (payload.data || []));
+    })
+    .catch((error) => { console.error("Error al obtener cocodes", error); });
+  };
+
   useEffect(() => { 
     getProblemas(); 
     getMunicipios();
+    getCocodes();
   }, [pagina]);
 
   const abrirEditarModal = (val) => {
@@ -327,10 +339,10 @@ function Problemas() {
         <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
-              <th>ID</th>
+              <th>TICKET</th>
               <th>TÍTULO / ASUNTO</th>
               <th>UBICACIÓN (BARRIO Y MUNI)</th>
-              <th>AFILIADO</th>
+              <th>COCODE</th>
               <th>ESTADO</th>
               <th className="text-center">OPERACIÓN</th>
             </tr>
@@ -339,7 +351,7 @@ function Problemas() {
             {problemasFiltrados.length > 0 ? (
               problemasFiltrados.map((val) => (
                 <tr key={val.id_problema}>
-                  <th className="table-light">{val.id_problema}</th>
+                  <th className="table-light">{val.ticket_codigo || `TCK-${new Date(val.fecha_reporte).getFullYear()}-${String(val.id_problema).padStart(6, '0')}`}</th>
                   <td>
                     <div className="fw-bold">{val.titulo}</div>
                     <small className="text-muted text-truncate d-inline-block" style={{maxWidth: "250px"}}>{val.descripcion}</small>
@@ -347,9 +359,17 @@ function Problemas() {
                   <td>
                     <strong>{val.barrio_colonia}</strong>, <span className="badge bg-secondary">{val.nombre_municipio || "No asignado"}</span>
                   </td>
-                  <td>#{val.id_afiliado}</td>
                   <td>
-                    <span className={`badge bg-${val.estado?.toLowerCase() === 'resuelto' ? 'success' : val.estado?.toLowerCase() === 'en proceso' ? 'warning text-dark' : 'danger'}`}>
+                    <div className="fw-bold">{val.nombre_cocode || `COCODE #${val.id_afiliado}`}</div>
+                    <small className="text-muted">DPI: {val.dpi_cocode || 'No disponible'}</small>
+                  </td>
+                  <td>
+                    <span className={`badge bg-${
+                      val.estado?.toLowerCase() === 'finalizado' ? 'success' :
+                      val.estado?.toLowerCase() === 'trabajando' ? 'warning text-dark' :
+                      val.estado?.toLowerCase() === 'seguimiento' ? 'info text-dark' :
+                      val.estado?.toLowerCase() === 'activo' ? 'primary' : 'secondary'
+                    }`}>
                       {val.estado ? val.estado.toUpperCase() : 'N/A'}
                     </span>
                   </td>
@@ -405,10 +425,40 @@ function Problemas() {
                     <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="form-control" placeholder="Ej: Fuga de Agua Potable" />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">ID Afiliado Afectado:</label>
-                    <input type="number" value={id_afiliado} onChange={(e) => setId_afiliado(e.target.value)} className="form-control" placeholder="Ej: 45" />
+                    <label className="form-label fw-bold">Cocode Afectado:</label>
+                    <select value={id_afiliado} onChange={(e) => setId_afiliado(e.target.value)} className="form-select">
+                      <option value="" disabled>-- Seleccione Cocode (DPI - Nombre) --</option>
+                      {cocodesList.map((coc) => (
+                        <option key={coc.id_afiliado} value={coc.id_afiliado}>
+                          {coc.dpi} - {coc.nombre_completo}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
+
+                {id_afiliado && (
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold">DPI del Cocode:</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={cocodesList.find((c) => String(c.id_afiliado) === String(id_afiliado))?.dpi || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold">Nombre del Cocode:</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={cocodesList.find((c) => String(c.id_afiliado) === String(id_afiliado))?.nombre_completo || ""}
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-3">
                   <label className="form-label fw-bold">Descripción del Problema:</label>
@@ -432,11 +482,13 @@ function Problemas() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Estado Inicial del Reporte:</label>
+                  <label className="form-label fw-bold">Estado Inicial del Ticket:</label>
                   <select value={estado} onChange={(e) => setEstado(e.target.value)} className="form-select">
                     <option value="Pendiente">Pendiente</option>
-                    <option value="En Proceso">En Proceso</option>
-                    <option value="Resuelto">Resuelto</option>
+                    <option value="Activo">Activo</option>
+                    <option value="Trabajando">Trabajando</option>
+                    <option value="Seguimiento">Seguimiento</option>
+                    <option value="Finalizado">Finalizado</option>
                   </select>
                 </div>
               </div>
@@ -465,10 +517,40 @@ function Problemas() {
                     <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="form-control" />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">ID Afiliado:</label>
-                    <input type="number" value={id_afiliado} onChange={(e) => setId_afiliado(e.target.value)} className="form-control" />
+                    <label className="form-label fw-bold">Cocode Afectado:</label>
+                    <select value={id_afiliado} onChange={(e) => setId_afiliado(e.target.value)} className="form-select">
+                      <option value="" disabled>-- Seleccione Cocode (DPI - Nombre) --</option>
+                      {cocodesList.map((coc) => (
+                        <option key={coc.id_afiliado} value={coc.id_afiliado}>
+                          {coc.dpi} - {coc.nombre_completo}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
+
+                {id_afiliado && (
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold">DPI del Cocode:</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={cocodesList.find((c) => String(c.id_afiliado) === String(id_afiliado))?.dpi || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-bold">Nombre del Cocode:</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={cocodesList.find((c) => String(c.id_afiliado) === String(id_afiliado))?.nombre_completo || ""}
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-3">
                   <label className="form-label fw-bold">Descripción del Problema:</label>
@@ -492,11 +574,13 @@ function Problemas() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Estado del Reporte:</label>
+                  <label className="form-label fw-bold">Estado del Ticket:</label>
                   <select value={estado} onChange={(e) => setEstado(e.target.value)} className="form-select">
                     <option value="Pendiente">Pendiente</option>
-                    <option value="En Proceso">En Proceso</option>
-                    <option value="Resuelto">Resuelto</option>
+                    <option value="Activo">Activo</option>
+                    <option value="Trabajando">Trabajando</option>
+                    <option value="Seguimiento">Seguimiento</option>
+                    <option value="Finalizado">Finalizado</option>
                   </select>
                 </div>
               </div>
