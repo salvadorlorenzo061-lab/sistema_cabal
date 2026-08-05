@@ -14,7 +14,7 @@ import Bitacora from './componentes/Bitacora';
 import Problemas from './componentes/Problemas'; 
 
 // Imagen corporativa
-import logoCabal from './img/1.png'; 
+import logoCabal from './img/4.jpeg'; 
 
 // =========================================================================
 // 🛡️ COMPONENTE CONTROLADOR DE RUTAS POR ROL
@@ -39,6 +39,9 @@ const RutaProtegida = ({ user, rolesPermitidos, children }) => {
 function App() {
   // Por defecto iniciamos con menú cerrado en móviles para mejorar la UX inicial
   const [isMenuOpen, setIsMenuOpen] = useState(window.innerWidth > 768);
+  const isMobile = window.innerWidth <= 768;
+  const sidebarMobileWidth = window.innerWidth <= 360 ? '200px' : window.innerWidth <= 430 ? '220px' : '240px';
+  const sidebarDesktopExpandedWidth = window.innerWidth <= 1366 ? '220px' : '240px';
 
   // Estados de autenticación
   const [user, setUser] = useState(null);
@@ -118,7 +121,7 @@ function App() {
       handleLogout();
       Swal.fire({
         title: 'Sesión Expirada',
-        text: `Tu sesión como ${user.rol.toUpperCase()} se ha cerrado automáticamente por inactividad para proteger los datos de control central.`,
+        text: `SE HA CERRADO AUTOMATICAMENTE SESION.`,
         icon: 'warning',
         confirmButtonColor: '#1e3a8a',
         confirmButtonText: 'Entrar de nuevo'
@@ -176,6 +179,7 @@ function App() {
   };
 
   const miRol = user?.rol ? user.rol.trim().toLowerCase() : '';
+  const sidebarModuleClass = 'nav-link btn btn-outline-light border-0 fw-bold text-start text-white d-flex align-items-center rounded sidebar-module-link';
 
   // 🚪 PANTALLA DE LOGIN RESPONSIVA
   if (!user) {
@@ -183,9 +187,10 @@ function App() {
       <div className="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center p-3">
         <div className="card shadow p-4 border-0 w-100" style={{ maxWidth: '400px', borderRadius: '15px' }}>
           <div className="text-center mb-4">
-            <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded-circle shadow-sm mb-3" style={{ maxWidth: '95px' }} />
-            <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>PARTIDO CABAL</h4>
-            <small className="text-muted tracking-wider fw-bold d-block mt-1" style={{ fontSize: '0.75rem' }}>IZABAL - CONTROL CENTRAL</small>
+
+            <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded shadow-sm mb-3" style={{ height: '90px', width: 'auto' }} />
+            <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>SISTEMA DE OBRAS MUNICIPALES JALAPA </h4>
+            <small className="text-muted tracking-wider fw-bold d-block mt-1" style={{ fontSize: '0.75rem' }}>JALAPA ADMINISTRACION 2024-2028</small>
           </div>
 
           {errorLogin && <div className="alert alert-danger py-2 text-center animate__animated animate__fadeIn" style={{ fontSize: '0.85rem' }}>⚠️ {errorLogin}</div>}
@@ -196,7 +201,7 @@ function App() {
               <input 
                 type="email" 
                 className="form-control text-lowercase" 
-                placeholder="ejemplo@cabal.com" 
+                placeholder="ejemplo@gmail.com" 
                 value={correo} 
                 onChange={(e) => setCorreo(e.target.value)} 
                 autoComplete="off" 
@@ -225,24 +230,28 @@ function App() {
   // 🏛️ INTERFAZ PRINCIPAL COMPLEMENTADA CON ESTRUCTURA MÓVIL (NAVBAR + SIDEBAR FLOTANTE)
   return (
     <Router>
-      <div className="container-fluid p-0 overflow-hidden" style={{ minHeight: '100vh' }}>
+      <div className="container-fluid p-0" style={{ minHeight: '100vh' }}>
         
         {/* 📱 NAVBAR SUPERIOR (SOLO EN PANTALLAS MÓVILES <= 768px) */}
         <div className="d-flex d-md-none bg-primary text-white justify-content-between align-items-center p-3 shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
-          <div className="d-flex align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2 flex-grow-1">
             <img src={logoCabal} alt="Logo" className="bg-white p-1 rounded" style={{ maxWidth: '35px' }} />
-            <span className="fw-bold tracking-wider" style={{ fontSize: '0.9rem' }}>CABAL IZABAL</span>
+            <span className="fw-bold tracking-wider" style={{ fontSize: '0.9rem' }}> JALAPA</span>
+            <button
+              className="btn btn-outline-light px-3 py-2 fw-bold rounded-pill shadow-sm text-nowrap ms-auto"
+              onClick={toggleMenu}
+              style={{ minWidth: '155px', fontSize: '0.9rem' }}
+            >
+              {isMenuOpen ? '✕ Ocultar menú' : '☰ Mostrar menú'}
+            </button>
           </div>
-          <button className="btn btn-outline-light px-3 py-1" onClick={toggleMenu}>
-            {isMenuOpen ? '✕ Cerrar' : '☰ Menú'}
-          </button>
         </div>
 
         <div className="row g-0 flex-nowrap" style={{ minHeight: '100vh' }}>
           
           {/* 🏢 BARRA LATERAL HÍBRIDA (Móviles: Flotante con Z-Index / Escritorio: Columna Estándar) */}
           <div 
-            className={`shadow p-3 d-flex flex-column transition-all`}
+            className={`shadow p-1 d-flex flex-column transition-all`}
             style={{ 
               backgroundColor: '#1e3a8a', 
               color: '#ffffff',
@@ -253,31 +262,44 @@ function App() {
               left: window.innerWidth <= 768 && !isMenuOpen ? '-100%' : '0',
               top: 0,
               height: '100vh',
-              width: window.innerWidth <= 768 ? '280px' : (isMenuOpen ? '260px' : '70px'),
-              minWidth: window.innerWidth <= 768 ? '280px' : (isMenuOpen ? '260px' : '70px'),
+              width: isMobile ? sidebarMobileWidth : (isMenuOpen ? sidebarDesktopExpandedWidth : '70px'),
+              minWidth: isMobile ? sidebarMobileWidth : (isMenuOpen ? sidebarDesktopExpandedWidth : '70px'),
+              flexShrink: 0,
             }}
           >
-            {/* Cabecera del Menú (Oculta en versión icono de escritorio) */}
-            <div className="text-center mb-4 mt-2">
-              <img 
-                src={logoCabal} 
-                alt="Logo Partido Cabal" 
-                className="img-fluid rounded bg-white p-1 shadow-sm" 
-                style={{ 
-                  maxWidth: (isMenuOpen || window.innerWidth <= 768) ? '100px' : '40px', 
-                  transition: 'max-width 0.3s' 
-                }} 
-              />
-              {(isMenuOpen || window.innerWidth <= 768) && (
-                <div className="mt-2 animate__animated animate__fadeIn">
-                  <span className="fw-bold tracking-wider text-white d-block" style={{ fontSize: '0.85rem' }}>PARTIDO CABAL</span>
-                  <small className="text-white-50" style={{ fontSize: '0.7rem' }}>IZABAL</small>
-                </div>
-              )}
+            {/* Cabecera del Menú */}
+            <div className="d-flex align-items-start justify-content-between gap-2 mb-3 mt-1 px-0 flex-nowrap">
+              <div className="text-center flex-grow-1">
+                <img 
+                  src={logoCabal} 
+                  alt="Logo Partido Cabal" 
+                  className="img-fluid rounded bg-white p-1 shadow-sm" 
+                  style={{ 
+                    maxWidth: isMobile ? '80px' : (isMenuOpen ? '100px' : '40px'), 
+                    transition: 'max-width 0.3s' 
+                  }} 
+                />
+                {(isMenuOpen || isMobile) && (
+                  <div className="mt-2 animate__animated animate__fadeIn">
+                    <span className="fw-bold tracking-wider text-white d-block" style={{ fontSize: '0.85rem' }}>SIOM</span>
+                    <small className="text-white-50" style={{ fontSize: '0.7rem' }}>SISTEMA DE OBRAS MUNICIAPLES</small>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="btn btn-danger border-0 fw-bold shadow-sm ms-auto d-flex align-items-center justify-content-center"
+                style={{ width: isMobile ? '40px' : (isMenuOpen ? 'auto' : '44px'), minWidth: '40px', height: '40px', padding: isMobile ? '0' : (isMenuOpen ? '0.45rem 0.75rem' : '0') }}
+                title="Cerrar sesión"
+              >
+                <span>🚪</span>
+                {!isMobile && isMenuOpen && <span className="ms-2">Cerrar</span>}
+              </button>
             </div>
 
             {/* Caja de Datos de Sesión Activa */}
-            {(isMenuOpen || window.innerWidth <= 768) && (
+            {(isMenuOpen || isMobile) && (
               <div className="text-center rounded p-2 mb-3 shadow-sm border border-white-10" style={{ backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.8rem' }}>
                 <span className="d-block text-white-50">Usuario Activo:</span>
                 <strong className="text-white d-block text-truncate">{user.nombre.toUpperCase()}</strong>
@@ -286,67 +308,64 @@ function App() {
             )}
 
             {/* Botón de contracción visible únicamente en Pantalla de Escritorio (Tablet/PC) */}
-            <button className="btn btn-light text-primary fw-bold mb-4 w-100 shadow-sm d-none d-md-block" onClick={toggleMenu}>
+            <button className="btn btn-light text-primary fw-bold mb-3 w-100 shadow-sm d-none d-md-block" onClick={toggleMenu}>
               {isMenuOpen ? '◀ Contraer' : '▶'}
             </button>
 
-            {(isMenuOpen || window.innerWidth <= 768) && <h5 className="fw-bold mb-2 text-white-50 px-2" style={{ fontSize: '0.8rem' }}>⚙️ MÓDULOS</h5>}
+            {(isMenuOpen || window.innerWidth <= 768) && <h5 className="fw-bold mb-1 text-white-50 px-0" style={{ fontSize: '0.8rem' }}>⚙️ MÓDULOS</h5>}
 
             {/* Navegación y Enlaces */}
-            <nav className="nav flex-column w-100 gap-1 flex-grow-1 overflow-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+            <nav className="nav flex-column w-100 gap-0 flex-grow-1 overflow-auto sidebar-menu-scroll" style={{ maxHeight: 'calc(100vh - 300px)', minHeight: 0 }}>
               
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/home" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>📊</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Dashboard</span>}
+                <Link to="/home" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">📊</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">DASHBOARD</span>}
                 </Link>
               )}
 
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/usuarios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>👥</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Usuarios</span>}
+                <Link to="/usuarios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">👥</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">USUARIOS</span>}
                 </Link>
               )}
 
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/bitacora" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>🛡️</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Bitácora</span>}
+                <Link to="/bitacora" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">🛡️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">BITACORA</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal'].includes(miRol) && (
                 <>
-                  <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                    <span>📑</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Municipios</span>}
+                  <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                    <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">MUNICIPIOS</span>}
                   </Link>
 
-                  <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                    <span>📍</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Aldeas / Caseríos</span>}
+                  <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                    <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ALDEAS / CASERIOS</span>}
                   </Link>
                 </>
               )}
               
               {['coordinador regional'].includes(miRol) && (
-                <Link to="/departamentos" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>🏕</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Departamentos</span>}
+                <Link to="/departamentos" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">🏕</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">DEPARTAMENTOS</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
-                <Link to="/afiliados" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>👨‍⚖️</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Afiliados</span>}
+                <Link to="/afiliados" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">COCODE</span>}
                 </Link>
               )}
 
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
-                <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className="nav-link btn btn-outline-light border-0 fw-bold p-2 text-start text-white d-flex align-items-center rounded">
-                  <span>⚠️</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Problemas de Barrio</span>}
+                <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS</span>}
                 </Link>
               )}
             </nav>
 
-            <button onClick={handleLogout} className="mt-auto btn btn-danger border-0 fw-bold p-2 text-start d-flex align-items-center w-100 shadow-sm rounded">
-              <span>🚪</span> {(isMenuOpen || window.innerWidth <= 768) && <span className="ms-2">Cerrar Sesión</span>}
-            </button>
           </div>
 
           {/* 🌫️ FONDO OSCURO COMPLEMENTARIO (Sólo móvil para cerrar el menú haciendo clic afuera) */}
@@ -359,11 +378,14 @@ function App() {
 
           {/* 📄 CONTENEDOR DEL CONTENIDO PRINCIPAL DINÁMICO */}
           <div 
-            className="flex-grow-1 p-3 p-md-4" 
+            className="flex-grow-1 p-1 p-md-2 app-main-content" 
             style={{ 
-              overflowY: 'auto', 
-              maxHeight: '100vh',
-              width: '100%',
+              overflowY: isMobile ? 'auto' : 'visible', 
+              overflowX: isMobile ? 'auto' : 'hidden',
+              maxHeight: isMobile ? '100vh' : 'none',
+              width: 'auto',
+              flex: '1 1 0',
+              minWidth: 0,
               backgroundColor: '#f8f9fa'
             }}
           >

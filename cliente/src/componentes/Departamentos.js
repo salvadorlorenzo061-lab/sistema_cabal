@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Departamentos() {
   // =========================================================================
@@ -21,6 +22,9 @@ function Departamentos() {
   const [departamentosList, setDepartamentosList] = useState([]); 
   
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
@@ -37,13 +41,13 @@ function Departamentos() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA CENTRAL CABAL", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Control y Catálogo Geográfico Regional", 14, 25);
-    doc.text("Infraestructura y Cobertura de Operaciones", 14, 30);
+    doc.text("JALAPA", 14, 25);
+    doc.text("ADMINISTRACION 2024-2028", 14, 30);
     doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
 
     // 🔒 BLOQUE DE CONTROL
@@ -214,14 +218,20 @@ function Departamentos() {
   };
 
   const getDepartamentos = () => {
-    Axios.get(API_URL)
-    .then((response) => { setDepartamentosList(response.data); })
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    .then((response) => {
+      const payload = response.data;
+      const data = Array.isArray(payload) ? payload : (payload.data || []);
+      setDepartamentosList(data);
+      setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+      setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+    })
     .catch((error) => { console.error("Error al obtener departamentos", error); });
   };
 
   useEffect(() => { 
     getDepartamentos();
-  }, []);
+  }, [pagina]);
 
   const abrirEditarModal = (val) => {
     setId_departamento(val.id_departamento);
@@ -235,10 +245,10 @@ function Departamentos() {
   );
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-2 px-md-3'>
       
       {/* CABECERA DE LA PANTALLA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
           <h3 className="m-0 text-dark fw-bold">GESTIÓN DE DEPARTAMENTOS</h3>
           <small className="text-muted">Operador activo: <strong>{nombreUsuarioLogueado}</strong></small>
@@ -264,10 +274,18 @@ function Departamentos() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* TABLA DE DATOS */}
-      <div className="table-responsive">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+      <div className="table-responsive module-table-wrap">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>ID DEPARTAMENTO</th>
@@ -287,12 +305,30 @@ function Departamentos() {
                       {(val.estado || 'INACTIVO').toUpperCase()}
                     </span>
                   </td>
-                  <td>
-                    <div className="d-flex justify-content-center">
-                      <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold text-white">ACTUALIZAR</button>
-                      <button type="button" onClick={() => deleteDepartamento(val)} className="btn btn-danger btn-sm mx-1 fw-bold">ELIMINAR</button>
-                      <button type="button" onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
-                    </div>
+                  <td className="text-center">
+                    <select
+                      className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const accion = e.target.value;
+                        if (!accion) return;
+
+                        if (accion === 'actualizar') {
+                          abrirEditarModal(val);
+                        } else if (accion === 'eliminar') {
+                          deleteDepartamento(val);
+                        } else if (accion === 'pdf') {
+                          descargarPDFIndividual(val);
+                        }
+
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="" disabled>⚙️ Acciones</option>
+                      <option value="actualizar">✏️ Actualizar</option>
+                      <option value="eliminar">🗑️ Eliminar</option>
+                      <option value="pdf">📄 PDF</option>
+                    </select>
                   </td>
                 </tr>
               ))

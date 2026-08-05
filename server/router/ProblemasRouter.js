@@ -50,20 +50,37 @@ router.post("/crear", (req, res) => {
 
 // === LISTAR PROBLEMAS (CON INNER JOIN PARA TRAER EL NOMBRE DEL MUNICIPIO) ===
 router.get("/", (req, res) => {
+    const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
+    const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
+    const offset = (pagina - 1) * limite;
+
     const sqlQuery = `
         SELECT p.id_problema, p.titulo, p.descripcion, p.barrio_colonia, p.id_municipio, p.estado, p.fecha_reporte, p.id_afiliado, m.nombre_municipio
         FROM problemas p
         INNER JOIN municipios m ON p.id_municipio = m.id_municipio
         ORDER BY p.fecha_reporte DESC
+        LIMIT ? OFFSET ?
     `;
 
-    db.query(sqlQuery, (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send("Error al obtener el listado de problemas");
-        } else {
-            res.send(result); 
+    db.query('SELECT COUNT(*) AS total FROM problemas', (countErr, countResult) => {
+        if (countErr) {
+            console.error(countErr);
+            return res.status(500).send("Error al obtener el listado de problemas");
         }
+
+        db.query(sqlQuery, [limite, offset], (err, result) => {
+            if (err) {
+                console.error(err);
+                res.status(500).send("Error al obtener el listado de problemas");
+            } else {
+                res.send({
+                    data: result,
+                    total: countResult[0].total,
+                    paginasTotales: Math.ceil(countResult[0].total / limite),
+                    paginaActual: pagina
+                }); 
+            }
+        });
     });
 });
 

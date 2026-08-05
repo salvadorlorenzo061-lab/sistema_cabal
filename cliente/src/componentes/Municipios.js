@@ -4,10 +4,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Municipios() {
   // =========================================================================
-  // 🔐 CONTROL DE USUARIO ACTIVO (Vincular con tu gestor de estados globales o login)
+  // 🔐 CONTROL DE USUARIO ACTIVO
   // =========================================================================
   const idUsuarioLogueado = 3; 
   const nombreUsuarioLogueado = "Erick Hernandez";
@@ -20,6 +21,9 @@ function Municipios() {
   const [municipiosList, setMunicipios] = useState([]);
   const [departamentosList, setDepartamentos] = useState([]); 
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
@@ -32,11 +36,10 @@ function Municipios() {
   const descargarPDFIndividual = (val) => {
     const doc = new jsPDF();
 
-    // 🏢 ENCABEZADO INSTITUCIONAL
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA CENTRAL CABAL", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -45,7 +48,6 @@ function Municipios() {
     doc.text("Infraestructura y Cobertura de Operaciones", 14, 30);
     doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
 
-    // 🔒 BLOQUE DE CONTROL
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
 
@@ -65,7 +67,6 @@ function Municipios() {
     doc.setDrawColor(200, 200, 200);
     doc.line(14, 42, 196, 42); 
 
-    // 👤 RESUMEN
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(40, 40, 40);
@@ -73,11 +74,10 @@ function Municipios() {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
-    doc.text(`Departamento:           ${val.nombre_departamento ? val.nombre_departamento.toUpperCase() : 'NO ASIGNADO'}`, 14, 56);
+    doc.text(`Departamento:        ${val.nombre_departamento ? val.nombre_departamento.toUpperCase() : 'NO ASIGNADO'}`, 14, 56);
     doc.text(`Nombre del Municipio:   ${val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'S/N'}`, 14, 62);
     doc.text(`Estado de Operación:    ${val.estado ? val.estado.toUpperCase() : ''}`, 14, 68); 
 
-    // 📊 TABLA 1: DATOS ESTRUCTURADOS
     autoTable(doc, {
       startY: 74,
       head: [['PARÁMETRO', 'DETALLE EN BASE DE DATOS']],
@@ -96,7 +96,6 @@ function Municipios() {
       }
     });
 
-    // 🔒 PIE DE PÁGINA
     const finalY = doc.lastAutoTable.finalY + 15;
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
@@ -108,7 +107,7 @@ function Municipios() {
   };
 
   // =========================================================================
-  //   CONTROLADORES DE BASE DE DATOS (CRUD + BITÁCORA)
+  //   CONTROLADORES DE BASE DE DATOS
   // =========================================================================
   const add = () => {
     if (!nombre_municipio.trim() || !estado.trim() || !id_departamento) {
@@ -198,7 +197,6 @@ function Municipios() {
       cancelButtonText: "Cancelar"
     }).then((result) => {
       if (result.isConfirmed) {
-        // Al usar DELETE, enviamos los datos del usuario mediante Query string (?param=valor)
         Axios.delete(`${API_URL}/delete/${val.id_municipio}?id_usuario_operador=${idUsuarioLogueado}&nombre_usuario_operador=${nombreUsuarioLogueado}`)
         .then(() => {
           getMunicipios();
@@ -220,21 +218,30 @@ function Municipios() {
   };
 
   const getMunicipios = () => {
-    Axios.get(API_URL)
-    .then((response) => { setMunicipios(response.data); })
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    .then((response) => {
+      const payload = response.data;
+      const data = Array.isArray(payload) ? payload : (payload.data || []);
+      setMunicipios(data);
+      setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+      setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+    })
     .catch((error) => { console.error("Error al obtener municipios", error); });
   };
 
   const getDepartamentos = () => {
     Axios.get(`${API_URL}/departamentos`)
-    .then((response) => { setDepartamentos(response.data); })
+    .then((response) => {
+      const payload = response.data;
+      setDepartamentos(Array.isArray(payload) ? payload : (payload.data || []));
+    })
     .catch((error) => { console.error("Error al obtener departamentos", error); });
   };
 
   useEffect(() => { 
     getMunicipios(); 
     getDepartamentos();
-  }, []);
+  }, [pagina]);
 
   const abrirEditarModal = (val) => {
     setId_municipio(val.id_municipio);
@@ -250,10 +257,10 @@ function Municipios() {
   );
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-1 px-md-2'>
       
       {/* CABECERA DE LA PANTALLA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
           <h3 className="m-0 text-dark fw-bold">GESTIÓN DE MUNICIPIOS</h3>
           <small className="text-muted">Operador activo: <strong>{nombreUsuarioLogueado}</strong></small>
@@ -279,10 +286,18 @@ function Municipios() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* TABLA DE DATOS */}
-      <div className="table-responsive">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+      <div className="table-responsive module-table-wrap">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>ID MUNICIPIO</th>
@@ -304,12 +319,30 @@ function Municipios() {
                       {val.estado ? val.estado.toUpperCase() : 'N/A'}
                     </span>
                   </td>
-                  <td>
-                    <div className="d-flex justify-content-center">
-                      <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold text-white">ACTUALIZAR</button>
-                      <button type="button" onClick={() => deleteMunicipio(val)} className="btn btn-danger btn-sm mx-1 fw-bold">ELIMINAR</button>
-                      <button type="button" onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
-                    </div>
+                  <td className="text-center">
+                    <select
+                      className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const accion = e.target.value;
+                        if (!accion) return;
+
+                        if (accion === 'actualizar') {
+                          abrirEditarModal(val);
+                        } else if (accion === 'eliminar') {
+                          deleteMunicipio(val);
+                        } else if (accion === 'pdf') {
+                          descargarPDFIndividual(val);
+                        }
+
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="" disabled>⚙️ Acciones</option>
+                      <option value="actualizar">✏️ Actualizar</option>
+                      <option value="eliminar">🗑️ Eliminar</option>
+                      <option value="pdf">📄 PDF</option>
+                    </select>
                   </td>
                 </tr>
               ))

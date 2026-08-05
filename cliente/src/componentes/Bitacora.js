@@ -29,7 +29,7 @@ function Bitacora() {
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
         pagina: pagina,
-        limite: 30 // Traer de 30 en 30 es ideal para rendimiento
+        limite: 10 // Mostrar los primeros 10 registros por página
       }
     })
     .then((response) => { 
@@ -79,12 +79,12 @@ function Bitacora() {
     const doc = new jsPDF({ orientation: "landscape" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("PARTIDO CABAL GUATEMALA", 14, 15);
+    doc.text("JALAPA", 14, 15);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text("REPORTE MAESTRO DE AUDITORÍA Y BITÁCORA DE SISTEMAS", 14, 21);
-    doc.text(`Fecha de Emisión: ${new Date().toLocaleString()} | Región: Izabal | Vista: Página ${pagina}`, 14, 26);
+    doc.text(`Fecha de Emisión: ${new Date().toLocaleString()} | Región: Jalapa | Vista: Página ${pagina}`, 14, 26);
 
     const dataTabla = bitacoraList.map((reg) => [
       reg.id_bitacora,
@@ -127,7 +127,7 @@ function Bitacora() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text("Partido Cabal - Control de Seguridad Informática (Izabal)", 14, 25);
+    doc.text("SISTEMA DE REGISTROS DE OBRAS MUNICIPALES JALAPA 2024-2026", 14, 25);
 
     doc.setFillColor(240, 244, 248);
     doc.rect(135, 12, 61, 22, "F");
@@ -171,18 +171,18 @@ function Bitacora() {
   };
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-1 px-md-2'>
       
       {/* SECCIÓN DE CABECERA PRINCIPAL */}
       <div className="bg-dark p-3 rounded shadow-sm text-white mb-3">
-        <div className="row align-items-center">
+        <div className="row align-items-center module-toolbar">
           <div className="col-md-7">
             <h3 className="m-0 fw-bold">🛡️ BITÁCORA DE AUDITORÍA</h3>
             <small className="text-white-50">
               Historial inmutable — Encontrados <strong>{totalRegistros} movimientos</strong> bajo los criterios actuales.
             </small>
           </div>
-          <div className="col-md-5 text-end">
+          <div className="col-md-5 text-end module-toolbar-actions">
             <button className="btn btn-primary fw-bold" onClick={descargarInformeGeneral}>
               📊 EXPORTAR VISTA ACTUAL A PDF
             </button>
@@ -240,7 +240,7 @@ function Bitacora() {
       </div>
       
       {/* TABLA DE RESULTADOS */}
-      <div className="table-responsive shadow-sm rounded mb-3">
+      <div className="table-responsive module-table-wrap shadow-sm rounded mb-3">
         <table className="table table-hover table-bordered align-middle m-0">
           <thead className="table-secondary text-center">
             <tr>

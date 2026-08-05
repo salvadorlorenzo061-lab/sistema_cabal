@@ -3,8 +3,11 @@ node_modules/
 *.exe
 .env
 .env.*
+.vscode/
 !.env.example
 !server/.env.example
 !cliente/.env.example
 server/.env
 cliente/.env
+.vercel
+.env*

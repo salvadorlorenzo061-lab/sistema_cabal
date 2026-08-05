@@ -1,11 +1,21 @@
 const mysql = require('mysql2'); 
 require('dotenv').config();      
 
-const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD'];
-const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
+const normalizeEnv = (value) => (typeof value === 'string' ? value.replace(/\r|\n/g, '').trim() : '');
 
-const DB_NAME = process.env.DB_NAME || 'defaultdb';
-const DB_PORT = Number(process.env.DB_PORT || 28828);
+const DB_HOST = normalizeEnv(process.env.DB_HOST);
+const DB_USER = normalizeEnv(process.env.DB_USER);
+const DB_PASSWORD = normalizeEnv(process.env.DB_PASSWORD);
+const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD'];
+const missingEnvVars = requiredEnvVars.filter((key) => {
+  if (key === 'DB_HOST') return !DB_HOST;
+  if (key === 'DB_USER') return !DB_USER;
+  if (key === 'DB_PASSWORD') return !DB_PASSWORD;
+  return !process.env[key];
+});
+
+const DB_NAME = normalizeEnv(process.env.DB_NAME) || 'defaultdb';
+const DB_PORT = Number(normalizeEnv(process.env.DB_PORT) || 28828);
 
 if (missingEnvVars.length > 0) {
   console.error(`Missing required database environment variables: ${missingEnvVars.join(', ')}`);
@@ -13,9 +23,9 @@ if (missingEnvVars.length > 0) {
 }
 
 const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  host: DB_HOST,
+  user: DB_USER,
+  password: DB_PASSWORD,
   database: DB_NAME,
   port: DB_PORT,
   connectTimeout: 10000,
@@ -33,10 +43,13 @@ const db = mysql.createPool({
 // Validar conexión inicial a la base de datos
 db.getConnection((err, connection) => {
   if (err) {
+    if (err.code === 'ER_ACCESS_DENIED_ERROR') {
+      console.error(`❌ Autenticación MySQL fallida para el usuario '${DB_USER}' en host '${DB_HOST}'. Verifique DB_USER/DB_PASSWORD en Render.`);
+    }
     console.error('❌ Error crítico al conectar a la base de datos de Aiven:', err);
     return;
   }
-  const destino = `${process.env.DB_HOST}:${DB_PORT}/${DB_NAME}`;
+  const destino = `${DB_HOST}:${DB_PORT}/${DB_NAME}`;
   console.log(`✅ Conectado exitosamente a la base de datos MySQL en: ${destino}`);
   connection.release();
 });

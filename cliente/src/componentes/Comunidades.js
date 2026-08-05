@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Axios from "axios";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Comunidades() {
   const [id_comunidad, setId_comunidad] = useState("");
@@ -17,12 +18,15 @@ function Comunidades() {
   const [municipiosList, setMunicipios] = useState([]);
   const [departamentosList, setDepartamentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
 
   // Variables Mock de usuario (Vincúlalas al Contexto o Redux de tu sesión activa en el futuro)
-  const USUARIO_ACTIVO_LOG = "OPERADOR IZABAL";
+  const USUARIO_ACTIVO_LOG = "OPERADOR JALAPA";
   const ID_USUARIO_LOG = 1;
 
   const API_URL = "https://sistema-cabal.onrender.com/api/comunidades";
@@ -41,7 +45,7 @@ function Comunidades() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA CENTRAL CABAL", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -109,19 +113,34 @@ function Comunidades() {
     doc.save(`${tName}_${cName.replace(/\s+/g, '_')}.pdf`);
   };
 
-  const getComunidades = () => {
-    Axios.get(API_URL).then((res) => setComunidades(res.data)).catch(console.error);
-  };
+  // ⚡ ENUELTO EN USECALLBACK PARA ESTABILIZAR LA REFERENCIA Y SATISFACER A ESLINT
+  const getComunidades = useCallback(() => {
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+      .then((res) => {
+        const payload = res.data;
+        const data = Array.isArray(payload) ? payload : (payload.data || []);
+        setComunidades(data);
+        setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+        setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+      })
+      .catch(console.error);
+  }, [pagina]);
 
   const getCatalogos = () => {
-    Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => setDepartamentos(res.data)).catch(console.error);
-    Axios.get("https://sistema-cabal.onrender.com/api/municipios").then((res) => setMunicipios(res.data)).catch(console.error);
+    Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => {
+      const payload = res.data;
+      setDepartamentos(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(console.error);
+    Axios.get("https://sistema-cabal.onrender.com/api/municipios").then((res) => {
+      const payload = res.data;
+      setMunicipios(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(console.error);
   };
 
   useEffect(() => {
     getComunidades();
     getCatalogos();
-  }, []);
+  }, [getComunidades]);
 
   const add = () => {
     if (!nombre_comunidad.trim() || !id_municipio) {
@@ -133,7 +152,7 @@ function Comunidades() {
       tipo, 
       estado, 
       id_municipio: parseInt(id_municipio, 10),
-      ejecutado_por: USUARIO_ACTIVO_LOG, // Pasados para el tracking automático
+      ejecutado_por: USUARIO_ACTIVO_LOG, 
       id_usuario: ID_USUARIO_LOG
     })
     .then(() => {
@@ -176,7 +195,6 @@ function Comunidades() {
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
-        // Pasamos el operador vía Query String para que el DELETE lo tome
         Axios.delete(`${API_URL}/delete/${val.id_comunidad}?ejecutado_por=${USUARIO_ACTIVO_LOG}&id_usuario=${ID_USUARIO_LOG}`)
         .then(() => {
           getComunidades();
@@ -212,9 +230,9 @@ function Comunidades() {
   );
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-2 px-md-3'>
       {/* CABECERA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
           <h3 className="m-0 text-dark fw-bold">ALDEAS Y CASERÍOS</h3>
         </div>
@@ -234,9 +252,17 @@ function Comunidades() {
         </div>
       </div>
 
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
+
       {/* TABLA */}
-      <div className="table-responsive">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+      <div className="table-responsive module-table-wrap">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>ID</th>
@@ -262,9 +288,29 @@ function Comunidades() {
                   </span>
                 </td>
                 <td className="text-center">
-                  <button onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold">EDITAR</button>
-                  <button onClick={() => deleteComunidad(val)} className="btn btn-danger btn-sm mx-1 fw-bold">BORRAR</button>
-                  <button onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
+                  <select
+                    className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const accion = e.target.value;
+                      if (!accion) return;
+
+                      if (accion === 'actualizar') {
+                        abrirEditarModal(val);
+                      } else if (accion === 'eliminar') {
+                        deleteComunidad(val);
+                      } else if (accion === 'pdf') {
+                        descargarPDFIndividual(val);
+                      }
+
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="" disabled>⚙️ Acciones</option>
+                    <option value="actualizar">✏️ Actualizar</option>
+                    <option value="eliminar">🗑️ Eliminar</option>
+                    <option value="pdf">📄 PDF</option>
+                  </select>
                 </td>
               </tr>
             ))}
@@ -328,7 +374,7 @@ function Comunidades() {
         </div>
       )}
 
-      {/* MODAL DE EDICIÓN (Optimizado el cambio de jerarquía) */}
+      {/* MODAL DE EDICIÓN */}
       {showEditModal && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog">
@@ -340,7 +386,6 @@ function Comunidades() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label fw-bold">Departamento:</label>
-                  {/* ⚡ CORREGIDO: Al cambiar el depto en edición, limpiamos el municipio para obligar a seleccionar uno válido de la nueva lista */}
                   <select value={id_departamento} onChange={(e) => { setId_departamento(e.target.value); setId_municipio(""); }} className="form-select">
                     <option value="">-- Elija un departamento --</option>
                     {departamentosList.map(dep => <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre_departamento}</option>)}

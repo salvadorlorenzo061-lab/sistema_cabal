@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import PaginationBar from './PaginationBar';
 
 function Usuarios() {
   const [id_usuario, setId_usuario] = useState("");
@@ -16,6 +17,9 @@ function Usuarios() {
   
   const [usuariosList, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
@@ -51,14 +55,14 @@ function Usuarios() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("PARTIDO CABAL GUATEMALA", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
     doc.text("Coordinación de TI y Organización Interna", 14, 25);
-    doc.text("Sistema Centralizado de Afiliaciones e Incidencias (Izabal)", 14, 30);
-    doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
+    doc.text("SISTEMA DE REGISTRO DE OBRAS MUNICIPALES, JALAPA", 14, 30);
+    doc.text(`GENERADO: DIRECTOR DE OBRAS MUNICIPALES`, 14, 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
@@ -149,7 +153,7 @@ function Usuarios() {
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
     doc.text("Nota de seguridad: Esta ficha contiene trazas e historial de acceso de uso confidencial.", 14, finalY);
-    doc.text("Partido Cabal - Control de Auditoría Interna de Sistemas de Información.", 14, finalY + 4);
+    doc.text("DIRECTOR DE  OBRAS MUNICIPALES ADMINISTRACION -2024-2028 .", 14, finalY + 4);
 
     const nombreArchivo = val.nombre ? val.nombre.replace(/\s+/g, '_') : 'Usuario';
     doc.save(`Ficha_Auditoria_${nombreArchivo}.pdf`);
@@ -272,15 +276,21 @@ function Usuarios() {
   };
 
   const getUsuarios = () => {
-    Axios.get(API_URL)
-    .then((response) => { setUsuarios(response.data); })
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    .then((response) => {
+      const payload = response.data;
+      const data = Array.isArray(payload) ? payload : (payload.data || []);
+      setUsuarios(data);
+      setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+      setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+    })
     .catch((error) => { console.error("Error al obtener usuarios", error); });
   };
 
   useEffect(() => { 
     getUsuarios(); 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pagina]);
 
   const abrirEditarModal = (val) => {
     setId_usuario(val.id_usuario);
@@ -298,9 +308,9 @@ function Usuarios() {
   );
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-1 px-md-2'>
       {/* Encabezado Principal */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
           <h3 className="m-0 text-dark fw-bold">GESTIÓN DE USUARIOS</h3>
         </div>
@@ -325,10 +335,18 @@ function Usuarios() {
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* Tabla Desplegable */}
-      <div className="table-responsive">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+      <div className="table-responsive module-table-wrap">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>ID USUARIO</th>
@@ -360,16 +378,34 @@ function Usuarios() {
                       {val.estado ? val.estado.toUpperCase() : 'DESCONOCIDO'}
                     </span>
                   </td>
-                  <td>
-                    <div className="d-flex justify-content-center">
-                      <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold">ACTUALIZAR</button>
-                      
+                  <td className="text-center">
+                    <select
+                      className="form-select form-select-sm fw-bold bg-light border-secondary module-action-select"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const accion = e.target.value;
+                        if (!accion) return;
+
+                        if (accion === 'actualizar') {
+                          abrirEditarModal(val);
+                        } else if (accion === 'eliminar') {
+                          if (miRol.trim().toLowerCase() !== "sub coordinador municipal") {
+                            deteleUsuario(val);
+                          }
+                        } else if (accion === 'pdf') {
+                          descargarPDFIndividual(val);
+                        }
+
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="" disabled>⚙️ Acciones</option>
+                      <option value="actualizar">✏️ Actualizar</option>
                       {miRol.trim().toLowerCase() !== "sub coordinador municipal" && (
-                        <button type="button" onClick={() => deteleUsuario(val)} className="btn btn-danger btn-sm mx-1 fw-bold">ELIMINAR</button>
+                        <option value="eliminar">🗑️ Eliminar</option>
                       )}
-                      
-                      <button type="button" onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
-                    </div>
+                      <option value="pdf">📄 PDF</option>
+                    </select>
                   </td>
                 </tr>
               ))
@@ -408,9 +444,9 @@ function Usuarios() {
                   <label className="form-label fw-bold">Rol de Usuario:</label>
                   <select value={rol} onChange={(e) => setRol(e.target.value)} className="form-select">
                     <option value="" disabled>-- Seleccione un Rol --</option>
-                    <option value="Coordinador Regional">Coordinador Regional</option>
-                    <option value="Coordinador Municipal">Coordinador Municipal</option>
-                    <option value="Sub Coordinador Municipal">Sub Coordinador Municipal</option>
+                    <option value="Coordinador Regional">DIRECTOR</option>
+                    <option value="Coordinador Municipal">SUBDIRECTOR I</option>
+                    <option value="Sub Coordinador Municipal">SUBDIRECTOR II</option>
                   </select>
                 </div>
                 <div className="mb-3">

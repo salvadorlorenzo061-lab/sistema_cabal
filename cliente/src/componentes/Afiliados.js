@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import * as XLSX from 'xlsx';
+import PaginationBar from './PaginationBar';
 
 function Afiliados() {
   // =========================================================================
@@ -16,6 +17,8 @@ function Afiliados() {
     rol: "Coordinador Regional"
   };
 
+  const fechaHoy = new Date().toISOString().split('T')[0];
+
   const [id_afiliado, setId_afiliado] = useState("");
   const [dpi, setDpi] = useState("");
   const [nombre_completo, setNombre_completo] = useState("");
@@ -23,17 +26,20 @@ function Afiliados() {
   const [direccion, setDireccion] = useState("");
   const [barrio_colonia, setBarrio_colonia] = useState("");
   const [id_municipio, setId_municipio] = useState("");
-  const [fecha_afiliacion, setFecha_afiliacion] = useState("");
+  const [fecha_afiliacion, setFecha_afiliacion] = useState(fechaHoy);
   const [id_usuario, setId_usuario] = useState("");
   const [foto, setFoto] = useState(""); 
   
-  const [num_empadronamiento, setNum_empadronamiento] = useState("");
+  
   const [lugar_votacion, setLugar_votacion] = useState("");
 
   const [afiliadosList, setAfiliados] = useState([]);
   const [municipiosList, setMunicipios] = useState([]);
   const [usuariosList, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [paginasTotales, setPaginasTotales] = useState(1);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
@@ -67,15 +73,15 @@ function Afiliados() {
     }
 
     const datosExcel = afiliadosFiltrados.map((afi) => ({
-      "ID AFILIADO": afi.id_afiliado,
+      "ID": afi.id_afiliado,
       "DPI / DOCUMENTO": afi.dpi,
-      "NO. EMPADRONAMIENTO": afi.num_empadronamiento || "N/A",
+      
       "NOMBRE COMPLETO": afi.nombre_completo?.toUpperCase(),
       "TELÉFONO": afi.telefono,
       "DIRECCIÓN DE RESIDENCIA": afi.direccion || "No registrada",
       "BARRIO / COLONIA": afi.barrio_colonia || "No registrado",
       "MUNICIPIO": afi.nombre_municipio || "N/A",
-      "CENTRO DE VOTACIÓN": afi.lugar_votacion || "No asignado",
+      "LUGAR": afi.lugar_votacion || "No asignado",
       "FECHA AFILIACIÓN": afi.fecha_afiliacion ? new Date(afi.fecha_afiliacion).toLocaleDateString() : "N/A",
       "REGISTRADO POR": afi.nombre_usuario || "Sistema"
     }));
@@ -100,14 +106,14 @@ function Afiliados() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(40, 40, 40);
-    doc.text("PARTIDO CABAL, IZABAL", 14, 20);
+    doc.text("MUNICIPALIDAD DE JALAPA, ADMINISTRACION 2024-2028", 14, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Departamento de Registro de Afiliados", 14, 25);
-    doc.text("Sistema Centralizado de Control de Lotes", 14, 30);
-    doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
+    doc.text("DEPARTAMENTO DE REGISTRO DE COCODES", 14, 25);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 30);
+    doc.text(`GENERADO POR: DIRECTOR DE OBRAS `, 14, 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
@@ -115,11 +121,11 @@ function Afiliados() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(41, 128, 185);  
-    doc.text("EXPEDIENTE DE AFILIADO", 133, 18);
+    doc.text("EXPEDIENTE DE COCODE", 133, 18);
     
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0); 
-    doc.text(`ID AFILIADO: #${val.id_afiliado}`, 133, 24); 
+    doc.text(`ID COCODE: #${val.id_afiliado}`, 133, 24); 
     
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
@@ -157,14 +163,13 @@ function Afiliados() {
       body: [
         ['CÓDIGO ÚNICO', `AFI-${val.id_afiliado}`],
         ['DOCUMENTO DE IDENTIDAD (DPI)', val.dpi],
-        ['NÚMERO DE EMPADRONAMIENTO', val.num_empadronamiento || 'No registrado'],
         ['LUGAR DE VOTACIÓN', val.lugar_votacion ? val.lugar_votacion.toUpperCase() : 'No asignado'],
         ['NOMBRE COMPLETO', val.nombre_completo.toUpperCase()],
         ['TELÉFONO DE CONTACTO', val.telefono],
         ['DIRECCIÓN DE RESIDENCIA', val.direccion || 'No registrada'],
         ['BARRIO / COLONIA', val.barrio_colonia || 'No registrado'],
         ['MUNICIPIO ASOCIADO', val.nombre_municipio || 'No especificado'],
-        ['FECHA DE AFILIACIÓN', val.fecha_afiliacion ? new Date(val.fecha_afiliacion).toLocaleDateString() : 'No registrada'],
+        ['FECHA', val.fecha_afiliacion ? new Date(val.fecha_afiliacion).toLocaleDateString() : 'No registrada'],
         ['REGISTRADO POR USUARIO', val.nombre_usuario || 'Sistema'],
       ],
       theme: 'striped',
@@ -180,21 +185,21 @@ function Afiliados() {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
-    doc.text("Nota de seguridad: Esta ficha contiene datos privados e historial confidencial del afiliado.", 14, finalY);
-    doc.text("Partido Cabal - Control Interno de Información.", 14, finalY + 4); 
+    doc.text("Nota de seguridad: Esta ficha contiene datos privados e historial confidencial del cocode.", 14, finalY);
+    doc.text("Obras Municipales - ADMINISTRACION 2024-2028.", 14, finalY + 4); 
 
-    doc.save(`Ficha_Afiliado_${val.nombre_completo.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`Ficha_${val.nombre_completo.replace(/\s+/g, '_')}.pdf`);
   };
 
   // === ACCIÓN: AGREGAR AFILIADO ===
   const add = () => {
     const fechaEnvio = fecha_afiliacion.trim() || new Date().toISOString().split('T')[0];
 
-    if (!dpi.trim() || !num_empadronamiento.trim() || !nombre_completo.trim() || !telefono.trim() || !id_municipio || !id_usuario) {
+    if (!dpi.trim() || !nombre_completo.trim() || !telefono.trim() || !id_municipio || !id_usuario) {
       Swal.fire({
         icon: "warning",
         title: 'DATOS INCOMPLETOS',
-        text: 'Por favor, complete los campos obligatorios incluyendo el Empadronamiento (*).',
+        text: 'Por favor, complete los campos obligatorios.',
         timer: 3000
       });
       return; 
@@ -202,7 +207,6 @@ function Afiliados() {
 
     Axios.post(`${API_URL}/crear`, { 
       dpi: dpi.trim(), 
-      num_empadronamiento: num_empadronamiento.trim(),
       lugar_votacion: lugar_votacion.trim(),
       nombre_completo: nombre_completo.trim(), 
       telefono: telefono.trim(), 
@@ -220,7 +224,7 @@ function Afiliados() {
       getAfiliados();
       limpiarCampos();
       setShowRegModal(false);
-      Swal.fire({ icon: "success", title: 'Afiliado registrado correctamente', showConfirmButton: false, timer: 2500 });
+      Swal.fire({ icon: "success", title: 'Se creó correctamente COCODE', showConfirmButton: false, timer: 2500 });
     })
     .catch((error) => {
       console.error(error);
@@ -234,8 +238,8 @@ function Afiliados() {
 
   // === ACCIÓN: ACTUALIZAR AFILIADO ===
   const actualizar = () => {
-    if (!dpi.trim() || !num_empadronamiento.trim() || !nombre_completo.trim() || !id_municipio || !id_usuario) {
-      Swal.fire({ icon: 'warning', title: 'Campos obligatorios vacíos', text: 'El DPI y Empadronamiento son campos requeridos.' });
+    if (!dpi.trim() || !nombre_completo.trim() || !id_municipio || !id_usuario) {
+      Swal.fire({ icon: 'warning', title: 'Campos obligatorios vacíos', text: 'El DPI son campos requeridos.' });
       return;
     }
 
@@ -244,7 +248,6 @@ function Afiliados() {
     Axios.put(`${API_URL}/actualizar`, { 
       id_afiliado: Number(id_afiliado),
       dpi: dpi.trim(), 
-      num_empadronamiento: num_empadronamiento.trim(),
       lugar_votacion: lugar_votacion.trim(),
       nombre_completo: nombre_completo.trim(), 
       telefono: telefono.trim(), 
@@ -262,7 +265,7 @@ function Afiliados() {
       getAfiliados();
       limpiarCampos();
       setShowEditModal(false);
-      Swal.fire({ title: '¡Éxito!', text: 'Registro actualizado de manera directa', icon: 'success', timer: 2500, showConfirmButton: false });
+      Swal.fire({ title: '¡Éxito!', text: 'Se actualizó correctamente COCODE', icon: 'success', timer: 2500, showConfirmButton: false });
     })
     .catch((error) => {
       console.error(error);
@@ -295,7 +298,7 @@ function Afiliados() {
         })
         .then(() => {
           getAfiliados();
-          Swal.fire('¡Eliminado!', 'El registro fue removido.', 'success');
+          Swal.fire('¡Eliminado!', 'Se eliminó correctamente COCODE', 'success');
         })
         .catch(err => {
           console.error(err);
@@ -309,17 +312,31 @@ function Afiliados() {
   const limpiarCampos = () => {
     setId_afiliado(""); setDpi(""); setNombre_completo(""); setTelefono("");
     setDireccion(""); setBarrio_colonia(""); setId_municipio("");
-    setFecha_afiliacion(""); setId_usuario(""); setFoto("");
-    setNum_empadronamiento(""); setLugar_votacion("");
+    setFecha_afiliacion(fechaHoy); setId_usuario(""); setFoto("");
+  
   };
 
   const getAfiliados = useCallback(() => {
-    Axios.get(API_URL).then((res) => setAfiliados(res.data)).catch(err => console.error(err));
-  }, [API_URL]);
+    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+      .then((res) => {
+        const payload = res.data;
+        const data = Array.isArray(payload) ? payload : (payload.data || []);
+        setAfiliados(data);
+        setPaginasTotales(Array.isArray(payload) ? 1 : (payload.paginasTotales || 1));
+        setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
+      })
+      .catch(err => console.error(err));
+  }, [API_URL, pagina]);
 
   const getCatalogos = useCallback(() => {
-    Axios.get(`${BASE_URL}/municipios`).then((res) => setMunicipios(res.data)).catch(err => console.error(err));
-    Axios.get(`${BASE_URL}/usuarios`).then((res) => setUsuarios(res.data)).catch(err => console.error(err));
+    Axios.get(`${BASE_URL}/municipios`).then((res) => {
+      const payload = res.data;
+      setMunicipios(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(err => console.error(err));
+    Axios.get(`${BASE_URL}/usuarios`).then((res) => {
+      const payload = res.data;
+      setUsuarios(Array.isArray(payload) ? payload : (payload.data || []));
+    }).catch(err => console.error(err));
   }, [BASE_URL]);
 
   useEffect(() => { 
@@ -338,23 +355,22 @@ function Afiliados() {
     setFecha_afiliacion(val.fecha_afiliacion ? val.fecha_afiliacion.split('T')[0] : "");
     setId_usuario(val.id_usuario);
     setFoto(val.foto || "");
-    setNum_empadronamiento(val.num_empadronamiento || "");
+    
     setLugar_votacion(val.lugar_votacion || "");
     setShowEditModal(true);
   };
 
   const afiliadosFiltrados = afiliadosList.filter((afi) => 
     afi.nombre_completo?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    afi.dpi?.includes(busqueda) ||
-    afi.num_empadronamiento?.includes(busqueda)
+    afi.dpi?.includes(busqueda)
   );
 
   return (
-    <div className='container mt-4'>
+    <div className='container-fluid mt-3 px-2 px-md-3'>
       {/* CABECERA */}
-      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+      <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-3">
-          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE AFILIADOS</h4>
+          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE COCODES</h4>
         </div>
         <div className="col-md-4">
           <div className="input-group">
@@ -362,33 +378,40 @@ function Afiliados() {
             <input 
               type="text" 
               className="form-control" 
-              placeholder="Buscar por nombre, DPI o padrón..." 
+              placeholder="Buscar por nombre o DPI..." 
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
         </div>
-        <div className="col-md-5 text-end d-flex gap-2">
+        <div className="col-md-5 text-end module-toolbar-actions">
           <button className="btn btn-outline-success fw-bold flex-fill" onClick={descargarExcel}>
             📥 DESCARGAR EXCEL
           </button>
           <button className="btn btn-success fw-bold flex-fill" onClick={() => { limpiarCampos(); setShowRegModal(true); }}>
-            ➕ AGREGAR AFILIADO
+            ➕ AGREGAR COCODE
           </button>
         </div>
       </div>
+
+      <PaginationBar
+        page={pagina}
+        totalPages={paginasTotales}
+        totalRecords={totalRegistros}
+        onPrevious={() => setPagina((prev) => Math.max(prev - 1, 1))}
+        onNext={() => setPagina((prev) => Math.min(prev + 1, paginasTotales))}
+      />
       
       {/* TABLA PRINCIPAL */}
-      <div className="table-responsive">
-        <table className="table table-striped table-bordered align-middle shadow-sm">
+      <div className="table-responsive module-table-wrap">
+        <table className="table table-striped table-bordered align-middle shadow-sm module-table-centered">
           <thead className="table-dark">
             <tr>
               <th>FOTO</th>
               <th>DPI</th>
-              <th>EMPADRONAMIENTO</th>
               <th>NOMBRE COMPLETO</th>
               <th>TELÉFONO</th>
-              <th>CENTRO DE VOTACIÓN</th>
+              <th>NOMBRE COCODE</th>
               <th>MUNICIPIO</th>
               <th className="text-center">OPERACIÓN</th>
             </tr>
@@ -405,23 +428,42 @@ function Afiliados() {
                     )}
                   </td>
                   <td><strong>{val.dpi}</strong></td>
-                  <td className="text-primary fw-bold">{val.num_empadronamiento || "N/A"}</td>
                   <td>{val.nombre_completo}</td>
                   <td>{val.telefono}</td>
                   <td><small>{val.lugar_votacion || "No asignado"}</small></td>
                   <td><span className="badge bg-info text-dark">{val.nombre_municipio || "N/A"}</span></td>
                   <td>
-                    <div className="d-flex justify-content-center">
-                      <button type="button" onClick={() => abrirEditarModal(val)} className="btn btn-info btn-sm mx-1 fw-bold text-white">ACTUALIZAR</button>
-                      <button type="button" onClick={() => deleteAfiliado(val)} className="btn btn-danger btn-sm mx-1 fw-bold">ELIMINAR</button>
-                      <button type="button" onClick={() => descargarPDFIndividual(val)} className="btn btn-secondary btn-sm mx-1 fw-bold">📄 PDF</button>
+                    <div className="module-action-buttons">
+                      <select
+                        className="form-select form-select-sm fw-bold text-center bg-light border-secondary module-action-select"
+                        defaultValue=""
+                        onChange={(e) => {
+                          const accion = e.target.value;
+                          if (!accion) return;
+
+                          if (accion === 'actualizar') {
+                            abrirEditarModal(val);
+                          } else if (accion === 'eliminar') {
+                            deleteAfiliado(val);
+                          } else if (accion === 'pdf') {
+                            descargarPDFIndividual(val);
+                          }
+
+                          e.target.value = "";
+                        }}
+                      >
+                        <option value="" disabled>⚙️ Acciones</option>
+                        <option value="actualizar" className="text-info fw-bold">✏️ Actualizar</option>
+                        <option value="eliminar" className="text-danger fw-bold">🗑️ Eliminar</option>
+                        <option value="pdf" className="text-secondary fw-bold">📄 PDF</option>
+                      </select>
                     </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center text-muted py-3">No se encontraron afiliados coincidentes.</td>
+                <td colSpan="8" className="text-center text-muted py-3">No se encontraron cocodes coincidentes.</td>
               </tr>
             )}
           </tbody>
@@ -434,7 +476,7 @@ function Afiliados() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-success text-white">
-                <h5 className="modal-title fw-bold">Registrar Nuevo Afiliado</h5>
+                <h5 className="modal-title fw-bold">REGISTRAR NUEVO COCODE</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => { setShowRegModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
@@ -443,10 +485,7 @@ function Afiliados() {
                     <label className="form-label fw-bold">Documento (DPI): *</label>
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" placeholder="Ingrese DPI" />
                   </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Número de Empadronamiento: *</label>
-                    <input type="text" value={num_empadronamiento} onChange={(e) => setNum_empadronamiento(e.target.value)} className="form-control" placeholder="Ingrese número de padrón" />
-                  </div>
+                 
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -459,8 +498,17 @@ function Afiliados() {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Lugar / Centro de Votación:</label>
+                  <label className="form-label fw-bold">Nombre cocode:</label>
                   <input type="text" value={lugar_votacion} onChange={(e) => setLugar_votacion(e.target.value)} className="form-control" placeholder="Ej: Escuela Oficial" />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Fecha de registro:</label>
+                  <input
+                    type="date"
+                    value={fecha_afiliacion}
+                    onChange={(e) => setFecha_afiliacion(e.target.value)}
+                    className="form-control"
+                  />
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -481,7 +529,7 @@ function Afiliados() {
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Usuario Coordinador (Asignado): *</label>
+                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado): *</label>
                     <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
@@ -490,7 +538,7 @@ function Afiliados() {
                 </div>
                 <div className="row align-items-center">
                   <div className="col-md-8 mb-3">
-                    <label className="form-label fw-bold">Fotografía del Afiliado (Opcional):</label>
+                    <label className="form-label fw-bold">Fotografía presindente COCODE (Opcional):</label>
                     <input type="file" accept="image/*" onChange={handleFotoChange} className="form-control" />
                   </div>
                   <div className="col-md-4 mb-3 text-center">
@@ -500,7 +548,7 @@ function Afiliados() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowRegModal(false); limpiarCampos(); }}>Cancelar</button>
-                <button type="button" className="btn btn-success fw-bold" onClick={add}>Guardar Afiliado</button>
+                <button type="button" className="btn btn-success fw-bold" onClick={add}>Guardar Presidente COCODE</button>
               </div>
             </div>
           </div>
@@ -513,7 +561,7 @@ function Afiliados() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-warning text-dark">
-                <h5 className="modal-title fw-bold">Actualizar Afiliado #{id_afiliado}</h5>
+                <h5 className="modal-title fw-bold">Actualizar Cocode #{id_afiliado}</h5>
                 <button type="button" className="btn-close" onClick={() => { setShowEditModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
@@ -521,10 +569,6 @@ function Afiliados() {
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Documento (DPI): *</label>
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" />
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Número de Empadronamiento: *</label>
-                    <input type="text" value={num_empadronamiento} onChange={(e) => setNum_empadronamiento(e.target.value)} className="form-control" />
                   </div>
                 </div>
                 <div className="row">
@@ -538,8 +582,17 @@ function Afiliados() {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Lugar / Centro de Votación:</label>
+                  <label className="form-label fw-bold">Nombre COCODE:</label>
                   <input type="text" value={lugar_votacion} onChange={(e) => setLugar_votacion(e.target.value)} className="form-control" />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Fecha de registro:</label>
+                  <input
+                    type="date"
+                    value={fecha_afiliacion}
+                    onChange={(e) => setFecha_afiliacion(e.target.value)}
+                    className="form-control"
+                  />
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
@@ -560,7 +613,7 @@ function Afiliados() {
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Usuario Coordinador (Asignado): *</label>
+                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado): *</label>
                     <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
@@ -569,7 +622,7 @@ function Afiliados() {
                 </div>
                 <div className="row align-items-center">
                   <div className="col-md-8 mb-3">
-                    <label className="form-label fw-bold">Fotografía del Afiliado (Opcional):</label>
+                    <label className="form-label fw-bold">Fotografía de COCODE (Opcional):</label>
                     <input type="file" accept="image/*" onChange={handleFotoChange} className="form-control" />
                   </div>
                   <div className="col-md-4 mb-3 text-center">
