@@ -237,11 +237,33 @@
   }
 
   .module-table-wrap .table {
-    min-width: 100%;
+    min-width: 680px !important;
+    table-layout: auto !important;
+  }
+
+  .module-table-wrap .table thead th,
+  .module-table-wrap .table tbody td,
+  .module-table-wrap .table tbody th {
+    white-space: nowrap;
   }
 }
 
-@media (max-width: 1440px) and (max-height: 900px) {
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-main-content {
+    overflow-x: auto !important;
+  }
+
+  .module-table-wrap {
+    overflow-x: auto !important;
+  }
+
+  .module-table-wrap .table {
+    min-width: 760px !important;
+    table-layout: auto !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1440px) and (max-height: 900px) {
   .app-main-content {
     font-size: 0.94rem;
   }
@@ -300,5 +322,23 @@
 
   .container-fluid.mt-3 {
     margin-top: 0.6rem !important;
+  }
+}
+
+/* Regla final para tablet: evita encabezados comprimidos y habilita scroll horizontal */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .module-table-wrap {
+    overflow-x: auto !important;
+  }
+
+  .module-table-wrap .table {
+    min-width: 860px !important;
+    table-layout: auto !important;
+  }
+
+  .module-table-wrap .table thead th,
+  .module-table-wrap .table tbody td,
+  .module-table-wrap .table tbody th {
+    white-space: nowrap !important;
   }
 }
