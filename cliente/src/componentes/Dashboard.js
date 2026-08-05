@@ -5,21 +5,41 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Dashboard() {
   const [afiliados, setAfiliados] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [problemas, setProblemas] = useState([]);
+  const [comunidades, setComunidades] = useState([]);
+  const [municipios, setMunicipios] = useState([]);
+  const [bitacora, setBitacora] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartsReady, setChartsReady] = useState(false);
 
+  const API_BASE = 'https://sistema-cabal.onrender.com/api';
+
   useEffect(() => {
-    // Consumimos tu endpoint actual de afiliados
-    Axios.get("https://sistema-cabal.onrender.com/api/afiliados")
-      .then((res) => {
-        const payload = res.data;
-        setAfiliados(Array.isArray(payload) ? payload : (payload.data || []));
-        setLoading(false);
+    const normalizeList = (payload) => (Array.isArray(payload) ? payload : (payload?.data || []));
+
+    Promise.allSettled([
+      Axios.get(`${API_BASE}/afiliados`),
+      Axios.get(`${API_BASE}/usuarios`),
+      Axios.get(`${API_BASE}/problemas`),
+      Axios.get(`${API_BASE}/comunidades`),
+      Axios.get(`${API_BASE}/municipios`),
+      Axios.get(`${API_BASE}/bitacora`)
+    ])
+      .then((results) => {
+        const [afiliadosRes, usuariosRes, problemasRes, comunidadesRes, municipiosRes, bitacoraRes] = results;
+
+        setAfiliados(afiliadosRes.status === 'fulfilled' ? normalizeList(afiliadosRes.value.data) : []);
+        setUsuarios(usuariosRes.status === 'fulfilled' ? normalizeList(usuariosRes.value.data) : []);
+        setProblemas(problemasRes.status === 'fulfilled' ? normalizeList(problemasRes.value.data) : []);
+        setComunidades(comunidadesRes.status === 'fulfilled' ? normalizeList(comunidadesRes.value.data) : []);
+        setMunicipios(municipiosRes.status === 'fulfilled' ? normalizeList(municipiosRes.value.data) : []);
+        setBitacora(bitacoraRes.status === 'fulfilled' ? normalizeList(bitacoraRes.value.data) : []);
       })
       .catch((err) => {
-        console.error("Error cargando estadísticas: ", err);
-        setLoading(false);
-      });
+        console.error('Error cargando dashboard:', err);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -40,11 +60,26 @@ function Dashboard() {
   // 📊 PROCESAMIENTO DE DATOS EN TIEMPO REAL (FRONTEND)
   // =========================================================================
   const safeAfiliados = Array.isArray(afiliados) ? afiliados : [];
+  const safeUsuarios = Array.isArray(usuarios) ? usuarios : [];
+  const safeProblemas = Array.isArray(problemas) ? problemas : [];
+  const safeComunidades = Array.isArray(comunidades) ? comunidades : [];
+  const safeMunicipios = Array.isArray(municipios) ? municipios : [];
+  const safeBitacora = Array.isArray(bitacora) ? bitacora : [];
   
   // 1. Totalizadores rápidos
-  const totalAfiliados = safeAfiliados.length;
-  
-  const conCentroVotacion = safeAfiliados.filter(a => a.lugar_votacion).length;
+  const totalCocodes = safeAfiliados.length;
+  const totalUsuarios = safeUsuarios.length;
+  const usuariosActivos = safeUsuarios.filter((u) => (u.estado || '').toLowerCase() === 'activo').length;
+  const totalProblemas = safeProblemas.length;
+  const problemasActivos = safeProblemas.filter((p) => {
+    const estado = (p.estado || '').toLowerCase();
+    return estado === 'pendiente' || estado === 'activo';
+  }).length;
+  const totalComunidades = safeComunidades.length;
+  const totalMunicipiosCatalogo = safeMunicipios.length;
+  const totalMovimientos = safeBitacora.length;
+
+  const conNombreCocode = safeAfiliados.filter(a => a.lugar_votacion && String(a.lugar_votacion).trim() !== '').length;
   
   // 2. Agrupación por Municipio para Gráfico de Barras
   const municipiosMap = {};
@@ -55,7 +90,7 @@ function Dashboard() {
   const datosMunicipios = Object.keys(municipiosMap).map(key => ({
     name: key,
     Cantidad: municipiosMap[key]
-  }));
+  })).sort((a, b) => b.Cantidad - a.Cantidad).slice(0, 8);
 
   // 3. Agrupación por Fecha (Mes/Año) para Gráfico de Línea temporal
   const fechasMap = {};
@@ -69,99 +104,191 @@ function Dashboard() {
   });
   const datosLineaTiempo = Object.keys(fechasMap).sort().map(key => ({
     Fecha: key,
-    Afiliados: fechasMap[key]
+    Cocodes: fechasMap[key]
   }));
 
+  // 4. Resumen por estado de problemas
+  const problemasEstadoMap = {};
+  safeProblemas.forEach((p) => {
+    const estado = (p.estado || 'Sin estado').toString().toUpperCase();
+    problemasEstadoMap[estado] = (problemasEstadoMap[estado] || 0) + 1;
+  });
+  const datosProblemasEstado = Object.keys(problemasEstadoMap).map((estado) => ({
+    Estado: estado,
+    Cantidad: problemasEstadoMap[estado]
+  }));
+
+  const ultimosMovimientos = [...safeBitacora].slice(0, 5);
+
   return (
-    <div className="container-fluid mt-3 px-2 px-md-3">
-      <h3 className="mb-4 text-dark fw-bold">📊 DASHBOARD DE CONTROL -OBRAS MUNICIPALES .</h3>
+    <div className="container-fluid mt-3 px-2 px-md-3 dashboard-shell">
+      <div className="dashboard-header mb-3 mb-md-4">
+        <h3 className="m-0 fw-bold">PANEL EJECUTIVO DEL SISTEMA</h3>
+        <small>Visión consolidada de cocodes, incidencias, cobertura territorial y actividad operativa.</small>
+      </div>
 
-      {/* 📈 TARJETAS DE MÉTRICAS RÁPIDAS (KPIs) */}
-      <div className="row mb-4">
-        <div className="col-md-4 mb-3">
-          <div className="card border-0 bg-primary text-white shadow-sm h-100">
-            <div className="card-body d-flex flex-column justify-content-center py-4">
-              <h6 className="text-uppercase fw-bold text-white-50">TOTAL COCODES</h6>
-              <h2 className="display-5 fw-bold m-0">{totalAfiliados}</h2>
-              <small className="mt-2 text-white-50">Registrados globalmente</small>
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-primary">
+            <div className="card-body">
+              <h6>TOTAL COCODES</h6>
+              <h2>{totalCocodes}</h2>
+              <small>Registros totales del padrón</small>
             </div>
           </div>
         </div>
 
-        <div className="col-md-4 mb-3">
-          <div className="card border-0 bg-success text-white shadow-sm h-100">
-            <div className="card-body d-flex flex-column justify-content-center py-4">
-              <h6 className="text-uppercase fw-bold text-white-50">PROYECTOS ASIGNADOS</h6>
-              <h2 className="display-5 fw-bold m-0">{conCentroVotacion}</h2>
-              <small className="mt-2 text-white-50">LUGAR</small>
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-success">
+            <div className="card-body">
+              <h6>COCODES CON NOMBRE</h6>
+              <h2>{conNombreCocode}</h2>
+              <small>Con campo de nombre de cocode</small>
             </div>
           </div>
         </div>
 
-        <div className="col-md-4 mb-3">
-          <div className="card border-0 bg-warning text-dark shadow-sm h-100">
-            <div className="card-body d-flex flex-column justify-content-center py-4">
-              <h6 className="text-uppercase fw-bold text-black-50">Municipios Cobertura</h6>
-              <h2 className="display-5 fw-bold m-0">{datosMunicipios.length}</h2>
-              <small className="mt-2 text-black-50">Sectores con presencia</small>
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-warning">
+            <div className="card-body">
+              <h6>USUARIOS ACTIVOS</h6>
+              <h2>{usuariosActivos}</h2>
+              <small>{totalUsuarios} usuarios en total</small>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-6 col-xl-3">
+          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-danger">
+            <div className="card-body">
+              <h6>INCIDENCIAS ABIERTAS</h6>
+              <h2>{problemasActivos}</h2>
+              <small>{totalProblemas} problemas registrados</small>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 📊 SECCIÓN DE GRÁFICOS */}
-      <div className="row">
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-lg-8">
+          <div className="card shadow-sm border-0 p-3 h-100">
+            <h5 className="card-title text-muted fw-bold mb-3">COCODES POR MUNICIPIO (TOP 8)</h5>
+            <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+              {!chartsReady ? (
+                <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                  Preparando gráfico...
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
+                  <BarChart data={datosMunicipios} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Cantidad" fill="#2980b9" radius={[4, 4, 0, 0]} name="No. Cocodes" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-lg-4">
+          <div className="card shadow-sm border-0 p-3 h-100">
+            <h5 className="card-title text-muted fw-bold mb-3">RESUMEN OPERATIVO</h5>
+            <ul className="dashboard-summary-list m-0 p-0">
+              <li><span>Municipios catalogados</span><strong>{totalMunicipiosCatalogo}</strong></li>
+              <li><span>Comunidades registradas</span><strong>{totalComunidades}</strong></li>
+              <li><span>Movimientos en bitácora</span><strong>{totalMovimientos}</strong></li>
+              <li><span>Cobertura municipal con cocodes</span><strong>{Object.keys(municipiosMap).length}</strong></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="row g-3">
+        <div className="col-12 col-lg-6">
+          <div className="card shadow-sm border-0 p-3 h-100">
+            <h5 className="card-title text-muted fw-bold mb-3">TENDENCIA MENSUAL DE COCODES</h5>
+            <div style={{ width: '100%', height: 300, minWidth: 0 }}>
+              {!chartsReady ? (
+                <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                  Preparando gráfico...
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
+                  <LineChart data={datosLineaTiempo} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="Fecha" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="Cocodes" stroke="#2ecc71" strokeWidth={3} activeDot={{ r: 7 }} name="Nuevos cocodes" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </div>
         
-        {/* Gráfico de Barras: Municipios */}
-        <div className="col-lg-6 mb-4">
+        <div className="col-12 col-lg-6">
           <div className="card shadow-sm border-0 p-3 h-100">
-            <h5 className="card-title text-muted fw-bold mb-3">📍 COCODES POR MUNICIPIOS</h5>
+            <h5 className="card-title text-muted fw-bold mb-3">INCIDENCIAS POR ESTADO</h5>
             <div style={{ width: '100%', height: 300, minWidth: 0 }}>
               {!chartsReady ? (
                 <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
                   Preparando gráfico...
                 </div>
               ) : (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
-                <BarChart data={datosMunicipios} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Cantidad" fill="#2980b9" radius={[4, 4, 0, 0]} name="No. Afiliados" />
-                </BarChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
+                  <BarChart data={datosProblemasEstado} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="Estado" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Cantidad" fill="#f39c12" radius={[4, 4, 0, 0]} name="No. Incidencias" />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </div>
           </div>
         </div>
 
-        {/* Gráfico de Línea: Historial Temporal */}
-        <div className="col-lg-6 mb-4">
-          <div className="card shadow-sm border-0 p-3 h-100">
-            <h5 className="card-title text-muted fw-bold mb-3">📈 TENDENCIA TEMPORAL</h5>
-            <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-              {!chartsReady ? (
-                <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
-                  Preparando gráfico...
-                </div>
-              ) : (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
-                <LineChart data={datosLineaTiempo} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="Fecha" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="Afiliados" stroke="#2ecc71" strokeWidth={3} activeDot={{ r: 8 }} name="Nuevos Registros" />
-                </LineChart>
-              </ResponsiveContainer>
-              )}
+        <div className="col-12">
+          <div className="card shadow-sm border-0 p-3">
+            <h5 className="card-title text-muted fw-bold mb-3">ÚLTIMOS MOVIMIENTOS EN BITÁCORA</h5>
+            <div className="table-responsive module-table-wrap">
+              <table className="table table-sm table-bordered align-middle mb-0 module-table-centered">
+                <thead className="table-dark">
+                  <tr>
+                    <th>ID</th>
+                    <th>FECHA</th>
+                    <th>MOVIMIENTO</th>
+                    <th>EJECUTADO POR</th>
+                    <th>DETALLE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ultimosMovimientos.length > 0 ? ultimosMovimientos.map((row) => (
+                    <tr key={row.id_bitacora || `${row.fecha_movimiento}-${row.tipo_movimiento}`}>
+                      <td>{row.id_bitacora || '-'}</td>
+                      <td>{row.fecha_movimiento ? new Date(row.fecha_movimiento).toLocaleString() : '-'}</td>
+                      <td>{(row.tipo_movimiento || 'N/A').toUpperCase()}</td>
+                      <td>{row.ejecutado_por || 'SISTEMA'}</td>
+                      <td className="text-start">{row.detalles || 'Sin detalle'}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="5" className="text-center text-muted py-3">No hay movimientos disponibles.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
