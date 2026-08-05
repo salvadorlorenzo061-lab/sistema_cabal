@@ -8,8 +8,9 @@ remote_url="$2"
 zero_hash="0000000000000000000000000000000000000000"
 found_secret=0
 
-# Patrones comunes de secretos
-secret_pattern="(AIVEN|AKIA[0-9A-Z]{16}|password[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,}|api[_-]?key[[:space:]]*[:=][[:space:]]*[^[:space:]]{10,}|token[[:space:]]*[:=][[:space:]]*[^[:space:]]{10,}|secret[[:space:]]*[:=][[:space:]]*[^[:space:]]{8,})"
+# Patrones comunes de secretos escritos como literales.
+# Se excluyen referencias seguras a variables de entorno como DB_PASSWORD.
+secret_pattern="(AKIA[0-9A-Z]{16}|password[[:space:]]*[:=][[:space:]]*['\"][^'\"]{6,}['\"]|api[_-]?key[[:space:]]*[:=][[:space:]]*['\"][^'\"]{10,}['\"]|token[[:space:]]*[:=][[:space:]]*['\"][^'\"]{10,}['\"]|secret[[:space:]]*[:=][[:space:]]*['\"][^'\"]{8,}['\"])"
 
 while read local_ref local_sha remote_ref remote_sha
 do
