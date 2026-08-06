@@ -121,8 +121,7 @@ function Dashboard() {
     mes: 'Mes actual'
   };
   
-  // 1. Totalizadores rápidos
-  const totalCocodes = cocodesPeriodo.length;
+  // Totalizadores
   const totalUsuarios = usuariosPeriodo.length;
   const usuariosActivos = usuariosPeriodo.filter((u) => (u.estado || '').toLowerCase() === 'activo').length;
   const totalProblemas = problemasPeriodo.length;
@@ -142,7 +141,7 @@ function Dashboard() {
 
   const conNombreCocode = cocodesPeriodo.filter(a => a.lugar_votacion && String(a.lugar_votacion).trim() !== '').length;
   
-  // 2. Agrupación por Municipio para Gráfico de Barras
+  // Agrupaciones para gráficos
   const municipiosMap = {};
   cocodesPeriodo.forEach(a => {
     const muni = a.nombre_municipio || "No Especificado";
@@ -153,12 +152,10 @@ function Dashboard() {
     Cantidad: municipiosMap[key]
   })).sort((a, b) => b.Cantidad - a.Cantidad).slice(0, 8);
 
-  // 3. Agrupación por Fecha (Mes/Año) para Gráfico de Línea temporal
   const fechasMap = {};
   cocodesPeriodo.forEach(a => {
     if (a.fecha_afiliacion) {
       const fecha = new Date(a.fecha_afiliacion);
-      // Formato: "Año-Mes" (Ej: 2026-06)
       const mesAnio = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
       fechasMap[mesAnio] = (fechasMap[mesAnio] || 0) + 1;
     }
@@ -168,7 +165,6 @@ function Dashboard() {
     Cocodes: fechasMap[key]
   }));
 
-  // 4. Resumen por estado de problemas
   const problemasEstadoMap = {};
   problemasPeriodo.forEach((p) => {
     const estado = (p.estado || 'Sin estado').toString().toUpperCase();
@@ -183,59 +179,61 @@ function Dashboard() {
 
   return (
     <div className="container-fluid mt-3 px-2 px-md-3 dashboard-shell">
-      <div className="dashboard-header mb-3 mb-md-4">
+      {/* HEADER Y FILTROS */}
+      <div className="dashboard-header mb-4">
         <h3 className="m-0 fw-bold">PANEL EJECUTIVO DEL SISTEMA</h3>
-        <small>Visión consolidada de cocodes, incidencias, cobertura territorial y actividad operativa.</small>
+        <small className="text-muted">Visión consolidada de cocodes, incidencias, cobertura territorial y actividad operativa.</small>
 
-        <div className="dashboard-period-filter mt-3">
+        <div className="dashboard-period-filter mt-3 d-flex align-items-center gap-2">
           <button type="button" className={`btn btn-sm ${periodo === 'hoy' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('hoy')}>Hoy</button>
           <button type="button" className={`btn btn-sm ${periodo === 'semana' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('semana')}>Semana</button>
           <button type="button" className={`btn btn-sm ${periodo === 'mes' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('mes')}>Mes</button>
           <button type="button" className={`btn btn-sm ${periodo === 'todo' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('todo')}>Todo</button>
-          <span className="dashboard-period-badge">Corte: {etiquetaPeriodo[periodo]}</span>
+          <span className="badge bg-secondary ms-2">Corte: {etiquetaPeriodo[periodo]}</span>
         </div>
       </div>
 
-      
-
-        <div className="col-12 col-md-6 col-xl-3">
+      {/* BLOQUE 1: KPIs GENERALES */}
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-md-6 col-xl-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-success">
             <div className="card-body">
-              <h6>COCODES CON NOMBRE</h6>
-              <h2>{conNombreCocode}</h2>
-              <small>Con campo de nombre de cocode</small>
+              <h6 className="text-muted fw-bold">COCODES CON NOMBRE</h6>
+              <h2 className="display-6 fw-bold mb-1">{conNombreCocode}</h2>
+              <small className="text-muted">Con campo de nombre de cocode</small>
             </div>
           </div>
         </div>
 
-        <div className="col-12 col-md-6 col-xl-3">
+        <div className="col-12 col-md-6 col-xl-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-warning">
             <div className="card-body">
-              <h6>USUARIOS ACTIVOS</h6>
-              <h2>{usuariosActivos}</h2>
-              <small>{totalUsuarios} usuarios en total</small>
+              <h6 className="text-muted fw-bold">USUARIOS ACTIVOS</h6>
+              <h2 className="display-6 fw-bold mb-1">{usuariosActivos}</h2>
+              <small className="text-muted">{totalUsuarios} usuarios en total</small>
             </div>
-          
+          </div>
         </div>
 
-        <div className="col-12 col-md-6 col-xl-3">
+        <div className="col-12 col-md-6 col-xl-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-danger">
             <div className="card-body">
-              <h6>INCIDENCIAS ABIERTAS</h6>
-              <h2>{problemasActivos}</h2>
-              <small>{totalProblemas} problemas registrados</small>
+              <h6 className="text-muted fw-bold">INCIDENCIAS ABIERTAS</h6>
+              <h2 className="display-6 fw-bold mb-1">{problemasActivos}</h2>
+              <small className="text-muted">{totalProblemas} problemas registrados</small>
             </div>
           </div>
         </div>
       </div>
 
+      {/* BLOQUE 2: KPIs DE TICKETS */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-warning">
             <div className="card-body">
-              <h6>TICKETS PENDIENTES</h6>
-              <h2>{ticketsPendientes}</h2>
-              <small>Esperando asignación/arranque</small>
+              <h6 className="text-muted fw-bold">TICKETS PENDIENTES</h6>
+              <h2 className="display-6 fw-bold mb-1">{ticketsPendientes}</h2>
+              <small className="text-muted">Esperando asignación/arranque</small>
             </div>
           </div>
         </div>
@@ -243,9 +241,9 @@ function Dashboard() {
         <div className="col-12 col-md-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-primary">
             <div className="card-body">
-              <h6>TICKETS ACTIVOS</h6>
-              <h2>{ticketsActivos}</h2>
-              <small>Activo, trabajando y seguimiento</small>
+              <h6 className="text-muted fw-bold">TICKETS ACTIVOS</h6>
+              <h2 className="display-6 fw-bold mb-1">{ticketsActivos}</h2>
+              <small className="text-muted">Activo, trabajando y seguimiento</small>
             </div>
           </div>
         </div>
@@ -253,14 +251,15 @@ function Dashboard() {
         <div className="col-12 col-md-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-success">
             <div className="card-body">
-              <h6>TICKETS FINALIZADOS</h6>
-              <h2>{ticketsFinalizados}</h2>
-              <small>Incidencias cerradas</small>
+              <h6 className="text-muted fw-bold">TICKETS FINALIZADOS</h6>
+              <h2 className="display-6 fw-bold mb-1">{ticketsFinalizados}</h2>
+              <small className="text-muted">Incidencias cerradas</small>
             </div>
           </div>
         </div>
       </div>
 
+      {/* BLOQUE 3: GRÁFICO MUNICIPIOS + RESUMEN OPERATIVO */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-lg-8">
           <div className="card shadow-sm border-0 p-3 h-100">
@@ -289,17 +288,30 @@ function Dashboard() {
         <div className="col-12 col-lg-4">
           <div className="card shadow-sm border-0 p-3 h-100">
             <h5 className="card-title text-muted fw-bold mb-3">RESUMEN OPERATIVO</h5>
-            <ul className="dashboard-summary-list m-0 p-0">
-              <li><span>Municipios catalogados</span><strong>{totalMunicipiosCatalogo}</strong></li>
-              <li><span>Comunidades registradas</span><strong>{totalComunidades}</strong></li>
-              <li><span>Movimientos en bitácora</span><strong>{totalMovimientos}</strong></li>
-              <li><span>Cobertura municipal con cocodes</span><strong>{Object.keys(municipiosMap).length}</strong></li>
+            <ul className="list-group list-group-flush m-0 p-0">
+              <li className="list-group-item d-flex justify-content-between align-items-center px-0">
+                <span>Municipios catalogados</span>
+                <strong>{totalMunicipiosCatalogo}</strong>
+              </li>
+              <li className="list-group-item d-flex justify-content-between align-items-center px-0">
+                <span>Comunidades registradas</span>
+                <strong>{totalComunidades}</strong>
+              </li>
+              <li className="list-group-item d-flex justify-content-between align-items-center px-0">
+                <span>Movimientos en bitácora</span>
+                <strong>{totalMovimientos}</strong>
+              </li>
+              <li className="list-group-item d-flex justify-content-between align-items-center px-0">
+                <span>Cobertura municipal con cocodes</span>
+                <strong>{Object.keys(municipiosMap).length}</strong>
+              </li>
             </ul>
           </div>
         </div>
       </div>
 
-      <div className="row g-3">
+      {/* BLOQUE 4: GRÁFICOS TENDENCIA Y ESTADO */}
+      <div className="row g-3 mb-4">
         <div className="col-12 col-lg-6">
           <div className="card shadow-sm border-0 p-3 h-100">
             <h5 className="card-title text-muted fw-bold mb-3">TENDENCIA MENSUAL DE COCODES</h5>
@@ -323,7 +335,7 @@ function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         <div className="col-12 col-lg-6">
           <div className="card shadow-sm border-0 p-3 h-100">
             <h5 className="card-title text-muted fw-bold mb-3">INCIDENCIAS POR ESTADO</h5>
@@ -347,12 +359,15 @@ function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
 
+      {/* BLOQUE 5: TABLA BITÁCORA */}
+      <div className="row g-3">
         <div className="col-12">
           <div className="card shadow-sm border-0 p-3">
             <h5 className="card-title text-muted fw-bold mb-3">ÚLTIMOS MOVIMIENTOS EN BITÁCORA</h5>
-            <div className="table-responsive module-table-wrap">
-              <table className="table table-sm table-bordered align-middle mb-0 module-table-centered">
+            <div className="table-responsive">
+              <table className="table table-sm table-bordered align-middle mb-0 text-center">
                 <thead className="table-dark">
                   <tr>
                     <th>ID</th>
