@@ -196,16 +196,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-md-6 col-xl-3">
-          <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-primary">
-            <div className="card-body">
-              <h6>TOTAL COCODES</h6>
-              <h2>{totalCocodes}</h2>
-              <small>Registros totales del padrón</small>
-            </div>
-          </div>
-        </div>
+      
 
         <div className="col-12 col-md-6 col-xl-3">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-success">
@@ -224,7 +215,7 @@ function Dashboard() {
               <h2>{usuariosActivos}</h2>
               <small>{totalUsuarios} usuarios en total</small>
             </div>
-          </div>
+          
         </div>
 
         <div className="col-12 col-md-6 col-xl-3">
