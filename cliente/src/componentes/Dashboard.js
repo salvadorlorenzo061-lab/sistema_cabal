@@ -198,7 +198,7 @@ function Dashboard() {
         <div className="col-12 col-md-6 col-xl-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-success">
             <div className="card-body">
-              <h6 className="text-muted fw-bold">COCODES CON NOMBRE</h6>
+              <h6 className="text-muted fw-bold">INFORMACION DE COCODES</h6>
               <h2 className="display-6 fw-bold mb-1">{conNombreCocode}</h2>
               <small className="text-muted">Con campo de nombre de cocode</small>
             </div>
