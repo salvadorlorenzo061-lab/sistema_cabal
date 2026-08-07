@@ -2,23 +2,31 @@ const express = require("express");
 const db = require('../Conexion');
 const router = express.Router();
 
-// Crea la tabla si no existe y siembra roles base la primera vez
+const todosLosModulos = ['dashboard','usuarios','bitacora','municipios','comunidades','departamentos','roles','cocode','problemas'];
+
 const initRolesTable = () => {
     db.query(`
         CREATE TABLE IF NOT EXISTS roles (
             id_rol INT AUTO_INCREMENT PRIMARY KEY,
             nombre_rol VARCHAR(100) NOT NULL UNIQUE,
             descripcion VARCHAR(255) DEFAULT NULL,
-            estado ENUM('Activo','Inactivo') NOT NULL DEFAULT 'Activo'
+            estado ENUM('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
+            permisos TEXT DEFAULT NULL
         )
     `, (err) => {
         if (err) { console.error("Error creando tabla roles:", err); return; }
+
+        // Agrega columna permisos si la tabla ya existía sin ella
+        db.query("ALTER TABLE roles ADD COLUMN IF NOT EXISTS permisos TEXT DEFAULT NULL", () => {});
+
+        const permisosTotal = JSON.stringify(todosLosModulos);
+        const permisosBase  = JSON.stringify(['cocode','problemas']);
         db.query(`
-            INSERT IGNORE INTO roles (nombre_rol, descripcion, estado) VALUES
-            ('Coordinador Regional',      'Nivel máximo de acceso al sistema',  'Activo'),
-            ('Coordinador Municipal',     'Acceso a módulos de campo',           'Activo'),
-            ('Sub Coordinador Municipal', 'Acceso básico de captura',            'Activo')
-        `, (seedErr) => {
+            INSERT IGNORE INTO roles (nombre_rol, descripcion, estado, permisos) VALUES
+            ('Coordinador Regional',      'Nivel máximo de acceso al sistema', 'Activo', ?),
+            ('Coordinador Municipal',     'Acceso a módulos de campo',          'Activo', ?),
+            ('Sub Coordinador Municipal', 'Acceso básico de captura',           'Activo', ?)
+        `, [permisosTotal, permisosBase, permisosBase], (seedErr) => {
             if (seedErr) console.error("Error en seed de roles:", seedErr);
         });
     });
@@ -35,11 +43,12 @@ router.get("/", (_req, res) => {
 
 // POST /crear
 router.post("/crear", (req, res) => {
-    const { nombre_rol, descripcion, estado } = req.body;
+    const { nombre_rol, descripcion, estado, permisos } = req.body;
     if (!nombre_rol?.trim()) return res.status(400).send("El nombre del rol es requerido");
+    const permisosJSON = Array.isArray(permisos) ? JSON.stringify(permisos) : (permisos || null);
     db.query(
-        "INSERT INTO roles (nombre_rol, descripcion, estado) VALUES (?, ?, ?)",
-        [nombre_rol.trim(), descripcion?.trim() || null, estado || 'Activo'],
+        "INSERT INTO roles (nombre_rol, descripcion, estado, permisos) VALUES (?, ?, ?, ?)",
+        [nombre_rol.trim(), descripcion?.trim() || null, estado || 'Activo', permisosJSON],
         (err) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') return res.status(400).send("Ya existe un rol con ese nombre");
@@ -53,11 +62,12 @@ router.post("/crear", (req, res) => {
 
 // PUT /actualizar
 router.put("/actualizar", (req, res) => {
-    const { id_rol, nombre_rol, descripcion, estado } = req.body;
+    const { id_rol, nombre_rol, descripcion, estado, permisos } = req.body;
     if (!id_rol || !nombre_rol?.trim()) return res.status(400).send("Datos incompletos");
+    const permisosJSON = Array.isArray(permisos) ? JSON.stringify(permisos) : (permisos || null);
     db.query(
-        "UPDATE roles SET nombre_rol=?, descripcion=?, estado=? WHERE id_rol=?",
-        [nombre_rol.trim(), descripcion?.trim() || null, estado || 'Activo', id_rol],
+        "UPDATE roles SET nombre_rol=?, descripcion=?, estado=?, permisos=? WHERE id_rol=?",
+        [nombre_rol.trim(), descripcion?.trim() || null, estado || 'Activo', permisosJSON, id_rol],
         (err) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') return res.status(400).send("Ya existe un rol con ese nombre");
