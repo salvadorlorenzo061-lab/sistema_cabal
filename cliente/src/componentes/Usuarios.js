@@ -227,6 +227,17 @@ function Usuarios() {
       ejecutado_por: usuarioLogueado 
     })
     .then(() => {
+      // Si el usuario actualizó su propio perfil, refresca la sesión en localStorage y recarga
+      const sesionActiva = (() => { try { return JSON.parse(localStorage.getItem('sesion_cabal') || 'null'); } catch (_) { return null; } })();
+      if (sesionActiva && String(sesionActiva.id_usuario) === String(id_usuario)) {
+        localStorage.setItem('sesion_cabal', JSON.stringify({ ...sesionActiva, nombre, correo, rol, estado }));
+        getUsuarios();
+        limpiarCampos();
+        setShowEditModal(false);
+        Swal.fire({ html: '<strong>¡Éxito!</strong><p>Usuario actualizado. Recargando sesión...</p>', icon: 'success', timer: 2000, showConfirmButton: false })
+          .then(() => window.location.reload());
+        return;
+      }
       getUsuarios();
       limpiarCampos();
       setShowEditModal(false);
