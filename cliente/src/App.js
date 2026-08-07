@@ -9,9 +9,10 @@ import Municipios from './componentes/Municipios';
 import Comunidades from './componentes/Comunidades'; 
 import Departamentos from './componentes/Departamentos';
 import Afiliados from './componentes/Afiliados';
+import Roles from './componentes/Roles';
 import Dashboard from './componentes/Dashboard'; 
 import Bitacora from './componentes/Bitacora'; 
-import Problemas from './componentes/Problemas'; 
+import Problemas from './componentes/Problemas';
 
 // Imagen corporativa
 import logoCabal from './img/4.jpeg'; 
@@ -28,7 +29,7 @@ const RutaProtegida = ({ user, rolesPermitidos, children }) => {
   
   if (!rolesPermitidos.includes(rolUsuario)) {
     if (rolUsuario === 'coordinador municipal' || rolUsuario === 'sub coordinador municipal') {
-      return <Navigate to="/afiliados" replace />;
+      return <Navigate to="/cocode" replace />;
     }
     return <Navigate to="/home" replace />;
   }
@@ -353,8 +354,14 @@ function App() {
                 </Link>
               )}
 
+              {['coordinador regional'].includes(miRol) && (
+                <Link to="/roles" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">🔐</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ROLES</span>}
+                </Link>
+              )}
+
               {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
-                <Link to="/afiliados" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                <Link to="/cocode" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">COCODE</span>}
                 </Link>
               )}
@@ -392,7 +399,7 @@ function App() {
             <Routes>
               <Route path="/" element={
                 (miRol === 'coordinador municipal' || miRol === 'sub coordinador municipal') 
-                  ? <Navigate to="/afiliados" replace /> 
+                  ? <Navigate to="/cocode" replace /> 
                   : <Navigate to="/home" replace />
               } />
 
@@ -432,9 +439,17 @@ function App() {
                 </RutaProtegida>
               } />
 
-              <Route path="/afiliados" element={
+              <Route path="/cocode" element={
                 <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
                   <Afiliados />
+                </RutaProtegida>
+              } />
+
+              <Route path="/afiliados" element={<Navigate to="/cocode" replace />} />
+
+              <Route path="/roles" element={
+                <RutaProtegida user={user} rolesPermitidos={['coordinador regional']}>
+                  <Roles />
                 </RutaProtegida>
               } />
 
@@ -445,7 +460,7 @@ function App() {
               } />
 
               <Route path="*" element={
-                <Navigate to={(miRol === 'coordinador municipal' || miRol === 'sub coordinador municipal') ? "/afiliados" : "/home"} replace />
+                <Navigate to={(miRol === 'coordinador municipal' || miRol === 'sub coordinador municipal') ? "/cocode" : "/home"} replace />
               } />
             </Routes>
           </div>

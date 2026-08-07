@@ -23,19 +23,19 @@ const usuariosRouter = require('./router/UsuariosRouter');
 const comunidadesRouter = require('./router/ComunidadesRouter'); 
 const departamentosRouter = require('./router/DepartamentosRouter');
 const afiliadosRouter = require('./router/AfiliadosRouter');
-const bitacoraRouter = require('./router/BitacoraRouter'); // 🛡️ Router de Auditoría
-const problemasRouter = require('./router/ProblemasRouter'); // ⚠️ Router de Problemas Comunitarios
+const bitacoraRouter = require('./router/BitacoraRouter');
+const problemasRouter = require('./router/ProblemasRouter');
+const rolesRouter = require('./router/RolesRouter');
 
-// Declarar los prefijos de la API global
-// 💡 Al usar '/api/usuarios', el endpoint de login se ejecutará automáticamente desde UsuariosRouter.js
-app.use('/api/usuarios', usuariosRouter);                                      
+app.use('/api/usuarios', usuariosRouter);
 app.use('/api/municipios', municipiosRouter);
-app.use('/api/comunidades', comunidadesRouter); 
+app.use('/api/comunidades', comunidadesRouter);
 app.use('/api/departamentos', departamentosRouter);
-app.use('/api/afiliados', afiliadosRouter); 
+app.use('/api/afiliados', afiliadosRouter);
 app.use('/api/cocodes', afiliadosRouter);
-app.use('/api/bitacora', bitacoraRouter); 
-app.use('/api/problemas', problemasRouter); 
+app.use('/api/roles', rolesRouter);
+app.use('/api/bitacora', bitacoraRouter);
+app.use('/api/problemas', problemasRouter);
 
 // Health check para Render y verificación rápida de identidad del servicio
 app.get('/health', (_req, res) => {

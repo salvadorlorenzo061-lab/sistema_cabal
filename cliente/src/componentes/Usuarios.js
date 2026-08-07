@@ -13,6 +13,7 @@ function Usuarios() {
   const [clave, setClave] = useState("");
   const [rol, setRol] = useState("");
   const [fecha_creacion, setFecha_creacion] = useState("");
+  const [rolesList, setRolesList] = useState([]);
   const [estado, setEstado] = useState("");
   
   const [usuariosList, setUsuarios] = useState([]);
@@ -287,8 +288,15 @@ function Usuarios() {
     .catch((error) => { console.error("Error al obtener usuarios", error); });
   };
 
+  const getRoles = () => {
+    Axios.get(`${BASE_URL}/roles`)
+      .then((res) => setRolesList(Array.isArray(res.data) ? res.data.filter(r => r.estado === 'Activo') : []))
+      .catch(() => {});
+  };
+
   useEffect(() => { 
-    getUsuarios(); 
+    getUsuarios();
+    getRoles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagina]);
 
@@ -444,9 +452,9 @@ function Usuarios() {
                   <label className="form-label fw-bold">Rol de Usuario:</label>
                   <select value={rol} onChange={(e) => setRol(e.target.value)} className="form-select">
                     <option value="" disabled>-- Seleccione un Rol --</option>
-                    <option value="Coordinador Regional">DIRECTOR</option>
-                    <option value="Coordinador Municipal">SUBDIRECTOR I</option>
-                    <option value="Sub Coordinador Municipal">SUBDIRECTOR II</option>
+                    {rolesList.map((r) => (
+                      <option key={r.id_rol} value={r.nombre_rol}>{r.nombre_rol.toUpperCase()}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="mb-3">
@@ -493,9 +501,9 @@ function Usuarios() {
                 <div className="mb-3">
                   <label className="form-label fw-bold">Rol de Usuario:</label>
                   <select value={rol} onChange={(e) => setRol(e.target.value)} className="form-select">
-                    <option value="Coordinador Regional">Coordinador Regional</option>
-                    <option value="Coordinador Municipal">Coordinador Municipal</option>
-                    <option value="Sub Coordinador Municipal">Sub Coordinador Municipal</option>
+                    {rolesList.map((r) => (
+                      <option key={r.id_rol} value={r.nombre_rol}>{r.nombre_rol}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="mb-3">
