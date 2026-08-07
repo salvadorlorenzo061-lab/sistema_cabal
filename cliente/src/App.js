@@ -167,9 +167,18 @@ function App() {
         const usuarioValido = data.usuario ? data.usuario : (data.id_usuario ? data : null);
 
         if (usuarioValido) {
+          // Carga los permisos del rol desde la API y los guarda en sesión
+          try {
+            const rolesRes = await fetch(`${BASE_URL}/roles`);
+            const rolesList = rolesRes.ok ? await rolesRes.json() : [];
+            const rolData = rolesList.find(r => r.nombre_rol?.toLowerCase() === (usuarioValido.rol || '').toLowerCase());
+            const permisos = rolData?.permisos ? (typeof rolData.permisos === 'string' ? JSON.parse(rolData.permisos) : rolData.permisos) : [];
+            usuarioValido.permisos = permisos;
+          } catch (_) {
+            usuarioValido.permisos = [];
+          }
           setUser(usuarioValido);
           localStorage.setItem('sesion_cabal', JSON.stringify(usuarioValido));
-          // Forzar apertura en escritorio tras loguearse exitosamente
           if (window.innerWidth > 768) setIsMenuOpen(true);
         } else {
           setErrorLogin('Estructura de usuario no reconocida por el servidor central.');
@@ -185,9 +194,28 @@ function App() {
 
   const ROLES_CONOCIDOS = ['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'];
   const rolRaw = user?.rol ? user.rol.trim().toLowerCase() : '';
-  // Si el rol guardado no es uno de los conocidos (ej: se guardó el correo por error), usa acceso total
+  // Normaliza roles corruptos a coordinador regional
   const miRol = ROLES_CONOCIDOS.includes(rolRaw) ? rolRaw : (rolRaw ? 'coordinador regional' : '');
   const rolDisplay = ROLES_CONOCIDOS.includes(rolRaw) ? user.rol.toUpperCase() : 'COORDINADOR REGIONAL';
+
+  // Permisos del rol desde la sesión; si están vacíos usa defaults por nombre de rol
+  const userPermisos = (() => {
+    if (!user?.permisos) return [];
+    if (Array.isArray(user.permisos)) return user.permisos;
+    try { return JSON.parse(user.permisos); } catch (_) { return []; }
+  })();
+
+  const PERMISOS_DEFAULT = {
+    'coordinador regional':      ['dashboard','usuarios','bitacora','municipios','comunidades','departamentos','roles','cocode','problemas'],
+    'coordinador municipal':     ['municipios','comunidades','cocode','problemas'],
+    'sub coordinador municipal': ['cocode','problemas']
+  };
+
+  const tieneAcceso = (modulo) => {
+    if (userPermisos.length > 0) return userPermisos.includes(modulo);
+    return (PERMISOS_DEFAULT[miRol] || []).includes(modulo);
+  };
+
   const sidebarModuleClass = 'nav-link btn btn-outline-light border-0 fw-bold text-start text-white d-flex align-items-center rounded sidebar-module-link';
 
   // 🚪 PANTALLA DE LOGIN RESPONSIVA
@@ -326,55 +354,55 @@ function App() {
             {/* Navegación y Enlaces */}
             <nav className="nav flex-column w-100 gap-0 flex-grow-1 overflow-auto sidebar-menu-scroll" style={{ maxHeight: 'calc(100vh - 300px)', minHeight: 0 }}>
               
-              {['coordinador regional'].includes(miRol) && (
+              {tieneAcceso('dashboard') && (
                 <Link to="/home" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">📊</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">DASHBOARD</span>}
                 </Link>
               )}
 
-              {['coordinador regional'].includes(miRol) && (
+              {tieneAcceso('usuarios') && (
                 <Link to="/usuarios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">👥</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">USUARIOS</span>}
                 </Link>
               )}
 
-              {['coordinador regional'].includes(miRol) && (
+              {tieneAcceso('bitacora') && (
                 <Link to="/bitacora" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">🛡️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">BITACORA</span>}
                 </Link>
               )}
 
-              {['coordinador regional', 'coordinador municipal'].includes(miRol) && (
-                <>
-                  <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                    <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">MUNICIPIOS</span>}
-                  </Link>
-
-                  <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                    <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ALDEAS / CASERIOS</span>}
-                  </Link>
-                </>
+              {tieneAcceso('municipios') && (
+                <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">MUNICIPIOS</span>}
+                </Link>
               )}
-              
-              {['coordinador regional'].includes(miRol) && (
+
+              {tieneAcceso('comunidades') && (
+                <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ALDEAS / CASERIOS</span>}
+                </Link>
+              )}
+
+              {tieneAcceso('departamentos') && (
                 <Link to="/departamentos" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">🏕</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">DEPARTAMENTOS</span>}
                 </Link>
               )}
 
-              {['coordinador regional'].includes(miRol) && (
+              {tieneAcceso('roles') && (
                 <Link to="/roles" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">🔐</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ROLES</span>}
                 </Link>
               )}
 
-              {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
+              {tieneAcceso('cocode') && (
                 <Link to="/cocode" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">COCODE</span>}
                 </Link>
               )}
 
-              {['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'].includes(miRol) && (
+              {tieneAcceso('problemas') && (
                 <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS</span>}
                 </Link>

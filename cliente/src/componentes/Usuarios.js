@@ -210,7 +210,7 @@ function Usuarios() {
     });
   };
 
-  const actualizar = () => {
+  const actualizar = async () => {
     if (!nombre.trim() || !correo.trim() || !clave.trim() || !rol.trim() || !estado.trim()) {
       Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
       return;
@@ -227,15 +227,27 @@ function Usuarios() {
       ejecutado_por: usuarioLogueado 
     })
     .then(() => {
-      // Si el usuario actualizó su propio perfil, refresca la sesión en localStorage y recarga
       const sesionActiva = (() => { try { return JSON.parse(localStorage.getItem('sesion_cabal') || 'null'); } catch (_) { return null; } })();
       if (sesionActiva && String(sesionActiva.id_usuario) === String(id_usuario)) {
-        localStorage.setItem('sesion_cabal', JSON.stringify({ ...sesionActiva, nombre, correo, rol, estado }));
-        getUsuarios();
-        limpiarCampos();
-        setShowEditModal(false);
-        Swal.fire({ html: '<strong>¡Éxito!</strong><p>Usuario actualizado. Recargando sesión...</p>', icon: 'success', timer: 2000, showConfirmButton: false })
-          .then(() => window.location.reload());
+        // Recarga permisos del nuevo rol con promesa encadenada (sin await en .then)
+        Axios.get(`${BASE_URL}/roles`)
+          .then((rolesRes) => {
+            const rolesList = Array.isArray(rolesRes.data) ? rolesRes.data : [];
+            const rolData = rolesList.find(r => r.nombre_rol?.toLowerCase() === rol.toLowerCase());
+            const permisos = rolData?.permisos
+              ? (typeof rolData.permisos === 'string' ? JSON.parse(rolData.permisos) : rolData.permisos)
+              : (sesionActiva.permisos || []);
+            localStorage.setItem('sesion_cabal', JSON.stringify({ ...sesionActiva, nombre, correo, rol, estado, permisos }));
+          })
+          .catch(() => {
+            localStorage.setItem('sesion_cabal', JSON.stringify({ ...sesionActiva, nombre, correo, rol, estado }));
+          })
+          .finally(() => {
+            limpiarCampos();
+            setShowEditModal(false);
+            Swal.fire({ html: '<strong>¡Éxito!</strong><p>Usuario actualizado. Recargando sesión...</p>', icon: 'success', timer: 2000, showConfirmButton: false })
+              .then(() => window.location.reload());
+          });
         return;
       }
       getUsuarios();
