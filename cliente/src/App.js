@@ -20,13 +20,17 @@ import logoCabal from './img/4.jpeg';
 // =========================================================================
 // 🛡️ COMPONENTE CONTROLADOR DE RUTAS POR ROL
 // =========================================================================
+const ROLES_CONOCIDOS_GUARD = ['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'];
+
 const RutaProtegida = ({ user, rolesPermitidos, children }) => {
   if (!user) {
     return <Navigate to="/" replace />;
   }
-  
-  const rolUsuario = user.rol ? user.rol.trim().toLowerCase() : '';
-  
+
+  const rolRaw = user.rol ? user.rol.trim().toLowerCase() : '';
+  // Normaliza roles corruptos (ej: correo guardado en campo rol) a coordinador regional
+  const rolUsuario = ROLES_CONOCIDOS_GUARD.includes(rolRaw) ? rolRaw : (rolRaw ? 'coordinador regional' : '');
+
   if (!rolesPermitidos.includes(rolUsuario)) {
     if (rolUsuario === 'coordinador municipal' || rolUsuario === 'sub coordinador municipal') {
       return <Navigate to="/cocode" replace />;
