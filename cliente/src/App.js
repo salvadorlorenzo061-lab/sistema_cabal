@@ -179,7 +179,11 @@ function App() {
     }
   };
 
-  const miRol = user?.rol ? user.rol.trim().toLowerCase() : '';
+  const ROLES_CONOCIDOS = ['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'];
+  const rolRaw = user?.rol ? user.rol.trim().toLowerCase() : '';
+  // Si el rol guardado no es uno de los conocidos (ej: se guardó el correo por error), usa acceso total
+  const miRol = ROLES_CONOCIDOS.includes(rolRaw) ? rolRaw : (rolRaw ? 'coordinador regional' : '');
+  const rolDisplay = ROLES_CONOCIDOS.includes(rolRaw) ? user.rol.toUpperCase() : 'COORDINADOR REGIONAL';
   const sidebarModuleClass = 'nav-link btn btn-outline-light border-0 fw-bold text-start text-white d-flex align-items-center rounded sidebar-module-link';
 
   // 🚪 PANTALLA DE LOGIN RESPONSIVA
@@ -304,7 +308,7 @@ function App() {
               <div className="text-center rounded p-2 mb-3 shadow-sm border border-white-10" style={{ backgroundColor: 'rgba(255,255,255,0.1)', fontSize: '0.8rem' }}>
                 <span className="d-block text-white-50">Usuario Activo:</span>
                 <strong className="text-white d-block text-truncate">{user.nombre.toUpperCase()}</strong>
-                <span className="badge bg-light text-primary mt-1 fw-bold" style={{ fontSize: '0.65rem' }}>{user.rol.toUpperCase()}</span>
+                <span className="badge bg-light text-primary mt-1 fw-bold" style={{ fontSize: '0.65rem' }}>{rolDisplay}</span>
               </div>
             )}
 
