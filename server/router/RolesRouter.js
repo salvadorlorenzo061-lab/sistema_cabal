@@ -16,8 +16,12 @@ const initRolesTable = () => {
     `, (err) => {
         if (err) { console.error("Error creando tabla roles:", err); return; }
 
-        // Agrega columna permisos si la tabla ya existía sin ella
-        db.query("ALTER TABLE roles ADD COLUMN IF NOT EXISTS permisos TEXT DEFAULT NULL", () => {});
+        // Agrega columna permisos si aún no existe (compatible con MySQL 5.7)
+        db.query("ALTER TABLE roles ADD COLUMN permisos TEXT DEFAULT NULL", (alterErr) => {
+            if (alterErr && alterErr.code !== 'ER_DUP_FIELDNAME') {
+                console.error("Error añadiendo columna permisos:", alterErr);
+            }
+        });
 
         const permisosTotal = JSON.stringify(todosLosModulos);
         const permisosBase  = JSON.stringify(['cocode','problemas']);
