@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Axios from "axios";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
@@ -7,6 +7,9 @@ import autoTable from "jspdf-autotable";
 import PaginationBar from './PaginationBar';
 
 function Problemas() {
+  const MUNICIPIO_JALAPA_ID = 1;
+  const MUNICIPIO_JALAPA_NOMBRE = 'Jalapa';
+
   // =========================================================================
   // 🔐 CONTROL DE USUARIO ACTIVO (Vincular con tu gestor de estados globales o login)
   // =========================================================================
@@ -26,16 +29,16 @@ function Problemas() {
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [barrio_colonia, setBarrio_colonia] = useState("");
-  const [id_municipio, setId_municipio] = useState("");
+  const [id_municipio, setId_municipio] = useState(String(MUNICIPIO_JALAPA_ID));
   const [estado, setEstado] = useState("Pendiente"); 
   const [id_afiliado, setId_afiliado] = useState("");
   const [foto, setFoto] = useState("");
   const [mostrarCargaFoto, setMostrarCargaFoto] = useState(false);
   const [cocodesList, setCocodesList] = useState([]);
+  const [comunidadesJalapa, setComunidadesJalapa] = useState([]);
 
   // Listas para catálogos y grilla
   const [problemasList, setProblemasList] = useState([]);
-  const [municipiosList, setMunicipiosList] = useState([]); 
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState(1);
@@ -147,7 +150,7 @@ function Problemas() {
   //   CONTROLADORES DE BASE DE DATOS (CRUD + BITÁCORA)
   // =========================================================================
   const add = () => {
-    if (!titulo.trim() || !descripcion.trim() || !barrio_colonia.trim() || !id_municipio || !id_afiliado) {
+    if (!titulo.trim() || !descripcion.trim() || !barrio_colonia.trim() || !id_afiliado) {
       Swal.fire({
         icon: "warning",
         title: 'DATOS INCOMPLETOS',
@@ -161,7 +164,7 @@ function Problemas() {
       titulo, 
       descripcion, 
       barrio_colonia, 
-      id_municipio, 
+      id_municipio: MUNICIPIO_JALAPA_ID, 
       estado, 
       id_afiliado,
       foto: foto || null,
@@ -191,7 +194,7 @@ function Problemas() {
   };
 
   const actualizar = () => {
-    if (!id_problema || !titulo.trim() || !descripcion.trim() || !barrio_colonia.trim() || !id_municipio || !id_afiliado || !estado.trim()) {
+    if (!id_problema || !titulo.trim() || !descripcion.trim() || !barrio_colonia.trim() || !id_afiliado || !estado.trim()) {
       Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
       return;
     }
@@ -201,7 +204,7 @@ function Problemas() {
       titulo, 
       descripcion, 
       barrio_colonia, 
-      id_municipio, 
+      id_municipio: MUNICIPIO_JALAPA_ID, 
       estado, 
       id_afiliado,
       foto: foto || null,
@@ -260,7 +263,7 @@ function Problemas() {
     setTitulo(""); 
     setDescripcion("");
     setBarrio_colonia("");
-    setId_municipio("");
+    setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setEstado("Pendiente"); 
     setId_afiliado("");
     setFoto("");
@@ -282,7 +285,7 @@ function Problemas() {
     reader.readAsDataURL(file);
   };
 
-  const getProblemas = () => {
+  const getProblemas = useCallback(() => {
     Axios.get(API_URL, { params: { pagina, limite: 10 } })
     .then((response) => {
       const payload = response.data;
@@ -292,44 +295,73 @@ function Problemas() {
       setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
     })
     .catch((error) => { console.error("Error al obtener problemas", error); });
-  };
+  }, [API_URL, pagina]);
 
-  const getMunicipios = () => {
-    Axios.get(`${API_URL}/municipios`)
+  const getComunidadesJalapa = useCallback(() => {
+    Axios.get(`${API_BASE_URL}/comunidades`, {
+      params: {
+        pagina: 1,
+        limite: 500,
+        id_departamento: 1,
+        id_municipio: MUNICIPIO_JALAPA_ID
+      }
+    })
     .then((response) => {
       const payload = response.data;
-      setMunicipiosList(Array.isArray(payload) ? payload : (payload.data || []));
+      const data = Array.isArray(payload) ? payload : (payload.data || []);
+      setComunidadesJalapa(data);
     })
-    .catch((error) => { console.error("Error al obtener municipios", error); });
-  };
+    .catch((error) => { console.error("Error al obtener comunidades de Jalapa", error); });
+  }, [API_BASE_URL]);
 
-  const getCocodes = () => {
+  const getCocodes = useCallback(() => {
     Axios.get(`${API_BASE_URL}/afiliados`, { params: { pagina: 1, limite: 500 } })
     .then((response) => {
       const payload = response.data;
       setCocodesList(Array.isArray(payload) ? payload : (payload.data || []));
     })
     .catch((error) => { console.error("Error al obtener cocodes", error); });
-  };
+  }, [API_BASE_URL]);
 
   useEffect(() => { 
     getProblemas(); 
-    getMunicipios();
+    getComunidadesJalapa();
     getCocodes();
-  }, [pagina]);
+  }, [getProblemas, getComunidadesJalapa, getCocodes]);
 
   const abrirEditarModal = (val) => {
     setId_problema(val.id_problema);
     setTitulo(val.titulo);
     setDescripcion(val.descripcion);
     setBarrio_colonia(val.barrio_colonia);
-    setId_municipio(val.id_municipio || "");
+    setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setEstado(val.estado || "Pendiente");
     setId_afiliado(val.id_afiliado || "");
     setFoto(val.foto || "");
     setMostrarCargaFoto(Boolean(val.foto));
     setShowEditModal(true);
   };
+
+  const comunidadesOptions = (() => {
+    const map = new Map();
+
+    comunidadesJalapa.forEach((item) => {
+      const nombre = (item.nombre_comunidad || '').trim();
+      if (!nombre) return;
+      if (!map.has(nombre)) {
+        map.set(nombre, item.tipo || '');
+      }
+    });
+
+    if (barrio_colonia.trim() && !map.has(barrio_colonia.trim())) {
+      map.set(barrio_colonia.trim(), 'actual');
+    }
+
+    return Array.from(map.entries()).map(([nombre, tipoItem]) => ({
+      nombre,
+      tipo: tipoItem
+    }));
+  })();
 
   const problemasFiltrados = problemasList.filter((prob) => 
     prob.titulo?.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -509,16 +541,20 @@ function Problemas() {
 
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Barrio o Colonia:</label>
-                    <input type="text" value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-control" placeholder="Ej: Barrio El Porvenir" />
+                    <label className="form-label fw-bold">Barrio, Colonia, Aldea o Caserio:</label>
+                    <select value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-select">
+                      <option value="" disabled>-- Seleccione una ubicacion de Jalapa --</option>
+                      {comunidadesOptions.map((comunidad) => (
+                        <option key={comunidad.nombre} value={comunidad.nombre}>
+                          {comunidad.nombre}{comunidad.tipo && comunidad.tipo !== 'actual' ? ` (${comunidad.tipo})` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Municipio:</label>
-                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select">
-                      <option value="" disabled>-- Seleccione un Municipio --</option>
-                      {municipiosList.map((muni) => (
-                        <option key={muni.id_municipio} value={muni.id_municipio}>{muni.nombre_municipio}</option>
-                      ))}
+                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled>
+                      <option value={String(MUNICIPIO_JALAPA_ID)}>{MUNICIPIO_JALAPA_NOMBRE}</option>
                     </select>
                   </div>
                 </div>
@@ -626,16 +662,20 @@ function Problemas() {
 
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Barrio o Colonia:</label>
-                    <input type="text" value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-control" />
+                    <label className="form-label fw-bold">Barrio, Colonia, Aldea o Caserio:</label>
+                    <select value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-select">
+                      <option value="" disabled>-- Seleccione una ubicacion de Jalapa --</option>
+                      {comunidadesOptions.map((comunidad) => (
+                        <option key={comunidad.nombre} value={comunidad.nombre}>
+                          {comunidad.nombre}{comunidad.tipo && comunidad.tipo !== 'actual' ? ` (${comunidad.tipo})` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Municipio:</label>
-                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select">
-                      <option value="" disabled>-- Seleccione un Municipio --</option>
-                      {municipiosList.map((muni) => (
-                        <option key={muni.id_municipio} value={muni.id_municipio}>{muni.nombre_municipio}</option>
-                      ))}
+                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled>
+                      <option value={String(MUNICIPIO_JALAPA_ID)}>{MUNICIPIO_JALAPA_NOMBRE}</option>
                     </select>
                   </div>
                 </div>
