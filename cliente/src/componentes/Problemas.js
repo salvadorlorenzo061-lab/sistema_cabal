@@ -355,7 +355,7 @@ function Problemas() {
     if (barrio_colonia.trim() && !existeValorActual) {
       return [
         ...normalizadas,
-        { nombre: barrio_colonia.trim(), tipo: 'actual' }
+        { nombre: barrio_colonia.trim(), tipo: 'actual', parent: '', searchText: barrio_colonia.trim().toLowerCase() }
       ].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
     }
 
@@ -554,7 +554,11 @@ function Problemas() {
                         <option
                           key={`crear-${comunidad.nombre}`}
                           value={comunidad.nombre}
-                          label={comunidad.tipo && comunidad.tipo !== 'actual' ? `${comunidad.nombre} (${comunidad.tipo})` : comunidad.nombre}
+                          label={
+                            `${comunidad.nombre}` +
+                            `${comunidad.tipo && comunidad.tipo !== 'actual' ? ` (${comunidad.tipo})` : ''}` +
+                            `${comunidad.parent ? ` - ${comunidad.parent}` : ''}`
+                          }
                         />
                       ))}
                     </datalist>
@@ -685,7 +689,11 @@ function Problemas() {
                         <option
                           key={`editar-${comunidad.nombre}`}
                           value={comunidad.nombre}
-                          label={comunidad.tipo && comunidad.tipo !== 'actual' ? `${comunidad.nombre} (${comunidad.tipo})` : comunidad.nombre}
+                          label={
+                            `${comunidad.nombre}` +
+                            `${comunidad.tipo && comunidad.tipo !== 'actual' ? ` (${comunidad.tipo})` : ''}` +
+                            `${comunidad.parent ? ` - ${comunidad.parent}` : ''}`
+                          }
                         />
                       ))}
                     </datalist>

@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
+import { normalizarLocalidadesJalapa } from '../data/localidadesJalapa';
 
 function Comunidades() {
   const [id_comunidad, setId_comunidad] = useState("");
@@ -27,6 +28,8 @@ function Comunidades() {
 
   const [showRegModal, setShowRegModal] = useState(false);  
   const [showEditModal, setShowEditModal] = useState(false); 
+  const [mostrarSugerenciasRegistro, setMostrarSugerenciasRegistro] = useState(false);
+  const [mostrarSugerenciasEdicion, setMostrarSugerenciasEdicion] = useState(false);
 
   // Variables Mock de usuario (Vincúlalas al Contexto o Redux de tu sesión activa en el futuro)
   const USUARIO_ACTIVO_LOG = "OPERADOR JALAPA";
@@ -227,6 +230,8 @@ function Comunidades() {
     setEstado("activo");
     setId_municipio("");
     setId_departamento("");
+    setMostrarSugerenciasRegistro(false);
+    setMostrarSugerenciasEdicion(false);
   };
 
   const abrirEditarModal = (val) => {
@@ -237,6 +242,28 @@ function Comunidades() {
     setId_departamento(val.id_departamento.toString()); 
     setId_municipio(val.id_municipio.toString()); 
     setShowEditModal(true);
+  };
+
+  const catalogoLocalidades = normalizarLocalidadesJalapa(
+    comunidadesList.map((item) => ({
+      nombre: item.nombre_comunidad,
+      tipo: item.tipo
+    }))
+  );
+
+  const sugerenciasLocalidades = catalogoLocalidades.filter((item) => {
+    const termino = nombre_comunidad.trim().toLowerCase();
+    if (!termino) return false;
+    return item.searchText?.includes(termino);
+  }).slice(0, 8);
+
+  const seleccionarSugerencia = (sugerencia) => {
+    setNombre_comunidad(sugerencia.nombre);
+    if (sugerencia.tipo) {
+      setTipo(sugerencia.tipo);
+    }
+    setMostrarSugerenciasRegistro(false);
+    setMostrarSugerenciasEdicion(false);
   };
 
   const municipiosFiltradosPorDepartamento = municipiosList.filter(
@@ -409,7 +436,34 @@ function Comunidades() {
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Nombre de la Aldea/Caserío:</label>
-                  <input type="text" value={nombre_comunidad} onChange={(e) => setNombre_comunidad(e.target.value)} className="form-control" placeholder="Ej: Sansirisay" />
+                  <input
+                    type="text"
+                    value={nombre_comunidad}
+                    onChange={(e) => {
+                      setNombre_comunidad(e.target.value);
+                      setMostrarSugerenciasRegistro(true);
+                    }}
+                    onFocus={() => setMostrarSugerenciasRegistro(true)}
+                    className="form-control"
+                    placeholder="Escriba para buscar: Ej. Sanyuyo"
+                  />
+                  {mostrarSugerenciasRegistro && sugerenciasLocalidades.length > 0 && (
+                    <div className="list-group mt-1 shadow-sm">
+                      {sugerenciasLocalidades.map((sugerencia) => (
+                        <button
+                          key={`reg-${sugerencia.nombre}`}
+                          type="button"
+                          className="list-group-item list-group-item-action"
+                          onClick={() => seleccionarSugerencia(sugerencia)}
+                        >
+                          {sugerencia.nombre}
+                          {sugerencia.tipo ? ` (${sugerencia.tipo})` : ''}
+                          {sugerencia.parent ? ` - ${sugerencia.parent}` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <small className="text-muted">Empiece a escribir para buscar aldeas, caseríos, barrios, colonias o cantones.</small>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Tipo Geográfico:</label>
@@ -465,7 +519,34 @@ function Comunidades() {
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Nombre:</label>
-                  <input type="text" value={nombre_comunidad} onChange={(e) => setNombre_comunidad(e.target.value)} className="form-control" />
+                  <input
+                    type="text"
+                    value={nombre_comunidad}
+                    onChange={(e) => {
+                      setNombre_comunidad(e.target.value);
+                      setMostrarSugerenciasEdicion(true);
+                    }}
+                    onFocus={() => setMostrarSugerenciasEdicion(true)}
+                    className="form-control"
+                    placeholder="Escriba para buscar: Ej. Sanyuyo"
+                  />
+                  {mostrarSugerenciasEdicion && sugerenciasLocalidades.length > 0 && (
+                    <div className="list-group mt-1 shadow-sm">
+                      {sugerenciasLocalidades.map((sugerencia) => (
+                        <button
+                          key={`edit-${sugerencia.nombre}`}
+                          type="button"
+                          className="list-group-item list-group-item-action"
+                          onClick={() => seleccionarSugerencia(sugerencia)}
+                        >
+                          {sugerencia.nombre}
+                          {sugerencia.tipo ? ` (${sugerencia.tipo})` : ''}
+                          {sugerencia.parent ? ` - ${sugerencia.parent}` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <small className="text-muted">Empiece a escribir para buscar aldeas, caseríos, barrios, colonias o cantones.</small>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Tipo:</label>
