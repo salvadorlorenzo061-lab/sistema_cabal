@@ -10,6 +10,7 @@ function PROPERSONALES() {
       heading="GESTION DE PROBLEMAS PERSONALES"
       createLabel="AGREGAR PROBLEMA PERSONAL"
       accentClass="danger"
+      useLocalidadesEnDireccion={true}
     />
   );
 }

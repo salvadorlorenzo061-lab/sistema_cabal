@@ -3,6 +3,7 @@ import Axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import PaginationBar from './PaginationBar';
+import { normalizarLocalidadesJalapa } from '../data/localidadesJalapa';
 
 function PersonaCrudBase({
   apiPath,
@@ -11,7 +12,8 @@ function PersonaCrudBase({
   entityLabelPlural,
   heading,
   createLabel,
-  accentClass = 'primary'
+  accentClass = 'primary',
+  useLocalidadesEnDireccion = false
 }) {
   const sesionActiva = (() => {
     try {
@@ -45,6 +47,11 @@ function PersonaCrudBase({
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [showRegModal, setShowRegModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  const localidadesOptions = normalizarLocalidadesJalapa();
+
+  const localidadLabel = (item) =>
+    `${item.nombre}${item.tipo ? ` (${item.tipo})` : ''}${item.parent ? ` - ${item.parent}` : ''}`;
 
   const limpiarCampos = () => {
     setIdRegistro('');
@@ -335,7 +342,24 @@ function PersonaCrudBase({
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Direccion</label>
-                  <input type="text" className="form-control" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
+                    list={useLocalidadesEnDireccion ? `localidades-direccion-crear-${apiPath}` : undefined}
+                    placeholder={useLocalidadesEnDireccion ? 'Escriba para buscar aldea, caserio, barrio o colonia' : undefined}
+                  />
+                  {useLocalidadesEnDireccion && (
+                    <>
+                      <datalist id={`localidades-direccion-crear-${apiPath}`}>
+                        {localidadesOptions.map((item) => (
+                          <option key={`crear-${apiPath}-${item.nombre}-${item.parent || 'sin-parent'}`} value={item.nombre} label={localidadLabel(item)} />
+                        ))}
+                      </datalist>
+                      <small className="text-muted">Empiece a escribir una ubicacion de Jalapa y seleccione la coincidencia.</small>
+                    </>
+                  )}
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Observaciones</label>
@@ -394,7 +418,24 @@ function PersonaCrudBase({
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Direccion</label>
-                  <input type="text" className="form-control" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
+                    list={useLocalidadesEnDireccion ? `localidades-direccion-editar-${apiPath}` : undefined}
+                    placeholder={useLocalidadesEnDireccion ? 'Escriba para buscar aldea, caserio, barrio o colonia' : undefined}
+                  />
+                  {useLocalidadesEnDireccion && (
+                    <>
+                      <datalist id={`localidades-direccion-editar-${apiPath}`}>
+                        {localidadesOptions.map((item) => (
+                          <option key={`editar-${apiPath}-${item.nombre}-${item.parent || 'sin-parent'}`} value={item.nombre} label={localidadLabel(item)} />
+                        ))}
+                      </datalist>
+                      <small className="text-muted">Empiece a escribir una ubicacion de Jalapa y seleccione la coincidencia.</small>
+                    </>
+                  )}
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Observaciones</label>
