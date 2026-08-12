@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require('../Conexion'); 
 const router = express.Router(); 
+const { listarMunicipios, obtenerMunicipioPorId } = require('../catalogosTerritoriales');
 
 let problemasTieneFoto = null;
 
@@ -23,14 +24,7 @@ const resolverColumnaFoto = (callback) => {
 
 // === OBTENER CATÁLOGO DE MUNICIPIOS (AUXILIAR PARA SELECTORS) ===
 router.get("/municipios", (req, res) => {
-    db.query("SELECT id_municipio, nombre_municipio FROM municipios WHERE estado = 'activo' ORDER BY nombre_municipio ASC", (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send("Error al obtener el catálogo de municipios");
-        } else {
-            res.send(result);
-        }
-    });
+    return res.send(listarMunicipios());
 });
 
 // === OBTENER CATÁLOGO DE COCODES (AUXILIAR PARA TICKETS) ===
@@ -81,20 +75,18 @@ router.post("/crear", (req, res) => {
             }
 
             // Consulta descriptiva para enriquecer la bitácora de auditoría
-            db.query('SELECT nombre_municipio FROM municipios WHERE id_municipio = ?', [id_municipio], (errMuni, resMuni) => {
-                const muniNombre = resMuni && resMuni.length > 0 ? resMuni[0].nombre_municipio : `ID: ${id_municipio}`;
-                const nuevoId = insertResult.insertId;
-                const detalles = `Se reportó la incidencia '${titulo.toUpperCase()}' en el barrio/colonia '${barrio_colonia.toUpperCase()}', ${muniNombre.toUpperCase()}. Registrado con estado inicial '${estado.toUpperCase()}' por COCODE ID #${cocodeId} (Ticket: TCK-${new Date().getFullYear()}-${String(nuevoId).padStart(6, '0')}).`;
+            const muniNombre = obtenerMunicipioPorId(id_municipio)?.nombre_municipio || `ID: ${id_municipio}`;
+            const nuevoId = insertResult.insertId;
+            const detalles = `Se reportó la incidencia '${titulo.toUpperCase()}' en el barrio/colonia '${barrio_colonia.toUpperCase()}', ${muniNombre.toUpperCase()}. Registrado con estado inicial '${estado.toUpperCase()}' por COCODE ID #${cocodeId} (Ticket: TCK-${new Date().getFullYear()}-${String(nuevoId).padStart(6, '0')}).`;
 
-                const sqlBitacora = `
-                    INSERT INTO bitacora (id_usuario, tipo_movimiento, ejecutado_por, detalles) 
-                    VALUES (?, 'INSERCION', ?, ?)
-                `;
+            const sqlBitacora = `
+                INSERT INTO bitacora (id_usuario, tipo_movimiento, ejecutado_por, detalles) 
+                VALUES (?, 'INSERCION', ?, ?)
+            `;
 
-                db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detalles], (bitacoraErr) => {
-                    if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
-                    return res.status(200).send("Problema de la comunidad registrado con éxito");
-                });
+            db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detalles], (bitacoraErr) => {
+                if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
+                return res.status(200).send("Problema de la comunidad registrado con éxito");
             });
         });
     });
@@ -126,7 +118,7 @@ router.get("/", (req, res) => {
                 a.nombre_completo AS nombre_cocode,
                 a.dpi AS dpi_cocode
             FROM problemas p
-            INNER JOIN municipios m ON p.id_municipio = m.id_municipio
+            LEFT JOIN municipios m ON p.id_municipio = m.id_municipio
             LEFT JOIN afiliados a ON p.id_afiliado = a.id_afiliado
             ORDER BY p.fecha_reporte DESC
             LIMIT ? OFFSET ?
@@ -143,8 +135,13 @@ router.get("/", (req, res) => {
                     console.error(err);
                     res.status(500).send("Error al obtener el listado de problemas");
                 } else {
+                    const data = result.map((row) => ({
+                        ...row,
+                        nombre_municipio: row.nombre_municipio || obtenerMunicipioPorId(row.id_municipio)?.nombre_municipio || 'No asignado'
+                    }));
+
                     res.send({
-                        data: result,
+                        data,
                         total: countResult[0].total,
                         paginasTotales: Math.ceil(countResult[0].total / limite),
                         paginaActual: pagina

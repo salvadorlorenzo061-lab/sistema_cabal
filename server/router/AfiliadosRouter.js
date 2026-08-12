@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require('../Conexion'); 
 const router = express.Router(); 
+const { obtenerMunicipioPorId } = require('../catalogosTerritoriales');
 
 /**
  * 🛡️ FUNCIÓN DE AUDITORÍA INTERNA (Bitácora)
@@ -44,8 +45,13 @@ router.get("/", (req, res) => {
                 console.error("Error MySQL en GET /:", err);
                 return res.status(500).json({ message: "Error al obtener el listado de cocodes." });
             } else {
+                const data = result.map((row) => ({
+                    ...row,
+                    nombre_municipio: row.nombre_municipio || obtenerMunicipioPorId(row.id_municipio)?.nombre_municipio || 'No asignado'
+                }));
+
                 return res.send({
-                    data: result,
+                    data,
                     total: countResult[0].total,
                     paginasTotales: Math.ceil(countResult[0].total / limite),
                     paginaActual: pagina

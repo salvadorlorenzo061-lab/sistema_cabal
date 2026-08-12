@@ -5,14 +5,14 @@ import Swal from 'sweetalert2';
 
 // Importación de tus componentes existentes
 import Usuarios from './componentes/Usuarios';
-import Municipios from './componentes/Municipios';
 import Comunidades from './componentes/Comunidades'; 
-import Departamentos from './componentes/Departamentos';
 import Afiliados from './componentes/Afiliados';
 import Roles from './componentes/Roles';
 import Dashboard from './componentes/Dashboard'; 
 import Bitacora from './componentes/Bitacora'; 
 import Problemas from './componentes/Problemas';
+import LIDER from './componentes/LIDER';
+import PROPERSONALES from './componentes/PROPERSONALES';
 
 // Imagen corporativa
 import logoCabal from './img/4.jpeg'; 
@@ -206,9 +206,9 @@ function App() {
   })();
 
   const PERMISOS_DEFAULT = {
-    'coordinador regional':      ['dashboard','usuarios','bitacora','municipios','comunidades','departamentos','roles','cocode','problemas'],
-    'coordinador municipal':     ['municipios','comunidades','cocode','problemas'],
-    'sub coordinador municipal': ['cocode','problemas']
+    'coordinador regional':      ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales'],
+    'coordinador municipal':     ['comunidades','cocode','problemas','lideres','propersonales'],
+    'sub coordinador municipal': ['cocode','problemas','lideres','propersonales']
   };
 
   const tieneAcceso = (modulo) => {
@@ -372,21 +372,9 @@ function App() {
                 </Link>
               )}
 
-              {tieneAcceso('municipios') && (
-                <Link to="/municipios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">MUNICIPIOS</span>}
-                </Link>
-              )}
-
               {tieneAcceso('comunidades') && (
                 <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ALDEAS / CASERIOS</span>}
-                </Link>
-              )}
-
-              {tieneAcceso('departamentos') && (
-                <Link to="/departamentos" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">🏕</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">DEPARTAMENTOS</span>}
                 </Link>
               )}
 
@@ -405,6 +393,18 @@ function App() {
               {tieneAcceso('problemas') && (
                 <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS</span>}
+                </Link>
+              )}
+
+              {tieneAcceso('lideres') && (
+                <Link to="/lideres" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">🧑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">LIDERES</span>}
+                </Link>
+              )}
+
+              {tieneAcceso('propersonales') && (
+                <Link to="/propersonales" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">📝</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROB. PERSONALES</span>}
                 </Link>
               )}
             </nav>
@@ -458,9 +458,7 @@ function App() {
               } />
 
               <Route path="/municipios" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal']}>
-                  <Municipios />
-                </RutaProtegida>
+                <Navigate to="/home" replace />
               } />
               
               <Route path="/comunidades" element={
@@ -470,9 +468,7 @@ function App() {
               } />
               
               <Route path="/departamentos" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional']}>
-                  <Departamentos />
-                </RutaProtegida>
+                <Navigate to="/home" replace />
               } />
 
               <Route path="/cocode" element={
@@ -492,6 +488,18 @@ function App() {
               <Route path="/problemas" element={
                 <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
                   <Problemas />
+                </RutaProtegida>
+              } />
+
+              <Route path="/lideres" element={
+                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                  <LIDER />
+                </RutaProtegida>
+              } />
+
+              <Route path="/propersonales" element={
+                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                  <PROPERSONALES />
                 </RutaProtegida>
               } />
 

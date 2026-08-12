@@ -1,9 +1,14 @@
 const express = require("express");
 const db = require('../Conexion'); 
 const router = express.Router(); 
+const { listarDepartamentos } = require('../catalogosTerritoriales');
 
 // === LISTAR TODOS LOS DEPARTAMENTOS ===
 router.get("/", (req, res) => {
+    if (!req.query.pagina && !req.query.limite) {
+        return res.send(listarDepartamentos());
+    }
+
     const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
     const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
     const offset = (pagina - 1) * limite;

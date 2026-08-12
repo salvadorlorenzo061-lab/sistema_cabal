@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../Conexion'); 
 const router = express.Router(); 
+const { listarMunicipios, obtenerDepartamentoPorId, obtenerMunicipioPorId } = require('../catalogosTerritoriales');
 
 // Función auxiliar inmutable para disparar la bitácora automáticamente
 const registrarAuditoria = (idUsuario, afectado, tipo, ejecutor, detalles) => {
@@ -71,6 +72,45 @@ router.get("/", (req, res) => {
     const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
     const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
     const offset = (pagina - 1) * limite;
+    const { id_departamento, id_municipio, tipo, busqueda } = req.query;
+
+    const whereClauses = [];
+    const params = [];
+
+    if (id_departamento) {
+        const municipioIds = listarMunicipios()
+            .filter((item) => String(item.id_departamento) === String(id_departamento))
+            .map((item) => item.id_municipio);
+
+        if (municipioIds.length === 0) {
+            return res.send({
+                data: [],
+                total: 0,
+                paginasTotales: 0,
+                paginaActual: pagina
+            });
+        }
+
+        whereClauses.push(`c.id_municipio IN (${municipioIds.map(() => '?').join(',')})`);
+        params.push(...municipioIds);
+    }
+
+    if (id_municipio) {
+        whereClauses.push('c.id_municipio = ?');
+        params.push(parseInt(id_municipio, 10));
+    }
+
+    if (tipo) {
+        whereClauses.push('c.tipo = ?');
+        params.push(tipo);
+    }
+
+    if (busqueda) {
+        whereClauses.push('(c.nombre_comunidad LIKE ? OR m.nombre_municipio LIKE ? OR d.nombre_departamento LIKE ?)');
+        params.push(`%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`);
+    }
+
+    const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
     const sqlQuery = `
         SELECT 
@@ -85,23 +125,37 @@ router.get("/", (req, res) => {
         FROM comunidades c
         LEFT JOIN municipios m ON c.id_municipio = m.id_municipio
         LEFT JOIN departamentos d ON m.id_departamento = d.id_departamento
+        ${whereSQL}
         ORDER BY d.nombre_departamento ASC, m.nombre_municipio ASC, c.nombre_comunidad ASC
         LIMIT ? OFFSET ?
     `;
 
-    db.query('SELECT COUNT(*) AS total FROM comunidades', (countErr, countResult) => {
+    const countQuery = `
+        SELECT COUNT(*) AS total
+        FROM comunidades c
+        LEFT JOIN municipios m ON c.id_municipio = m.id_municipio
+        LEFT JOIN departamentos d ON m.id_departamento = d.id_departamento
+        ${whereSQL}
+    `;
+
+    db.query(countQuery, params, (countErr, countResult) => {
         if (countErr) {
             console.error("🚨 Error contando comunidades:", countErr);
             return res.status(500).send("Error al cargar el catálogo de comunidades");
         }
 
-        db.query(sqlQuery, [limite, offset], (err, result) => {
+        db.query(sqlQuery, [...params, limite, offset], (err, result) => {
             if (err) {
                 console.error("🚨 Error en GET de comunidades:", err);
                 return res.status(500).send("Error al cargar el catálogo de comunidades");
             }
+            const data = result.map((row) => ({
+                ...row,
+                nombre_municipio: row.nombre_municipio || obtenerMunicipioPorId(row.id_municipio)?.nombre_municipio || 'Sin Asignar',
+                nombre_departamento: row.nombre_departamento || obtenerDepartamentoPorId(row.id_departamento)?.nombre_departamento || 'Sin Asignar'
+            }));
             res.send({
-                data: result,
+                data,
                 total: countResult[0].total,
                 paginasTotales: Math.ceil(countResult[0].total / limite),
                 paginaActual: pagina

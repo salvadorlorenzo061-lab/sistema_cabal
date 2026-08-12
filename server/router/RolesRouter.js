@@ -2,7 +2,7 @@ const express = require("express");
 const db = require('../Conexion');
 const router = express.Router();
 
-const todosLosModulos = ['dashboard','usuarios','bitacora','municipios','comunidades','departamentos','roles','cocode','problemas'];
+const todosLosModulos = ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales'];
 
 const initRolesTable = () => {
     db.query(`
@@ -24,7 +24,9 @@ const initRolesTable = () => {
         });
 
         const permisosTotal = JSON.stringify(todosLosModulos);
-        const permisosBase  = JSON.stringify(['cocode','problemas']);
+        const permisosBase  = JSON.stringify(['cocode','problemas','lideres','propersonales']);
+        const permisosRegionalViejos = JSON.stringify(['dashboard','usuarios','bitacora','municipios','comunidades','departamentos','roles','cocode','problemas']);
+        const permisosCampoViejos = JSON.stringify(['cocode','problemas']);
         db.query(`
             INSERT IGNORE INTO roles (nombre_rol, descripcion, estado, permisos) VALUES
             ('Coordinador Regional',      'Nivel máximo de acceso al sistema', 'Activo', ?),
@@ -33,6 +35,22 @@ const initRolesTable = () => {
         `, [permisosTotal, permisosBase, permisosBase], (seedErr) => {
             if (seedErr) console.error("Error en seed de roles:", seedErr);
         });
+
+        db.query(
+            "UPDATE roles SET permisos = ? WHERE nombre_rol = 'Coordinador Regional' AND permisos = ?",
+            [permisosTotal, permisosRegionalViejos],
+            (updateErr) => {
+                if (updateErr) console.error("Error actualizando permisos regionales:", updateErr);
+            }
+        );
+
+        db.query(
+            "UPDATE roles SET permisos = ? WHERE nombre_rol IN ('Coordinador Municipal', 'Sub Coordinador Municipal') AND permisos = ?",
+            [permisosBase, permisosCampoViejos],
+            (updateErr) => {
+                if (updateErr) console.error("Error actualizando permisos de campo:", updateErr);
+            }
+        );
     });
 };
 initRolesTable();

@@ -18,6 +18,9 @@ function Comunidades() {
   const [municipiosList, setMunicipios] = useState([]);
   const [departamentosList, setDepartamentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroDepartamento, setFiltroDepartamento] = useState("");
+  const [filtroMunicipio, setFiltroMunicipio] = useState("");
+  const [filtroTipo, setFiltroTipo] = useState("");
   const [pagina, setPagina] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState(1);
   const [totalRegistros, setTotalRegistros] = useState(0);
@@ -115,7 +118,16 @@ function Comunidades() {
 
   // ⚡ ENUELTO EN USECALLBACK PARA ESTABILIZAR LA REFERENCIA Y SATISFACER A ESLINT
   const getComunidades = useCallback(() => {
-    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    Axios.get(API_URL, {
+      params: {
+        pagina,
+        limite: 10,
+        id_departamento: filtroDepartamento || undefined,
+        id_municipio: filtroMunicipio || undefined,
+        tipo: filtroTipo || undefined,
+        busqueda: busqueda.trim() || undefined
+      }
+    })
       .then((res) => {
         const payload = res.data;
         const data = Array.isArray(payload) ? payload : (payload.data || []);
@@ -124,7 +136,7 @@ function Comunidades() {
         setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
       })
       .catch(console.error);
-  }, [pagina]);
+  }, [API_URL, pagina, filtroDepartamento, filtroMunicipio, filtroTipo, busqueda]);
 
   const getCatalogos = () => {
     Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => {
@@ -141,6 +153,10 @@ function Comunidades() {
     getComunidades();
     getCatalogos();
   }, [getComunidades]);
+
+  useEffect(() => {
+    setPagina(1);
+  }, [filtroDepartamento, filtroMunicipio, filtroTipo, busqueda]);
 
   const add = () => {
     if (!nombre_comunidad.trim() || !id_municipio) {
@@ -223,10 +239,8 @@ function Comunidades() {
     setShowEditModal(true);
   };
 
-  const comunidadesFiltradas = comunidadesList.filter((com) => 
-    com.nombre_comunidad.toLowerCase().includes(busqueda.toLowerCase()) ||
-    com.nombre_municipio.toLowerCase().includes(busqueda.toLowerCase()) ||
-    com.nombre_departamento.toLowerCase().includes(busqueda.toLowerCase())
+  const municipiosFiltradosPorDepartamento = municipiosList.filter(
+    (m) => !filtroDepartamento || String(m.id_departamento) === String(filtroDepartamento)
   );
 
   return (
@@ -234,13 +248,13 @@ function Comunidades() {
       {/* CABECERA */}
       <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
-          <h3 className="m-0 text-dark fw-bold">ALDEAS Y CASERÍOS</h3>
+          <h3 className="m-0 text-dark fw-bold">TABLA DE ALDEAS, CASERIOS Y CANTONES</h3>
         </div>
         <div className="col-md-5">
           <input 
             type="text" 
             className="form-control" 
-            placeholder="Buscar por aldea, municipio o departamento..." 
+            placeholder="Buscar por aldea, caserio, canton o municipio..." 
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
@@ -249,6 +263,49 @@ function Comunidades() {
           <button className="btn btn-success fw-bold w-100" onClick={() => { limpiarCampos(); setShowRegModal(true); }}>
             ➕ AGREGAR LUGAR
           </button>
+        </div>
+      </div>
+
+      <div className="row mb-3 g-2">
+        <div className="col-md-4">
+          <label className="form-label fw-bold">Filtrar por Departamento</label>
+          <select
+            className="form-select"
+            value={filtroDepartamento}
+            onChange={(e) => {
+              setFiltroDepartamento(e.target.value);
+              setFiltroMunicipio("");
+            }}
+          >
+            <option value="">-- Todos los departamentos --</option>
+            {departamentosList.map((dep) => (
+              <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre_departamento}</option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-4">
+          <label className="form-label fw-bold">Filtrar por Municipio</label>
+          <select
+            className="form-select"
+            value={filtroMunicipio}
+            onChange={(e) => setFiltroMunicipio(e.target.value)}
+            disabled={!filtroDepartamento}
+          >
+            <option value="">-- Todos los municipios --</option>
+            {municipiosFiltradosPorDepartamento.map((muni) => (
+              <option key={muni.id_municipio} value={muni.id_municipio}>{muni.nombre_municipio}</option>
+            ))}
+          </select>
+        </div>
+        <div className="col-md-4">
+          <label className="form-label fw-bold">Filtrar por Tipo</label>
+          <select className="form-select" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+            <option value="">-- Todos los tipos --</option>
+            <option value="aldea">Aldea</option>
+            <option value="caserio">Caserio</option>
+            <option value="barrio">Barrio</option>
+            <option value="canton">Canton</option>
+          </select>
         </div>
       </div>
 
@@ -275,7 +332,7 @@ function Comunidades() {
             </tr>
           </thead>
           <tbody>
-            {comunidadesFiltradas.map((val) => (
+            {comunidadesList.length > 0 ? comunidadesList.map((val) => (
               <tr key={val.id_comunidad}>
                 <th>{val.id_comunidad}</th>
                 <td>{val.nombre_departamento}</td>
@@ -313,7 +370,13 @@ function Comunidades() {
                   </select>
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan="7" className="text-center text-muted py-3">
+                  No hay aldeas, caserios o cantones para el filtro seleccionado.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -26,6 +26,8 @@ const afiliadosRouter = require('./router/AfiliadosRouter');
 const bitacoraRouter = require('./router/BitacoraRouter');
 const problemasRouter = require('./router/ProblemasRouter');
 const rolesRouter = require('./router/RolesRouter');
+const liderRouter = require('./router/LiderRouter');
+const properRouter = require('./router/ProperRouter');
 
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/municipios', municipiosRouter);
@@ -36,6 +38,8 @@ app.use('/api/cocodes', afiliadosRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/bitacora', bitacoraRouter);
 app.use('/api/problemas', problemasRouter);
+app.use('/api/lideres', liderRouter);
+app.use('/api/propersonales', properRouter);
 
 // Health check para Render y verificación rápida de identidad del servicio
 app.get('/health', (_req, res) => {

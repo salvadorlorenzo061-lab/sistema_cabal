@@ -7,12 +7,12 @@ const MODULOS = [
   { key: 'dashboard',     label: 'Dashboard' },
   { key: 'usuarios',      label: 'Usuarios' },
   { key: 'bitacora',      label: 'Bitacora' },
-  { key: 'municipios',    label: 'Municipios' },
   { key: 'comunidades',   label: 'Aldeas / Caserios' },
-  { key: 'departamentos', label: 'Departamentos' },
   { key: 'roles',         label: 'Roles' },
   { key: 'cocode',        label: 'Cocode' },
   { key: 'problemas',     label: 'Problemas' },
+  { key: 'lideres',       label: 'Lideres' },
+  { key: 'propersonales', label: 'Problemas Personales' },
 ];
 
 const parsePermisos = (raw) => {

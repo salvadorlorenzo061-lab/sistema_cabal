@@ -1,17 +1,11 @@
 const express = require("express");
 const db = require('../Conexion'); 
 const router = express.Router(); 
+const { listarDepartamentos, listarMunicipios } = require('../catalogosTerritoriales');
 
 // === OBTENER CATÁLOGO DE DEPARTAMENTOS (AUXILIAR PARA SELECTORS) ===
 router.get("/departamentos", (req, res) => {
-    db.query("SELECT id_departamento, nombre_departamento FROM departamentos WHERE estado = 'activo' ORDER BY nombre_departamento ASC", (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send("Error al obtener el catálogo de departamentos");
-        } else {
-            res.send(result);
-        }
-    });
+    return res.send(listarDepartamentos());
 });
 
 // === CREAR MUNICIPIOS (CON BITÁCORA) ===
@@ -50,6 +44,10 @@ router.post("/crear", (req, res) => {
 
 // === LISTAR MUNICIPIOS (CON INNER JOIN PARA TRAER EL NOMBRE DEL DEPARTAMENTO) ===
 router.get("/", (req, res) => {
+    if (!req.query.pagina && !req.query.limite) {
+        return res.send(listarMunicipios());
+    }
+
     const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
     const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
     const offset = (pagina - 1) * limite;
