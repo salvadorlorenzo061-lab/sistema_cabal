@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
+import { normalizarLocalidadesJalapa } from '../data/localidadesJalapa';
 
 function Problemas() {
   const MUNICIPIO_JALAPA_ID = 1;
@@ -343,24 +344,22 @@ function Problemas() {
   };
 
   const comunidadesOptions = (() => {
-    const map = new Map();
+    const extras = comunidadesJalapa.map((item) => ({
+      nombre: item.nombre_comunidad,
+      tipo: item.tipo
+    }));
 
-    comunidadesJalapa.forEach((item) => {
-      const nombre = (item.nombre_comunidad || '').trim();
-      if (!nombre) return;
-      if (!map.has(nombre)) {
-        map.set(nombre, item.tipo || '');
-      }
-    });
+    const normalizadas = normalizarLocalidadesJalapa(extras);
+    const existeValorActual = normalizadas.some((item) => item.nombre === barrio_colonia.trim());
 
-    if (barrio_colonia.trim() && !map.has(barrio_colonia.trim())) {
-      map.set(barrio_colonia.trim(), 'actual');
+    if (barrio_colonia.trim() && !existeValorActual) {
+      return [
+        ...normalizadas,
+        { nombre: barrio_colonia.trim(), tipo: 'actual' }
+      ].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
     }
 
-    return Array.from(map.entries()).map(([nombre, tipoItem]) => ({
-      nombre,
-      tipo: tipoItem
-    }));
+    return normalizadas;
   })();
 
   const problemasFiltrados = problemasList.filter((prob) => 
@@ -542,14 +541,24 @@ function Problemas() {
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Barrio, Colonia, Aldea o Caserio:</label>
-                    <select value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-select">
-                      <option value="" disabled>-- Seleccione una ubicacion de Jalapa --</option>
+                    <input
+                      type="text"
+                      value={barrio_colonia}
+                      onChange={(e) => setBarrio_colonia(e.target.value)}
+                      className="form-control"
+                      list="localidades-jalapa-crear"
+                      placeholder="Escriba para buscar y seleccionar una ubicacion"
+                    />
+                    <datalist id="localidades-jalapa-crear">
                       {comunidadesOptions.map((comunidad) => (
-                        <option key={comunidad.nombre} value={comunidad.nombre}>
-                          {comunidad.nombre}{comunidad.tipo && comunidad.tipo !== 'actual' ? ` (${comunidad.tipo})` : ''}
-                        </option>
+                        <option
+                          key={`crear-${comunidad.nombre}`}
+                          value={comunidad.nombre}
+                          label={comunidad.tipo && comunidad.tipo !== 'actual' ? `${comunidad.nombre} (${comunidad.tipo})` : comunidad.nombre}
+                        />
                       ))}
-                    </select>
+                    </datalist>
+                    <small className="text-muted">Empiece a escribir el nombre de la aldea, barrio, colonia, caserio o canton.</small>
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Municipio:</label>
@@ -663,14 +672,24 @@ function Problemas() {
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Barrio, Colonia, Aldea o Caserio:</label>
-                    <select value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-select">
-                      <option value="" disabled>-- Seleccione una ubicacion de Jalapa --</option>
+                    <input
+                      type="text"
+                      value={barrio_colonia}
+                      onChange={(e) => setBarrio_colonia(e.target.value)}
+                      className="form-control"
+                      list="localidades-jalapa-editar"
+                      placeholder="Escriba para buscar y seleccionar una ubicacion"
+                    />
+                    <datalist id="localidades-jalapa-editar">
                       {comunidadesOptions.map((comunidad) => (
-                        <option key={comunidad.nombre} value={comunidad.nombre}>
-                          {comunidad.nombre}{comunidad.tipo && comunidad.tipo !== 'actual' ? ` (${comunidad.tipo})` : ''}
-                        </option>
+                        <option
+                          key={`editar-${comunidad.nombre}`}
+                          value={comunidad.nombre}
+                          label={comunidad.tipo && comunidad.tipo !== 'actual' ? `${comunidad.nombre} (${comunidad.tipo})` : comunidad.nombre}
+                        />
                       ))}
-                    </select>
+                    </datalist>
+                    <small className="text-muted">Empiece a escribir el nombre de la aldea, barrio, colonia, caserio o canton.</small>
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Municipio:</label>
