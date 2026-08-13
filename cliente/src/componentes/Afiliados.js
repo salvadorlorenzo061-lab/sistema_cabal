@@ -9,6 +9,12 @@ import PaginationBar from './PaginationBar';
 
 function Afiliados() {
   // =========================================================================
+  // 📍 MUNICIPIO FIJO: EL SISTEMA OPERA UNICAMENTE EN JALAPA
+  // =========================================================================
+  const MUNICIPIO_JALAPA_ID = 1;
+  const MUNICIPIO_JALAPA_NOMBRE = 'Jalapa';
+
+  // =========================================================================
   // 🔐 CONTROL DE SESIÓN (Enlazado dinámicamente)
   // =========================================================================
   const sesionActiva = (() => {
@@ -33,7 +39,7 @@ function Afiliados() {
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
   const [barrio_colonia, setBarrio_colonia] = useState("");
-  const [id_municipio, setId_municipio] = useState("");
+  const [id_municipio, setId_municipio] = useState(String(MUNICIPIO_JALAPA_ID));
   const [fecha_afiliacion, setFecha_afiliacion] = useState(fechaHoy);
   const [id_usuario, setId_usuario] = useState("");
   const [foto, setFoto] = useState(""); 
@@ -42,7 +48,6 @@ function Afiliados() {
   const [lugar_votacion, setLugar_votacion] = useState("");
 
   const [afiliadosList, setAfiliados] = useState([]);
-  const [municipiosList, setMunicipios] = useState([]);
   const [usuariosList, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
@@ -304,7 +309,7 @@ function Afiliados() {
 
   const limpiarCampos = () => {
     setId_afiliado(""); setDpi(""); setNombre_completo(""); setTelefono("");
-    setDireccion(""); setBarrio_colonia(""); setId_municipio("");
+    setDireccion(""); setBarrio_colonia(""); setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setFecha_afiliacion(fechaHoy); setId_usuario(""); setFoto("");
   
   };
@@ -322,10 +327,7 @@ function Afiliados() {
   }, [API_URL, pagina]);
 
   const getCatalogos = useCallback(() => {
-    Axios.get(`${BASE_URL}/municipios`).then((res) => {
-      const payload = res.data;
-      setMunicipios(Array.isArray(payload) ? payload : (payload.data || []));
-    }).catch(err => console.error(err));
+    // El catálogo de municipios ya no se consulta: el sistema opera solo en Jalapa.
     Axios.get(`${BASE_URL}/usuarios`).then((res) => {
       const payload = res.data;
       setUsuarios(Array.isArray(payload) ? payload : (payload.data || []));
@@ -344,7 +346,7 @@ function Afiliados() {
     setTelefono(val.telefono);
     setDireccion(val.direccion || "");
     setBarrio_colonia(val.barrio_colonia || "");
-    setId_municipio(val.id_municipio);
+    setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setFecha_afiliacion(val.fecha_afiliacion ? val.fecha_afiliacion.split('T')[0] : "");
     setId_usuario(val.id_usuario);
     setFoto(val.foto || "");
@@ -516,9 +518,8 @@ function Afiliados() {
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Municipio de Residencia:</label>
-                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select">
-                      <option value="">-- Seleccione Municipio --</option>
-                      {municipiosList.map((m) => <option key={m.id_municipio} value={m.id_municipio}>{m.nombre_municipio}</option>)}
+                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled>
+                      <option value={String(MUNICIPIO_JALAPA_ID)}>{MUNICIPIO_JALAPA_NOMBRE}</option>
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
@@ -600,9 +601,8 @@ function Afiliados() {
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Municipio de Residencia:</label>
-                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select">
-                      <option value="">-- Seleccione Municipio --</option>
-                      {municipiosList.map((m) => <option key={m.id_municipio} value={m.id_municipio}>{m.nombre_municipio}</option>)}
+                    <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled>
+                      <option value={String(MUNICIPIO_JALAPA_ID)}>{MUNICIPIO_JALAPA_NOMBRE}</option>
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
