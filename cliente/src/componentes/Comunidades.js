@@ -8,19 +8,23 @@ import PaginationBar from './PaginationBar';
 import { normalizarLocalidadesJalapa } from '../data/localidadesJalapa';
 
 function Comunidades() {
+  const DEPARTAMENTO_JALAPA_ID = 1;
+  const MUNICIPIO_JALAPA_ID = 1;
+  const TIPOS_COMUNIDAD = ['aldea', 'caserio', 'barrio', 'canton', 'colonia', 'otro'];
+
   const [id_comunidad, setId_comunidad] = useState("");
   const [nombre_comunidad, setNombre_comunidad] = useState("");
   const [tipo, setTipo] = useState("aldea");
   const [estado, setEstado] = useState("activo"); 
-  const [id_municipio, setId_municipio] = useState("");
-  const [id_departamento, setId_departamento] = useState(""); 
+  const [id_municipio, setId_municipio] = useState(String(MUNICIPIO_JALAPA_ID));
+  const [id_departamento, setId_departamento] = useState(String(DEPARTAMENTO_JALAPA_ID)); 
 
   const [comunidadesList, setComunidades] = useState([]);
   const [municipiosList, setMunicipios] = useState([]);
   const [departamentosList, setDepartamentos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
-  const [filtroDepartamento, setFiltroDepartamento] = useState("");
-  const [filtroMunicipio, setFiltroMunicipio] = useState("");
+  const [filtroDepartamento, setFiltroDepartamento] = useState(String(DEPARTAMENTO_JALAPA_ID));
+  const [filtroMunicipio, setFiltroMunicipio] = useState(String(MUNICIPIO_JALAPA_ID));
   const [filtroTipo, setFiltroTipo] = useState("");
   const [pagina, setPagina] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState(1);
@@ -36,6 +40,13 @@ function Comunidades() {
   const ID_USUARIO_LOG = 1;
 
   const API_URL = "https://sistema-cabal.onrender.com/api/comunidades";
+
+  const normalizarTipoComunidad = (valor) => {
+    const tipoNormalizado = String(valor || '').trim().toLowerCase();
+    if (!tipoNormalizado) return 'aldea';
+    if (TIPOS_COMUNIDAD.includes(tipoNormalizado)) return tipoNormalizado;
+    return 'otro';
+  };
 
   // =========================================================================
   // 📄 REPORTE PROFESIONAL: FICHA DE COMUNIDAD
@@ -144,11 +155,17 @@ function Comunidades() {
   const getCatalogos = () => {
     Axios.get("https://sistema-cabal.onrender.com/api/municipios/departamentos").then((res) => {
       const payload = res.data;
-      setDepartamentos(Array.isArray(payload) ? payload : (payload.data || []));
+      const departamentos = Array.isArray(payload) ? payload : (payload.data || []);
+      setDepartamentos(
+        departamentos.filter((dep) => String(dep.id_departamento) === String(DEPARTAMENTO_JALAPA_ID))
+      );
     }).catch(console.error);
     Axios.get("https://sistema-cabal.onrender.com/api/municipios").then((res) => {
       const payload = res.data;
-      setMunicipios(Array.isArray(payload) ? payload : (payload.data || []));
+      const municipios = Array.isArray(payload) ? payload : (payload.data || []);
+      setMunicipios(
+        municipios.filter((muni) => String(muni.id_municipio) === String(MUNICIPIO_JALAPA_ID))
+      );
     }).catch(console.error);
   };
 
@@ -220,8 +237,8 @@ function Comunidades() {
     setNombre_comunidad("");
     setTipo("aldea");
     setEstado("activo");
-    setId_municipio("");
-    setId_departamento("");
+    setId_municipio(String(MUNICIPIO_JALAPA_ID));
+    setId_departamento(String(DEPARTAMENTO_JALAPA_ID));
     setMostrarSugerenciasRegistro(false);
     setMostrarSugerenciasEdicion(false);
   };
@@ -229,10 +246,10 @@ function Comunidades() {
   const abrirEditarModal = (val) => {
     setId_comunidad(val.id_comunidad);
     setNombre_comunidad(val.nombre_comunidad);
-    setTipo(val.tipo);
+    setTipo(normalizarTipoComunidad(val.tipo));
     setEstado(val.estado);
-    setId_departamento(val.id_departamento.toString()); 
-    setId_municipio(val.id_municipio.toString()); 
+    setId_departamento(String(DEPARTAMENTO_JALAPA_ID)); 
+    setId_municipio(String(MUNICIPIO_JALAPA_ID)); 
     setShowEditModal(true);
   };
 
@@ -252,14 +269,14 @@ function Comunidades() {
   const seleccionarSugerencia = (sugerencia) => {
     setNombre_comunidad(sugerencia.nombre);
     if (sugerencia.tipo) {
-      setTipo(sugerencia.tipo);
+      setTipo(normalizarTipoComunidad(sugerencia.tipo));
     }
     setMostrarSugerenciasRegistro(false);
     setMostrarSugerenciasEdicion(false);
   };
 
   const municipiosFiltradosPorDepartamento = municipiosList.filter(
-    (m) => !filtroDepartamento || String(m.id_departamento) === String(filtroDepartamento)
+    (m) => String(m.id_municipio) === String(MUNICIPIO_JALAPA_ID)
   );
 
   return (
@@ -295,8 +312,8 @@ function Comunidades() {
               setFiltroDepartamento(e.target.value);
               setFiltroMunicipio("");
             }}
+            disabled
           >
-            <option value="">-- Todos los departamentos --</option>
             {departamentosList.map((dep) => (
               <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre_departamento}</option>
             ))}
@@ -308,9 +325,8 @@ function Comunidades() {
             className="form-select"
             value={filtroMunicipio}
             onChange={(e) => setFiltroMunicipio(e.target.value)}
-            disabled={!filtroDepartamento}
+            disabled
           >
-            <option value="">-- Todos los municipios --</option>
             {municipiosFiltradosPorDepartamento.map((muni) => (
               <option key={muni.id_municipio} value={muni.id_municipio}>{muni.nombre_municipio}</option>
             ))}
@@ -324,6 +340,8 @@ function Comunidades() {
             <option value="caserio">Caserio</option>
             <option value="barrio">Barrio</option>
             <option value="canton">Canton</option>
+            <option value="colonia">Colonia</option>
+            <option value="otro">Otro</option>
           </select>
         </div>
       </div>
@@ -412,16 +430,14 @@ function Comunidades() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label fw-bold">1. Seleccione Departamento:</label>
-                  <select value={id_departamento} onChange={(e) => { setId_departamento(e.target.value); setId_municipio(""); }} className="form-select">
-                    <option value="">-- Elija un departamento --</option>
+                  <select value={id_departamento} onChange={(e) => setId_departamento(e.target.value)} className="form-select" disabled>
                     {departamentosList.map(dep => <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre_departamento}</option>)}
                   </select>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">2. Seleccione Municipio:</label>
-                  <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled={!id_departamento}>
-                    <option value="">-- Elija un municipio --</option>
-                    {municipiosList.filter(m => String(m.id_departamento) === String(id_departamento)).map(muni => (
+                  <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled>
+                    {municipiosList.filter(m => String(m.id_municipio) === String(MUNICIPIO_JALAPA_ID)).map(muni => (
                       <option key={muni.id_municipio} value={muni.id_municipio}>{muni.nombre_municipio}</option>
                     ))}
                   </select>
@@ -464,6 +480,8 @@ function Comunidades() {
                     <option value="caserio">Caserío</option>
                     <option value="barrio">Barrio</option>
                     <option value="canton">Cantón</option>
+                    <option value="colonia">Colonia</option>
+                    <option value="otro">Otro</option>
                   </select>
                 </div>
                 <div className="mb-3">
@@ -495,16 +513,14 @@ function Comunidades() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label fw-bold">Departamento:</label>
-                  <select value={id_departamento} onChange={(e) => { setId_departamento(e.target.value); setId_municipio(""); }} className="form-select">
-                    <option value="">-- Elija un departamento --</option>
+                  <select value={id_departamento} onChange={(e) => setId_departamento(e.target.value)} className="form-select" disabled>
                     {departamentosList.map(dep => <option key={dep.id_departamento} value={dep.id_departamento}>{dep.nombre_departamento}</option>)}
                   </select>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Municipio:</label>
-                  <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled={!id_departamento}>
-                    <option value="">-- Elija un municipio --</option>
-                    {municipiosList.filter(m => String(m.id_departamento) === String(id_departamento)).map(muni => (
+                  <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select" disabled>
+                    {municipiosList.filter(m => String(m.id_municipio) === String(MUNICIPIO_JALAPA_ID)).map(muni => (
                       <option key={muni.id_municipio} value={muni.id_municipio}>{muni.nombre_municipio}</option>
                     ))}
                   </select>
@@ -547,6 +563,8 @@ function Comunidades() {
                     <option value="caserio">Caserío</option>
                     <option value="barrio">Barrio</option>
                     <option value="canton">Cantón</option>
+                    <option value="colonia">Colonia</option>
+                    <option value="otro">Otro</option>
                   </select>
                 </div>
                 <div className="mb-3">
