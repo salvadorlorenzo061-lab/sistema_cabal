@@ -118,16 +118,6 @@ function Municipios() {
   //   CONTROLADORES DE BASE DE DATOS
   // =========================================================================
   const add = () => {
-    if (!nombre_municipio.trim() || !estado.trim() || !id_departamento) {
-      Swal.fire({
-        icon: "warning",
-        title: 'DATOS INCOMPLETOS',
-        text: 'Por favor, seleccione un departamento e ingrese todos los campos.',
-        showConfirmButton: true
-      });
-      return; 
-    }
-
     Axios.post(`${API_URL}/crear`, { 
       nombre_municipio, 
       estado, 
@@ -158,11 +148,6 @@ function Municipios() {
   };
 
   const actualizar = () => {
-    if (!nombre_municipio.trim() || !estado.trim() || !id_departamento || !id_municipio) {
-      Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
-      return;
-    }
-
     Axios.put(`${API_URL}/actualizar`, { 
       id_municipio, 
       nombre_municipio, 

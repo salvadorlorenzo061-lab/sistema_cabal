@@ -162,10 +162,6 @@ function Comunidades() {
   }, [filtroDepartamento, filtroMunicipio, filtroTipo, busqueda]);
 
   const add = () => {
-    if (!nombre_comunidad.trim() || !id_municipio) {
-      Swal.fire({ icon: 'warning', title: 'Campos incompletos', text: 'Escriba el nombre y elija el Municipio.' });
-      return;
-    }
     Axios.post(`${API_URL}/crear`, { 
       nombre_comunidad: nombre_comunidad.trim(), 
       tipo, 
@@ -185,10 +181,6 @@ function Comunidades() {
   };
 
   const actualizar = () => {
-    if (!nombre_comunidad.trim() || !id_municipio) {
-      Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
-      return;
-    }
     Axios.put(`${API_URL}/actualizar`, { 
       id_comunidad: parseInt(id_comunidad, 10), 
       nombre_comunidad: nombre_comunidad.trim(), 

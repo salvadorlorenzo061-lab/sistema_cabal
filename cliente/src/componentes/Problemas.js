@@ -151,16 +151,6 @@ function Problemas() {
   //   CONTROLADORES DE BASE DE DATOS (CRUD + BITÁCORA)
   // =========================================================================
   const add = () => {
-    if (!titulo.trim() || !descripcion.trim() || !barrio_colonia.trim() || !id_afiliado) {
-      Swal.fire({
-        icon: "warning",
-        title: 'DATOS INCOMPLETOS',
-        text: 'Por favor, ingrese todos los campos requeridos para reportar el problema.',
-        showConfirmButton: true
-      });
-      return; 
-    }
-
     Axios.post(`${API_URL}/crear`, { 
       titulo, 
       descripcion, 
@@ -195,11 +185,6 @@ function Problemas() {
   };
 
   const actualizar = () => {
-    if (!id_problema || !titulo.trim() || !descripcion.trim() || !barrio_colonia.trim() || !id_afiliado || !estado.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
-      return;
-    }
-
     Axios.put(`${API_URL}/actualizar`, { 
       id_problema,
       titulo, 

@@ -122,15 +122,6 @@ function Departamentos() {
   //   CONTROLADORES DE BASE DE DATOS (CRUD + BITÁCORA)
   // =========================================================================
   const add = () => {
-    if (!nombre_departamento.trim() || !estado.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: 'DATOS INCOMPLETOS',
-        text: 'Por favor, ingrese todos los campos necesarios.',
-      });
-      return; 
-    }
-
     Axios.post(`${API_URL}/crear`, { 
       nombre_departamento, 
       estado,
@@ -160,11 +151,6 @@ function Departamentos() {
   };
 
   const actualizar = () => {
-    if (!nombre_departamento.trim() || !estado.trim() || !id_departamento) {
-      Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
-      return;
-    }
-
     Axios.put(`${API_URL}/actualizar`, { 
       id_departamento, 
       nombre_departamento, 

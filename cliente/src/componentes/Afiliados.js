@@ -203,16 +203,6 @@ function Afiliados() {
   const add = () => {
     const fechaEnvio = fecha_afiliacion.trim() || new Date().toISOString().split('T')[0];
 
-    if (!dpi.trim() || !nombre_completo.trim() || !telefono.trim() || !id_municipio || !id_usuario) {
-      Swal.fire({
-        icon: "warning",
-        title: 'DATOS INCOMPLETOS',
-        text: 'Por favor, complete los campos obligatorios.',
-        timer: 3000
-      });
-      return; 
-    }
-
     Axios.post(`${API_URL}/crear`, { 
       dpi: dpi.trim(), 
       lugar_votacion: lugar_votacion.trim(),
@@ -246,11 +236,6 @@ function Afiliados() {
 
   // === ACCIÓN: ACTUALIZAR AFILIADO ===
   const actualizar = () => {
-    if (!dpi.trim() || !nombre_completo.trim() || !id_municipio || !id_usuario) {
-      Swal.fire({ icon: 'warning', title: 'Campos obligatorios vacíos', text: 'El DPI son campos requeridos.' });
-      return;
-    }
-
     const fechaFormateada = fecha_afiliacion ? fecha_afiliacion.split('T')[0] : new Date().toISOString().split('T')[0];
 
     Axios.put(`${API_URL}/actualizar`, { 
@@ -490,18 +475,18 @@ function Afiliados() {
               <div className="modal-body">
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Documento (DPI): *</label>
+                    <label className="form-label fw-bold">Documento (DPI):</label>
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" placeholder="Ingrese DPI" />
                   </div>
                  
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Nombre Completo: *</label>
+                    <label className="form-label fw-bold">Nombre Completo:</label>
                     <input type="text" value={nombre_completo} onChange={(e) => setNombre_completo(e.target.value)} className="form-control" placeholder="Nombre completo" />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Teléfono: *</label>
+                    <label className="form-label fw-bold">Teléfono:</label>
                     <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} className="form-control" placeholder="Número telefónico" />
                   </div>
                 </div>
@@ -530,14 +515,14 @@ function Afiliados() {
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Municipio de Residencia: *</label>
+                    <label className="form-label fw-bold">Municipio de Residencia:</label>
                     <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Municipio --</option>
                       {municipiosList.map((m) => <option key={m.id_municipio} value={m.id_municipio}>{m.nombre_municipio}</option>)}
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado): *</label>
+                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
                     <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
@@ -575,17 +560,17 @@ function Afiliados() {
               <div className="modal-body">
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Documento (DPI): *</label>
+                    <label className="form-label fw-bold">Documento (DPI):</label>
                     <input type="text" value={dpi} onChange={(e) => setDpi(e.target.value)} className="form-control" />
                   </div>
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Nombre Completo: *</label>
+                    <label className="form-label fw-bold">Nombre Completo:</label>
                     <input type="text" value={nombre_completo} onChange={(e) => setNombre_completo(e.target.value)} className="form-control" />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Teléfono: *</label>
+                    <label className="form-label fw-bold">Teléfono:</label>
                     <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} className="form-control" />
                   </div>
                 </div>
@@ -614,14 +599,14 @@ function Afiliados() {
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Municipio de Residencia: *</label>
+                    <label className="form-label fw-bold">Municipio de Residencia:</label>
                     <select value={id_municipio} onChange={(e) => setId_municipio(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Municipio --</option>
                       {municipiosList.map((m) => <option key={m.id_municipio} value={m.id_municipio}>{m.nombre_municipio}</option>)}
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado): *</label>
+                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
                     <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}

@@ -166,17 +166,6 @@ function Usuarios() {
   const add = () => {
     const fechaEnvio = fecha_creacion.trim() || new Date().toISOString().split('T')[0];
 
-    if (!nombre.trim() || !correo.trim() || !clave.trim() || !rol.trim() || !estado.trim()) {
-      Swal.fire({
-        position: "top-end",
-        icon: "warning",
-        title: 'DATOS INCOMPLETOS',
-        showConfirmButton: false,
-        timer: 3000
-      });
-      return; 
-    }
-
     Axios.post(`${API_URL}/crear`, { 
       nombre, 
       correo, 
@@ -211,11 +200,6 @@ function Usuarios() {
   };
 
   const actualizar = async () => {
-    if (!nombre.trim() || !correo.trim() || !clave.trim() || !rol.trim() || !estado.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Campos incompletos' });
-      return;
-    }
-
     Axios.put(`${API_URL}/actualizar`, { 
       id_usuario, 
       nombre, 

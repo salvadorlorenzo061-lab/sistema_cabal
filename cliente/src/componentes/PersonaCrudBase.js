@@ -109,11 +109,6 @@ function PersonaCrudBase({
   });
 
   const add = () => {
-    if (!dpi.trim() || !nombre.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Campos obligatorios', text: 'DPI y nombre son requeridos.' });
-      return;
-    }
-
     Axios.post(`${API_URL}/crear`, buildPayload())
       .then(() => {
         getRegistros();
@@ -131,11 +126,6 @@ function PersonaCrudBase({
   };
 
   const actualizar = () => {
-    if (!idRegistro || !dpi.trim() || !nombre.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Campos obligatorios', text: 'ID, DPI y nombre son requeridos.' });
-      return;
-    }
-
     Axios.put(`${API_URL}/actualizar`, {
       [idField]: Number(idRegistro),
       ...buildPayload()
@@ -319,11 +309,11 @@ function PersonaCrudBase({
               <div className="modal-body">
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">DPI *</label>
+                    <label className="form-label fw-bold">DPI</label>
                     <input type="text" className="form-control" value={dpi} onChange={(e) => setDpi(e.target.value)} />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Nombre *</label>
+                    <label className="form-label fw-bold">Nombre</label>
                     <input type="text" className="form-control" value={nombre} onChange={(e) => setNombre(e.target.value)} />
                   </div>
                 </div>
@@ -395,11 +385,11 @@ function PersonaCrudBase({
               <div className="modal-body">
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">DPI *</label>
+                    <label className="form-label fw-bold">DPI</label>
                     <input type="text" className="form-control" value={dpi} onChange={(e) => setDpi(e.target.value)} />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Nombre *</label>
+                    <label className="form-label fw-bold">Nombre</label>
                     <input type="text" className="form-control" value={nombre} onChange={(e) => setNombre(e.target.value)} />
                   </div>
                 </div>
