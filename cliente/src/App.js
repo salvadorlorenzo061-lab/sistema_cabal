@@ -221,10 +221,13 @@ function App() {
   // 🚪 PANTALLA DE LOGIN RESPONSIVA
   if (!user) {
     return (
-      <div className="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center p-3">
-        <div className="card shadow p-4 border-0 w-100" style={{ maxWidth: '400px', borderRadius: '15px' }}>
-          <div className="text-center mb-4">
+      <div className="login-page container-fluid min-vh-100 d-flex align-items-center justify-content-center p-3">
+        <div className="login-watermark" aria-hidden="true">
+          <img src={logoCabal} alt="" />
+        </div>
 
+        <div className="card shadow p-4 border-0 w-100 login-card" style={{ maxWidth: '400px', borderRadius: '15px' }}>
+          <div className="text-center mb-4">
             <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded shadow-sm mb-3" style={{ height: '90px', width: 'auto' }} />
             <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>SISTEMA DE OBRAS MUNICIPALES JALAPA </h4>
             <small className="text-muted tracking-wider fw-bold d-block mt-1" style={{ fontSize: '0.75rem' }}>JALAPA ADMINISTRACION 2024-2028</small>
@@ -360,6 +363,30 @@ function App() {
                 </Link>
               )}
 
+              {tieneAcceso('problemas') && (
+                <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS</span>}
+                </Link>
+              )}
+
+              {tieneAcceso('propersonales') && (
+                <Link to="/propersonales" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">📝</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS PERSONALES</span>}
+                </Link>
+              )}
+
+              {tieneAcceso('lideres') && (
+                <Link to="/lideres" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">🧑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">LIDERES</span>}
+                </Link>
+              )}
+
+              {tieneAcceso('cocode') && (
+                <Link to="/cocode" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">COCODE</span>}
+                </Link>
+              )}
+
               {tieneAcceso('usuarios') && (
                 <Link to="/usuarios" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">👥</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">USUARIOS</span>}
@@ -381,30 +408,6 @@ function App() {
               {tieneAcceso('roles') && (
                 <Link to="/roles" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">🔐</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ROLES</span>}
-                </Link>
-              )}
-
-              {tieneAcceso('cocode') && (
-                <Link to="/cocode" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">COCODE</span>}
-                </Link>
-              )}
-
-              {tieneAcceso('problemas') && (
-                <Link to="/problemas" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">⚠️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS</span>}
-                </Link>
-              )}
-
-              {tieneAcceso('lideres') && (
-                <Link to="/lideres" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">🧑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">LIDERES</span>}
-                </Link>
-              )}
-
-              {tieneAcceso('propersonales') && (
-                <Link to="/propersonales" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">📝</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROB. PERSONALES</span>}
                 </Link>
               )}
             </nav>

@@ -4,6 +4,38 @@
   justify-content: center;
 }
 
+.login-page {
+  position: relative;
+  background: linear-gradient(135deg, #f8fafc 0%, #eaf1ff 100%);
+  overflow: hidden;
+}
+
+.login-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.08;
+  z-index: 0;
+}
+
+.login-watermark img {
+  width: min(72vw, 700px);
+  height: auto;
+  object-fit: contain;
+  filter: grayscale(100%);
+  transform: rotate(-5deg);
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(2px);
+}
+
 .datos {
   display: flex;
   flex-direction: column;
