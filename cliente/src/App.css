@@ -4,29 +4,40 @@
   justify-content: center;
 }
 
-.login-page {
-  position: relative;
-  background: linear-gradient(135deg, #f8fafc 0%, #eaf1ff 100%);
-  overflow: hidden;
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f4f7fb 0%, #eef4ff 100%);
 }
 
-.login-watermark {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.12;
-  z-index: 0;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-size: min(72vw, 700px) auto;
-  filter: grayscale(100%);
-  transform: rotate(-6deg);
+.login-visual {
+  flex: 0 0 42%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 520px;
 }
 
-.login-card {
-  position: relative;
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.9);
+.login-visual img {
+  width: min(100%, 520px);
+  max-height: 78vh;
+  object-fit: contain;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(30, 58, 138, 0.12);
+  background: rgba(255, 255, 255, 0.45);
+  padding: 1rem;
+}
+
+.login-panel {
+  width: min(100%, 420px);
+  max-width: 420px;
+  border-radius: 18px !important;
+  padding: 2rem 1.5rem !important;
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(2px);
 }
 
@@ -250,6 +261,27 @@
 }
 
 @media (max-width: 768px) {
+  .login-shell {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  .login-visual {
+    flex-basis: auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .login-visual img {
+    max-height: 34vh;
+  }
+
+  .login-panel {
+    width: 100%;
+    max-width: 400px;
+  }
+
   .app-main-content {
     overflow-x: auto !important;
     overflow-y: auto !important;

@@ -104,8 +104,7 @@ function App() {
   const obtenerTiempoLimite = useCallback(() => {
     if (!user || !user.rol) return 5 * 60 * 1000;
 
-    const rol = user.rol.trim().toLowerCase();
-
+    const rol = String(user.rol).trim().toLowerCase();
     if (rol === 'usuario') return 10 * 60 * 1000;
     return 3 * 60 * 1000;
   }, [user]);
@@ -188,7 +187,6 @@ function App() {
     }
   };
 
-  const rolRaw = user?.rol ? user.rol.trim().toLowerCase() : '';
   const miRol = normalizarRolSistema(user?.rol);
   const rolDisplay = miRol === 'usuario' ? 'USUARIO' : miRol.toUpperCase();
 
@@ -213,14 +211,12 @@ function App() {
   // 🚪 PANTALLA DE LOGIN RESPONSIVA
   if (!user) {
     return (
-      <div className="login-page container-fluid min-vh-100 d-flex align-items-center justify-content-center p-3">
-        <div
-          className="login-watermark"
-          aria-hidden="true"
-          style={{ backgroundImage: `url(${logoCabal})` }}
-        />
+      <div className="login-shell">
+        <div className="login-visual" aria-hidden="true">
+          <img src={logoCabal} alt="" />
+        </div>
 
-        <div className="card shadow p-4 border-0 w-100 login-card" style={{ maxWidth: '400px', borderRadius: '15px' }}>
+        <div className="login-panel card shadow border-0">
           <div className="text-center mb-4">
             <img src={logoCabal} alt="Logo Partido Cabal" className="img-fluid p-2 bg-white rounded shadow-sm mb-3" style={{ height: '90px', width: 'auto' }} />
             <h4 className="fw-bold m-0" style={{ color: '#1e3a8a' }}>SISTEMA DE OBRAS MUNICIPALES JALAPA </h4>
@@ -450,9 +446,7 @@ function App() {
                 </RutaProtegida>
               } />
 
-              <Route path="/municipios" element={
-                <Navigate to="/home" replace />
-              } />
+              <Route path="/municipios" element={<Navigate to="/home" replace />} />
               
               <Route path="/comunidades" element={
                 <RutaProtegida user={user} rolesPermitidos={['usuario']}>
@@ -460,9 +454,7 @@ function App() {
                 </RutaProtegida>
               } />
               
-              <Route path="/departamentos" element={
-                <Navigate to="/home" replace />
-              } />
+              <Route path="/departamentos" element={<Navigate to="/home" replace />} />
 
               <Route path="/cocode" element={
                 <RutaProtegida user={user} rolesPermitidos={['usuario']}>
