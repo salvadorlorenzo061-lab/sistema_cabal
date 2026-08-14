@@ -3,6 +3,10 @@ const db = require('../Conexion');
 const router = express.Router();
 
 const todosLosModulos = ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales'];
+const esNombreRolLegacy = (nombreRol) => {
+    const valor = String(nombreRol || '').trim().toLowerCase();
+    return valor.includes('coordinador') || valor.includes('sub');
+};
 
 const initRolesTable = () => {
     db.query(`
@@ -16,48 +20,40 @@ const initRolesTable = () => {
     `, (err) => {
         if (err) { console.error("Error creando tabla roles:", err); return; }
 
-        // Agrega columna permisos si aún no existe (compatible con MySQL 5.7)
         db.query("ALTER TABLE roles ADD COLUMN permisos TEXT DEFAULT NULL", (alterErr) => {
             if (alterErr && alterErr.code !== 'ER_DUP_FIELDNAME') {
                 console.error("Error añadiendo columna permisos:", alterErr);
             }
         });
 
+        db.query(
+            "DELETE FROM roles WHERE LOWER(nombre_rol) LIKE '%coordinador%' OR LOWER(nombre_rol) LIKE '%sub%'",
+            (deleteErr) => {
+                if (deleteErr) console.error("Error eliminando roles obsoletos:", deleteErr);
+            }
+        );
+
+        db.query(
+            "UPDATE usuarios SET rol = 'Usuario' WHERE LOWER(rol) LIKE '%coordinador%' OR LOWER(rol) LIKE '%sub%'",
+            (updateErr) => {
+                if (updateErr) console.error("Error sanitizando roles de usuarios:", updateErr);
+            }
+        );
+
         const permisosTotal = JSON.stringify(todosLosModulos);
-        const permisosBase  = JSON.stringify(['cocode','problemas','lideres','propersonales']);
-        const permisosRegionalViejos = JSON.stringify(['dashboard','usuarios','bitacora','municipios','comunidades','departamentos','roles','cocode','problemas']);
-        const permisosCampoViejos = JSON.stringify(['cocode','problemas']);
         db.query(`
             INSERT IGNORE INTO roles (nombre_rol, descripcion, estado, permisos) VALUES
-            ('Coordinador Regional',      'Nivel máximo de acceso al sistema', 'Activo', ?),
-            ('Coordinador Municipal',     'Acceso a módulos de campo',          'Activo', ?),
-            ('Sub Coordinador Municipal', 'Acceso básico de captura',           'Activo', ?)
-        `, [permisosTotal, permisosBase, permisosBase], (seedErr) => {
+            ('Usuario', 'Acceso general al sistema', 'Activo', ?)
+        `, [permisosTotal], (seedErr) => {
             if (seedErr) console.error("Error en seed de roles:", seedErr);
         });
-
-        db.query(
-            "UPDATE roles SET permisos = ? WHERE nombre_rol = 'Coordinador Regional' AND permisos = ?",
-            [permisosTotal, permisosRegionalViejos],
-            (updateErr) => {
-                if (updateErr) console.error("Error actualizando permisos regionales:", updateErr);
-            }
-        );
-
-        db.query(
-            "UPDATE roles SET permisos = ? WHERE nombre_rol IN ('Coordinador Municipal', 'Sub Coordinador Municipal') AND permisos = ?",
-            [permisosBase, permisosCampoViejos],
-            (updateErr) => {
-                if (updateErr) console.error("Error actualizando permisos de campo:", updateErr);
-            }
-        );
     });
 };
 initRolesTable();
 
 // GET / — listar roles
 router.get("/", (_req, res) => {
-    db.query("SELECT * FROM roles ORDER BY id_rol ASC", (err, result) => {
+    db.query("SELECT * FROM roles WHERE NOT (LOWER(nombre_rol) LIKE '%coordinador%' OR LOWER(nombre_rol) LIKE '%sub%') ORDER BY id_rol ASC", (err, result) => {
         if (err) { console.error(err); return res.status(500).send("Error al obtener roles"); }
         res.json(result);
     });

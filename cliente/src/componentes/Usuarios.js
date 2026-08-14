@@ -383,7 +383,7 @@ function Usuarios() {
                   <td>{val.correo}</td>
                   <td><span className="text-muted">••••••••</span></td>
                   <td>
-                    <span className={`badge ${val.rol === 'Coordinador Regional' ? 'bg-danger' : 'bg-primary'}`}>
+                    <span className="badge bg-primary">
                       {val.rol ? val.rol.toUpperCase() : 'SIN ROL'}
                     </span>
                   </td>
@@ -404,9 +404,7 @@ function Usuarios() {
                         if (accion === 'actualizar') {
                           abrirEditarModal(val);
                         } else if (accion === 'eliminar') {
-                          if (miRol.trim().toLowerCase() !== "sub coordinador municipal") {
-                            deteleUsuario(val);
-                          }
+                          deteleUsuario(val);
                         } else if (accion === 'pdf') {
                           descargarPDFIndividual(val);
                         }
@@ -416,9 +414,7 @@ function Usuarios() {
                     >
                       <option value="" disabled>⚙️ Acciones</option>
                       <option value="actualizar">✏️ Actualizar</option>
-                      {miRol.trim().toLowerCase() !== "sub coordinador municipal" && (
-                        <option value="eliminar">🗑️ Eliminar</option>
-                      )}
+                      <option value="eliminar">🗑️ Eliminar</option>
                       <option value="pdf">📄 PDF</option>
                     </select>
                   </td>

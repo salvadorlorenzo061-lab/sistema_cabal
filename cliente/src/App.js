@@ -20,21 +20,25 @@ import logoCabal from './img/4.jpeg';
 // =========================================================================
 // 🛡️ COMPONENTE CONTROLADOR DE RUTAS POR ROL
 // =========================================================================
-const ROLES_CONOCIDOS_GUARD = ['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'];
+const esRolLegacy = (rol) => {
+  const valor = String(rol || '').trim().toLowerCase();
+  return valor.includes('coordinador') || valor.includes('sub');
+};
+
+const normalizarRolSistema = (rol) => {
+  const valor = String(rol || '').trim().toLowerCase();
+  if (!valor) return 'usuario';
+  return esRolLegacy(valor) ? 'usuario' : valor;
+};
 
 const RutaProtegida = ({ user, rolesPermitidos, children }) => {
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  const rolRaw = user.rol ? user.rol.trim().toLowerCase() : '';
-  // Normaliza roles corruptos (ej: correo guardado en campo rol) a coordinador regional
-  const rolUsuario = ROLES_CONOCIDOS_GUARD.includes(rolRaw) ? rolRaw : (rolRaw ? 'coordinador regional' : '');
+  const rolUsuario = normalizarRolSistema(user.rol);
 
   if (!rolesPermitidos.includes(rolUsuario)) {
-    if (rolUsuario === 'coordinador municipal' || rolUsuario === 'sub coordinador municipal') {
-      return <Navigate to="/cocode" replace />;
-    }
     return <Navigate to="/home" replace />;
   }
 
@@ -98,20 +102,12 @@ function App() {
 
   // 🕒 OBTENER TIEMPO LÍMITE SEGÚN EL ROL DEL USUARIO
   const obtenerTiempoLimite = useCallback(() => {
-    if (!user || !user.rol) return 5 * 60 * 1000; 
+    if (!user || !user.rol) return 5 * 60 * 1000;
 
     const rol = user.rol.trim().toLowerCase();
 
-    switch (rol) {
-      case 'coordinador regional':
-        return 10 * 60 * 1000; 
-      case 'coordinador municipal':
-        return 5 * 60 * 1000;  
-      case 'sub coordinador municipal':
-        return 5 * 60 * 1000;  
-      default:
-        return 3 * 60 * 1000;  
-    }
+    if (rol === 'usuario') return 10 * 60 * 1000;
+    return 3 * 60 * 1000;
   }, [user]);
 
   // 🕒 FUNCIÓN DE EXPIRACIÓN POR INACTIVIDAD
@@ -192,11 +188,9 @@ function App() {
     }
   };
 
-  const ROLES_CONOCIDOS = ['coordinador regional', 'coordinador municipal', 'sub coordinador municipal'];
   const rolRaw = user?.rol ? user.rol.trim().toLowerCase() : '';
-  // Normaliza roles corruptos a coordinador regional
-  const miRol = ROLES_CONOCIDOS.includes(rolRaw) ? rolRaw : (rolRaw ? 'coordinador regional' : '');
-  const rolDisplay = ROLES_CONOCIDOS.includes(rolRaw) ? user.rol.toUpperCase() : 'COORDINADOR REGIONAL';
+  const miRol = normalizarRolSistema(user?.rol);
+  const rolDisplay = miRol === 'usuario' ? 'USUARIO' : miRol.toUpperCase();
 
   // Permisos del rol desde la sesión; si están vacíos usa defaults por nombre de rol
   const userPermisos = (() => {
@@ -206,9 +200,7 @@ function App() {
   })();
 
   const PERMISOS_DEFAULT = {
-    'coordinador regional':      ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales'],
-    'coordinador municipal':     ['comunidades','cocode','problemas','lideres','propersonales'],
-    'sub coordinador municipal': ['cocode','problemas','lideres','propersonales']
+    'usuario': ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales']
   };
 
   const tieneAcceso = (modulo) => {
@@ -222,9 +214,11 @@ function App() {
   if (!user) {
     return (
       <div className="login-page container-fluid min-vh-100 d-flex align-items-center justify-content-center p-3">
-        <div className="login-watermark" aria-hidden="true">
-          <img src={logoCabal} alt="" />
-        </div>
+        <div
+          className="login-watermark"
+          aria-hidden="true"
+          style={{ backgroundImage: `url(${logoCabal})` }}
+        />
 
         <div className="card shadow p-4 border-0 w-100 login-card" style={{ maxWidth: '400px', borderRadius: '15px' }}>
           <div className="text-center mb-4">
@@ -436,26 +430,22 @@ function App() {
             }}
           >
             <Routes>
-              <Route path="/" element={
-                (miRol === 'coordinador municipal' || miRol === 'sub coordinador municipal') 
-                  ? <Navigate to="/cocode" replace /> 
-                  : <Navigate to="/home" replace />
-              } />
+              <Route path="/" element={<Navigate to="/home" replace />} />
 
               <Route path="/home" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <Dashboard />
                 </RutaProtegida>
               } />
 
               <Route path="/usuarios" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <Usuarios />
                 </RutaProtegida>
               } />
 
               <Route path="/bitacora" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <Bitacora />
                 </RutaProtegida>
               } />
@@ -465,7 +455,7 @@ function App() {
               } />
               
               <Route path="/comunidades" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <Comunidades />
                 </RutaProtegida>
               } />
@@ -475,7 +465,7 @@ function App() {
               } />
 
               <Route path="/cocode" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <Afiliados />
                 </RutaProtegida>
               } />
@@ -483,32 +473,30 @@ function App() {
               <Route path="/afiliados" element={<Navigate to="/cocode" replace />} />
 
               <Route path="/roles" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <Roles />
                 </RutaProtegida>
               } />
 
               <Route path="/problemas" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <Problemas />
                 </RutaProtegida>
               } />
 
               <Route path="/lideres" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <LIDER />
                 </RutaProtegida>
               } />
 
               <Route path="/propersonales" element={
-                <RutaProtegida user={user} rolesPermitidos={['coordinador regional', 'coordinador municipal', 'sub coordinador municipal']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
                   <PROPERSONALES />
                 </RutaProtegida>
               } />
 
-              <Route path="*" element={
-                <Navigate to={(miRol === 'coordinador municipal' || miRol === 'sub coordinador municipal') ? "/cocode" : "/home"} replace />
-              } />
+              <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
           </div>
 

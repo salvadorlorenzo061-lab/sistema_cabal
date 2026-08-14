@@ -13,20 +13,14 @@
 .login-watermark {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   pointer-events: none;
-  opacity: 0.08;
+  opacity: 0.12;
   z-index: 0;
-}
-
-.login-watermark img {
-  width: min(72vw, 700px);
-  height: auto;
-  object-fit: contain;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: min(72vw, 700px) auto;
   filter: grayscale(100%);
-  transform: rotate(-5deg);
+  transform: rotate(-6deg);
 }
 
 .login-card {

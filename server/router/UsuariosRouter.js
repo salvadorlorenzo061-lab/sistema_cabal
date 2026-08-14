@@ -208,12 +208,6 @@ router.put("/actualizar", (req, res) => {
 router.delete("/delete/:id_usuario", (req, res) => {
     const { id_usuario } = req.params; 
     const operador = req.query.operador || "DESCONOCIDO"; 
-    const rolOperador = req.query.rolOperador ? req.query.rolOperador.trim().toLowerCase() : "";
-
-    if (rolOperador === "sub coordinador municipal") {
-        console.warn(`⚠️ ALERTA: El operador [${operador}] intentó borrar el ID ${id_usuario} sin permisos.`);
-        return res.status(403).send("Acceso denegado: Tu rango de Sub-Coordinador Municipal no tiene autorización para destruir registros.");
-    }
 
     db.query('SELECT nombre, correo, rol FROM usuarios WHERE id_usuario = ?', [id_usuario], (searchErr, searchResult) => {
         if (searchErr || searchResult.length === 0) {

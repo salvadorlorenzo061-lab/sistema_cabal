@@ -254,7 +254,7 @@ function Roles() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label fw-bold">Nombre del Rol:</label>
-                  <input type="text" className="form-control" placeholder="Ej: Coordinador Regional"
+                  <input type="text" className="form-control" placeholder="Ej: Usuario"
                     value={nombre_rol} onChange={(e) => setNombre_rol(e.target.value)} />
                 </div>
                 <div className="mb-3">
