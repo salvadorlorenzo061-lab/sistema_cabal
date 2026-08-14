@@ -15,7 +15,8 @@ import LIDER from './componentes/LIDER';
 import PROPERSONALES from './componentes/PROPERSONALES';
 
 // Imagen corporativa
-import logoCabal from './img/4.jpeg'; 
+import logoCabal from './img/4.jpeg';
+import imagenLoginLateral from './img/1.png';
 
 // =========================================================================
 // 🛡️ COMPONENTE CONTROLADOR DE RUTAS POR ROL
@@ -214,12 +215,7 @@ function App() {
       <div className="login-shell">
         <div className="login-visual" aria-hidden="true">
           <div className="login-brand-card">
-            <img src={logoCabal} alt="Gobierno Municipal de Jalapa" className="login-brand-icon" />
-            <div className="login-brand-copy">
-              <span>Gobierno Municipal</span>
-              <strong>de Jalapa</strong>
-              <small>2024 - 2028</small>
-            </div>
+            <img src={imagenLoginLateral} alt="Gobierno Municipal de Jalapa" className="login-brand-icon" />
           </div>
         </div>
 
