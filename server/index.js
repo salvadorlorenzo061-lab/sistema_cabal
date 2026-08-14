@@ -13,26 +13,42 @@ const allowlist = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://localhost:3000',
+    'https://localhost:3001',
     'https://siom-pfycqtlz5-equipo5.vercel.app',
     'https://siom-56gju83n-equipo5.vercel.app',
     'https://siom-bdwa8bq-equipo5.vercel.app',
+    'https://siom-r1yxbfk-equipo5.vercel.app',
+    'https://siom-cwfc9s1sp-equipo5.vercel.app',
+    'https://siom-app.vercel.app',
     'https://sistema-cabal.vercel.app'
 ];
 
+const normalizeOrigin = (origin) => {
+    if (!origin) return '';
+    return String(origin).trim().toLowerCase();
+};
+
 const isAllowedOrigin = (origin) => {
-    if (!origin) return true;
-    if (allowlist.includes(origin)) return true;
-    return /^https?:\/\/([a-z0-9-]+\.)*vercel\.app$/i.test(origin);
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (!normalizedOrigin) return true;
+
+    if (allowlist.some((allowed) => normalizeOrigin(allowed) === normalizedOrigin)) return true;
+
+    if (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')) return true;
+    if (normalizedOrigin.includes('.vercel.app')) return true;
+    if (normalizedOrigin.includes('.onrender.com')) return true;
+
+    return false;
 };
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (isAllowedOrigin(origin)) {
+        if (!origin || isAllowedOrigin(origin)) {
             callback(null, true);
             return;
         }
 
-        callback(null, true);
+        callback(new Error('Origen no autorizado por CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -41,8 +57,10 @@ const corsOptions = {
 
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (isAllowedOrigin(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    if (!normalizedOrigin || isAllowedOrigin(normalizedOrigin)) {
+        res.setHeader('Access-Control-Allow-Origin', normalizedOrigin || '*');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Vary', 'Origin');
     }

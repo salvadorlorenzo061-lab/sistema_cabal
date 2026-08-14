@@ -432,19 +432,19 @@ function App() {
               <Route path="/" element={<Navigate to="/home" replace />} />
 
               <Route path="/home" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <Dashboard />
                 </RutaProtegida>
               } />
 
               <Route path="/usuarios" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <Usuarios />
                 </RutaProtegida>
               } />
 
               <Route path="/bitacora" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <Bitacora />
                 </RutaProtegida>
               } />
@@ -452,7 +452,7 @@ function App() {
               <Route path="/municipios" element={<Navigate to="/home" replace />} />
               
               <Route path="/comunidades" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <Comunidades />
                 </RutaProtegida>
               } />
@@ -460,7 +460,7 @@ function App() {
               <Route path="/departamentos" element={<Navigate to="/home" replace />} />
 
               <Route path="/cocode" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <Afiliados />
                 </RutaProtegida>
               } />
@@ -468,25 +468,25 @@ function App() {
               <Route path="/afiliados" element={<Navigate to="/cocode" replace />} />
 
               <Route path="/roles" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <Roles />
                 </RutaProtegida>
               } />
 
               <Route path="/problemas" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <Problemas />
                 </RutaProtegida>
               } />
 
               <Route path="/lideres" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <LIDER />
                 </RutaProtegida>
               } />
 
               <Route path="/propersonales" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
                   <PROPERSONALES />
                 </RutaProtegida>
               } />
