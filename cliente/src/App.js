@@ -16,7 +16,7 @@ import PROPERSONALES from './componentes/PROPERSONALES';
 
 // Imagen corporativa
 import logoCabal from './img/4.jpeg';
-import imagenLoginLateral from './img/1.png';
+import imagenLoginLateral from './img/5.jpg';
 
 // =========================================================================
 // 🛡️ COMPONENTE CONTROLADOR DE RUTAS POR ROL
