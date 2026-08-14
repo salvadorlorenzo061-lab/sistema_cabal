@@ -9,7 +9,30 @@ const app = express();
 // =========================================================================
 // 🛠️ MIDDLEWARES GLOBALES
 // =========================================================================
-app.use(cors());
+const allowlist = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://localhost:3000',
+    'https://siom-pfycqtlz5-equipo5.vercel.app',
+    'https://sistema-cabal.vercel.app'
+];
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowlist.includes(origin) || /^https?:\/\/.*\.vercel\.app$/.test(origin)) {
+            callback(null, true);
+            return;
+        }
+
+        callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Configuración para aceptar payloads grandes (Base64, reportes, etc.)
 app.use(express.json({ limit: '50mb' }));

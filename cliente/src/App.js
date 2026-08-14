@@ -213,7 +213,14 @@ function App() {
     return (
       <div className="login-shell">
         <div className="login-visual" aria-hidden="true">
-          <img src={logoCabal} alt="" />
+          <div className="login-brand-card">
+            <img src={logoCabal} alt="Gobierno Municipal de Jalapa" className="login-brand-icon" />
+            <div className="login-brand-copy">
+              <span>Gobierno Municipal</span>
+              <strong>de Jalapa</strong>
+              <small>2024 - 2028</small>
+            </div>
+          </div>
         </div>
 
         <div className="login-panel card shadow border-0">
