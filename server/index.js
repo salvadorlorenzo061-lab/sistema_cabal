@@ -14,22 +14,40 @@ const allowlist = [
     'http://127.0.0.1:3000',
     'https://localhost:3000',
     'https://siom-pfycqtlz5-equipo5.vercel.app',
+    'https://siom-56gju83n-equipo5.vercel.app',
     'https://sistema-cabal.vercel.app'
 ];
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin || allowlist.includes(origin) || /^https?:\/\/.*\.vercel\.app$/.test(origin)) {
+        if (!origin) {
             callback(null, true);
             return;
         }
 
-        callback(null, true);
+        const isAllowed = allowlist.includes(origin) || /(^|\.)vercel\.app$/i.test(origin);
+
+        if (isAllowed) {
+            callback(null, true);
+            return;
+        }
+
+        callback(new Error('CORS no permitido para este origen'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept']
 };
+
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && (allowlist.includes(origin) || /(^|\.)vercel\.app$/i.test(origin))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Vary', 'Origin');
+    }
+    next();
+});
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
