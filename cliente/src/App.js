@@ -29,17 +29,36 @@ const esRolLegacy = (rol) => {
 const normalizarRolSistema = (rol) => {
   const valor = String(rol || '').trim().toLowerCase();
   if (!valor) return 'usuario';
-  return esRolLegacy(valor) ? 'usuario' : valor;
+
+  if (valor.includes('admin')) return 'administrador';
+  if (esRolLegacy(valor) || valor.includes('usuario') || valor.includes('user')) return 'usuario';
+
+  return valor;
 };
 
-const RutaProtegida = ({ user, rolesPermitidos, children }) => {
+const obtenerPermisosUsuario = (user) => {
+  if (!user?.permisos) return [];
+
+  if (Array.isArray(user.permisos)) return user.permisos;
+
+  try {
+    const parseado = JSON.parse(user.permisos);
+    return Array.isArray(parseado) ? parseado : [];
+  } catch (_) {
+    return [];
+  }
+};
+
+const RutaProtegida = ({ user, rolesPermitidos, requiredModule, children }) => {
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
   const rolUsuario = normalizarRolSistema(user.rol);
+  const permisosUsuario = obtenerPermisosUsuario(user);
+  const tienePermisoDelModulo = requiredModule ? permisosUsuario.includes(requiredModule) : false;
 
-  if (!rolesPermitidos.includes(rolUsuario)) {
+  if (!rolesPermitidos.includes(rolUsuario) && !tienePermisoDelModulo) {
     return <Navigate to="/home" replace />;
   }
 
@@ -427,19 +446,19 @@ function App() {
               <Route path="/" element={<Navigate to="/home" replace />} />
 
               <Route path="/home" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="dashboard">
                   <Dashboard />
                 </RutaProtegida>
               } />
 
               <Route path="/usuarios" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="usuarios">
                   <Usuarios />
                 </RutaProtegida>
               } />
 
               <Route path="/bitacora" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="bitacora">
                   <Bitacora />
                 </RutaProtegida>
               } />
@@ -447,7 +466,7 @@ function App() {
               <Route path="/municipios" element={<Navigate to="/home" replace />} />
               
               <Route path="/comunidades" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="comunidades">
                   <Comunidades />
                 </RutaProtegida>
               } />
@@ -455,7 +474,7 @@ function App() {
               <Route path="/departamentos" element={<Navigate to="/home" replace />} />
 
               <Route path="/cocode" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="cocode">
                   <Afiliados />
                 </RutaProtegida>
               } />
@@ -463,25 +482,25 @@ function App() {
               <Route path="/afiliados" element={<Navigate to="/cocode" replace />} />
 
               <Route path="/roles" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="roles">
                   <Roles />
                 </RutaProtegida>
               } />
 
               <Route path="/problemas" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="problemas">
                   <Problemas />
                 </RutaProtegida>
               } />
 
               <Route path="/lideres" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="lideres">
                   <LIDER />
                 </RutaProtegida>
               } />
 
               <Route path="/propersonales" element={
-                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']}>
+                <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="propersonales">
                   <PROPERSONALES />
                 </RutaProtegida>
               } />
