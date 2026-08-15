@@ -80,33 +80,26 @@ router.post("/login", (req, res) => {
             }
 
             if (!result || result.length === 0) {
-                const esAdminPorDefecto = correoLimpio === 'admin@admin.com' && claveLimpia === 'admin123';
-
-                if (!esAdminPorDefecto) {
-                    return responderLogin(null);
-                }
-
-                return db.query(
-                    'INSERT INTO usuarios (nombre, correo, clave, rol, fecha_creacion, estado) VALUES (?, ?, ?, ?, CURDATE(), ?)',
-                    ['ADMINISTRADOR', 'admin@admin.com', 'admin123', 'Usuario', 'Activo'],
-                    (insertErr) => {
-                        if (insertErr && !String(insertErr.message).toLowerCase().includes('duplicate')) {
-                            console.error('❌ Error creando usuario administrador por defecto:', insertErr);
-                            return responderLogin(null);
-                        }
-
-                        return db.query('SELECT * FROM usuarios WHERE LOWER(TRIM(correo)) = ?', [correoLimpio], (selectErr, adminResult) => {
-                            if (selectErr || !adminResult || adminResult.length === 0) {
-                                return responderLogin(null);
-                            }
-
-                            return responderLogin(adminResult[0]);
-                        });
-                    }
-                );
+                return responderLogin(null);
             }
 
-            return responderLogin(result[0]);
+            const usuario = result[0];
+            const rolNombre = String(usuario.rol || '').trim();
+
+            if (!rolNombre) {
+                return responderLogin(usuario);
+            }
+
+            db.query('SELECT * FROM roles WHERE LOWER(TRIM(nombre_rol)) = LOWER(TRIM(?))', [rolNombre], (roleErr, roleRows) => {
+                if (!roleErr && roleRows && roleRows.length > 0) {
+                    const permisosRaw = roleRows[0].permisos;
+                    const permisos = Array.isArray(permisosRaw)
+                        ? permisosRaw
+                        : (typeof permisosRaw === 'string' ? (() => { try { return JSON.parse(permisosRaw); } catch (_) { return []; } })() : []);
+                    usuario.permisos = permisos;
+                }
+                return responderLogin(usuario);
+            });
         });
     } catch (globalError) {
         console.error("❌ Error crítico global en el endpoint /login:", globalError);

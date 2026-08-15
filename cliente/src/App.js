@@ -198,13 +198,8 @@ function App() {
     try { return JSON.parse(user.permisos); } catch (_) { return []; }
   })();
 
-  const PERMISOS_DEFAULT = {
-    'usuario': ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales']
-  };
-
   const tieneAcceso = (modulo) => {
-    if (userPermisos.length > 0) return userPermisos.includes(modulo);
-    return (PERMISOS_DEFAULT[miRol] || []).includes(modulo);
+    return userPermisos.includes(modulo);
   };
 
   const sidebarModuleClass = 'nav-link btn btn-outline-light border-0 fw-bold text-start text-white d-flex align-items-center rounded sidebar-module-link';
