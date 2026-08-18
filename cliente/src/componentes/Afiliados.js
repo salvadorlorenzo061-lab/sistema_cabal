@@ -176,7 +176,7 @@ function Afiliados() {
       body: [
         ['CÓDIGO ÚNICO', `AFI-${val.id_afiliado}`],
         ['DOCUMENTO DE IDENTIDAD (DPI)', val.dpi],
-        ['LUGAR DE VOTACIÓN', val.lugar_votacion ? val.lugar_votacion.toUpperCase() : 'No asignado'],
+        ['COMUNIDAD AFECTADA', val.lugar_votacion ? val.lugar_votacion.toUpperCase() : 'No asignada'],
         ['NOMBRE COMPLETO', val.nombre_completo.toUpperCase()],
         ['TELÉFONO DE CONTACTO', val.telefono],
         ['DIRECCIÓN DE RESIDENCIA', val.direccion || 'No registrada'],
