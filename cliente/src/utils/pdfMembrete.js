@@ -1,5 +1,5 @@
-import logoMembrete from '../img/1.png';
+import logoMembrete from '../img/4.jpeg';
 
 export const agregarMembrete = (doc) => {
-  doc.addImage(logoMembrete, 'PNG', 14, 8, 20, 18, undefined, 'FAST');
+  doc.addImage(logoMembrete, 'JPEG', 14, 8, 20, 18, undefined, 'FAST');
 };
