@@ -3,6 +3,12 @@ const db = require('../Conexion');
 const router = express.Router(); 
 const { obtenerMunicipioPorId } = require('../catalogosTerritoriales');
 
+db.query('ALTER TABLE afiliados ADD COLUMN numero_celular VARCHAR(25) DEFAULT NULL AFTER telefono', (err) => {
+    if (err && err.code !== 'ER_DUP_FIELDNAME') {
+        console.error('Error agregando numero_celular a afiliados:', err);
+    }
+});
+
 /**
  * 🛡️ FUNCIÓN DE AUDITORÍA INTERNA (Bitácora)
  * Inserta de manera automática las trazas de movimientos en la base de datos.

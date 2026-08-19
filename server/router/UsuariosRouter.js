@@ -2,6 +2,12 @@ const express = require("express");
 const db = require('../Conexion'); 
 const router = express.Router(); 
 
+db.query('ALTER TABLE usuarios ADD COLUMN numero_celular VARCHAR(25) DEFAULT NULL AFTER correo', (err) => {
+    if (err && err.code !== 'ER_DUP_FIELDNAME') {
+        console.error('Error agregando numero_celular a usuarios:', err);
+    }
+});
+
 // === 🛡️ FUNCIÓN AUXILIAR PARA REGISTRAR EN BITÁCORA (Sincronizada con Aiven) ===
 const registrarBitacora = (id_usuario, usuario_afectado, tipo_movimiento, ejecutado_por, detalles, callback) => {
     // Agregada explícitamente la columna 'usuario_afectado' requerida en la BD
