@@ -31,6 +31,7 @@ const crearRouterCrudPersona = ({
                 nombre VARCHAR(200) NOT NULL,
                 direccion VARCHAR(255) DEFAULT NULL,
                 telefono VARCHAR(30) DEFAULT NULL,
+                id_usuario INT DEFAULT NULL,
                 foto LONGTEXT DEFAULT NULL,
                 observaciones TEXT DEFAULT NULL,
                 estado ENUM('Activo', 'Desactivado') NOT NULL DEFAULT 'Activo',
@@ -43,7 +44,14 @@ const crearRouterCrudPersona = ({
         db.query(sql, (err) => {
             if (err) {
                 console.error(`Error creando tabla ${tableName}:`, err);
+                return;
             }
+
+            db.query(`ALTER TABLE ${tableName} ADD COLUMN id_usuario INT DEFAULT NULL AFTER telefono`, (alterErr) => {
+                if (alterErr && alterErr.code !== 'ER_DUP_FIELDNAME') {
+                    console.error(`Error agregando propietario a ${tableName}:`, alterErr);
+                }
+            });
         });
     };
 
@@ -53,16 +61,21 @@ const crearRouterCrudPersona = ({
         const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
         const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
         const offset = (pagina - 1) * limite;
+        const idUsuario = parseInt(req.query.id_usuario || '0', 10);
+        const rol = String(req.query.rol || '').trim().toLowerCase();
+        const puedeVerTodos = rol === 'administrador' || rol === 'supervisor general';
+        const whereSQL = puedeVerTodos ? '' : 'WHERE id_usuario = ?';
+        const params = puedeVerTodos ? [] : [idUsuario];
 
-        db.query(`SELECT COUNT(*) AS total FROM ${tableName}`, (countErr, countResult) => {
+        db.query(`SELECT COUNT(*) AS total FROM ${tableName} ${whereSQL}`, params, (countErr, countResult) => {
             if (countErr) {
                 console.error(countErr);
                 return res.status(500).json({ message: `Error al obtener ${entityLabelPlural}.` });
             }
 
             db.query(
-                `SELECT * FROM ${tableName} ORDER BY ${idColumn} DESC LIMIT ? OFFSET ?`,
-                [limite, offset],
+                `SELECT * FROM ${tableName} ${whereSQL} ORDER BY ${idColumn} DESC LIMIT ? OFFSET ?`,
+                [...params, limite, offset],
                 (err, result) => {
                     if (err) {
                         console.error(err);
@@ -109,8 +122,8 @@ const crearRouterCrudPersona = ({
             }
 
             const sqlInsert = `
-                INSERT INTO ${tableName} (dpi, nombre, direccion, telefono, foto, observaciones, estado)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ${tableName} (dpi, nombre, direccion, telefono, id_usuario, foto, observaciones, estado)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
             db.query(
@@ -120,6 +133,7 @@ const crearRouterCrudPersona = ({
                     nombre.trim(),
                     direccion?.trim() || null,
                     telefono?.trim() || null,
+                    operador_id || null,
                     foto || null,
                     observaciones?.trim() || null,
                     estado || 'Activo'

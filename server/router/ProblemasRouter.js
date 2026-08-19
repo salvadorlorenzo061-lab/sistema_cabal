@@ -29,8 +29,15 @@ router.get("/municipios", (req, res) => {
 
 // === OBTENER CATÁLOGO DE COCODES (AUXILIAR PARA TICKETS) ===
 router.get("/cocodes", (req, res) => {
+    const idUsuario = parseInt(req.query.id_usuario || '0', 10);
+    const rol = String(req.query.rol || '').trim().toLowerCase();
+    const puedeVerTodos = rol === 'administrador' || rol === 'supervisor general';
+    const whereSQL = puedeVerTodos ? '' : 'WHERE id_usuario = ?';
+    const params = puedeVerTodos ? [] : [idUsuario];
+
     db.query(
-        "SELECT id_afiliado AS id_cocode, id_afiliado, dpi, nombre_completo FROM afiliados ORDER BY nombre_completo ASC",
+        `SELECT id_afiliado AS id_cocode, id_afiliado, dpi, nombre_completo FROM afiliados ${whereSQL} ORDER BY nombre_completo ASC`,
+        params,
         (err, result) => {
             if (err) {
                 console.error(err);
@@ -97,6 +104,16 @@ router.get("/", (req, res) => {
     const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
     const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
     const offset = (pagina - 1) * limite;
+    const idUsuario = parseInt(req.query.id_usuario || '0', 10);
+    const rol = String(req.query.rol || '').trim().toLowerCase();
+    const puedeVerTodos = rol === 'administrador' || rol === 'supervisor general';
+
+    if (!puedeVerTodos && !idUsuario) {
+        return res.status(400).json({ message: "No se pudo identificar al usuario de la sesión." });
+    }
+
+    const filtroPropietario = puedeVerTodos ? '' : 'WHERE a.id_usuario = ?';
+    const paramsPropietario = puedeVerTodos ? [] : [idUsuario];
 
     resolverColumnaFoto((tieneFoto) => {
         const campoFoto = tieneFoto ? "p.foto" : "NULL AS foto";
@@ -120,17 +137,18 @@ router.get("/", (req, res) => {
             FROM problemas p
             LEFT JOIN municipios m ON p.id_municipio = m.id_municipio
             LEFT JOIN afiliados a ON p.id_afiliado = a.id_afiliado
+            ${filtroPropietario}
             ORDER BY p.fecha_reporte DESC
             LIMIT ? OFFSET ?
         `;
 
-        db.query('SELECT COUNT(*) AS total FROM problemas', (countErr, countResult) => {
+        db.query(`SELECT COUNT(*) AS total FROM problemas p LEFT JOIN afiliados a ON p.id_afiliado = a.id_afiliado ${filtroPropietario}`, paramsPropietario, (countErr, countResult) => {
             if (countErr) {
                 console.error(countErr);
                 return res.status(500).send("Error al obtener el listado de problemas");
             }
 
-            db.query(sqlQuery, [limite, offset], (err, result) => {
+            db.query(sqlQuery, [...paramsPropietario, limite, offset], (err, result) => {
                 if (err) {
                     console.error(err);
                     res.status(500).send("Error al obtener el listado de problemas");

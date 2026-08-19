@@ -5,11 +5,13 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
+import { agregarMembrete } from '../utils/pdfMembrete';
 
 function Usuarios() {
   const [id_usuario, setId_usuario] = useState("");
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
+  const [numero_celular, setNumero_celular] = useState("");
   const [clave, setClave] = useState("");
   const [rol, setRol] = useState("");
   const [fecha_creacion, setFecha_creacion] = useState("");
@@ -52,18 +54,19 @@ function Usuarios() {
   // =========================================================================
   const descargarPDFIndividual = (val) => {
     const doc = new jsPDF();
+    agregarMembrete(doc);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
+    doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Coordinación de TI y Organización Interna", 14, 25);
-    doc.text("SISTEMA DE REGISTRO DE OBRAS MUNICIPALES, JALAPA", 14, 30);
-    doc.text(`GENERADO: DIRECTOR DE OBRAS MUNICIPALES`, 14, 35);
+    doc.text("Coordinación de TI y Organización Interna", 38, 25);
+    doc.text("SISTEMA DE REGISTRO DE OBRAS MUNICIPALES, JALAPA", 38, 30);
+    doc.text(`GENERADO: DIRECTOR DE OBRAS MUNICIPALES`, 38, 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
@@ -103,6 +106,7 @@ function Usuarios() {
         ['CÓDIGO INTERNO DE USUARIO', `USR-${val.id_usuario}2026`],
         ['NOMBRE COMPLETO', val.nombre ? val.nombre.toUpperCase() : 'NO REGISTRADO'],
         ['CORREO ELECTRÓNICO DE ACCESO', val.correo || 'NO REGISTRADO'],
+        ['NÚMERO DE CELULAR', val.numero_celular || 'NO REGISTRADO'],
         ['CONTRASEÑA ENCRIPTADA (BD)', '••••••••'],
         ['ROL / NIVEL DE PERMISOS', val.rol ? val.rol.toUpperCase() : 'NO ASIGNADO'],
         ['FECHA CREACIÓN', val.fecha_creacion ? new Date(val.fecha_creacion).toLocaleDateString() : 'No registrada'],
@@ -169,6 +173,7 @@ function Usuarios() {
     Axios.post(`${API_URL}/crear`, { 
       nombre, 
       correo, 
+      numero_celular,
       clave, 
       rol, 
       fecha_creacion: fechaEnvio, 
@@ -204,6 +209,7 @@ function Usuarios() {
       id_usuario, 
       nombre, 
       correo, 
+      numero_celular,
       clave, 
       rol, 
       fecha_creacion, 
@@ -279,7 +285,7 @@ function Usuarios() {
   };
 
   const limpiarCampos = () => {
-    setNombre(""); setCorreo(""); setClave(""); setRol(""); 
+    setNombre(""); setCorreo(""); setNumero_celular(""); setClave(""); setRol("");
     setFecha_creacion(""); setEstado(""); setId_usuario("");
   };
 
@@ -311,6 +317,7 @@ function Usuarios() {
     setId_usuario(val.id_usuario);
     setNombre(val.nombre);
     setCorreo(val.correo);
+    setNumero_celular(val.numero_celular || "");
     setClave(val.clave);
     setRol(val.rol);
     setFecha_creacion(val.fecha_creacion ? val.fecha_creacion.split('T')[0] : "");
@@ -367,6 +374,7 @@ function Usuarios() {
               <th>ID USUARIO</th>
               <th>NOMBRE</th>
               <th>CORREO</th>
+              <th>CELULAR</th>
               <th>CLAVE</th>
               <th>ROL</th>
               <th>FECHA CREACIÓN</th>
@@ -381,6 +389,7 @@ function Usuarios() {
                   <th className="table-light">{val.id_usuario}</th>
                   <td><strong>{val.nombre}</strong></td>
                   <td>{val.correo}</td>
+                  <td>{val.numero_celular || 'No registrado'}</td>
                   <td><span className="text-muted">••••••••</span></td>
                   <td>
                     <span className="badge bg-primary">
@@ -422,7 +431,7 @@ function Usuarios() {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center text-muted py-3">No se encontraron usuarios coincidentes.</td>
+                <td colSpan="9" className="text-center text-muted py-3">No se encontraron usuarios coincidentes.</td>
               </tr>
             )}
           </tbody>
@@ -446,6 +455,10 @@ function Usuarios() {
                 <div className="mb-3">
                   <label className="form-label fw-bold">Correo Electrónico:</label>
                   <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} className="form-control" placeholder="ejemplo@cabal.com" />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Número de celular:</label>
+                  <input type="tel" value={numero_celular} onChange={(e) => setNumero_celular(e.target.value)} className="form-control" placeholder="Número de celular" />
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Clave de Acceso:</label>
@@ -496,6 +509,10 @@ function Usuarios() {
                 <div className="mb-3">
                   <label className="form-label fw-bold">Correo Electrónico:</label>
                   <input type="text" value={correo} onChange={(e) => setCorreo(e.target.value)} className="form-control" />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Número de celular:</label>
+                  <input type="tel" value={numero_celular} onChange={(e) => setNumero_celular(e.target.value)} className="form-control" />
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Cambiar Clave:</label>

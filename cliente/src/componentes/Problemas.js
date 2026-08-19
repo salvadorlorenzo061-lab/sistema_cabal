@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
 import { normalizarLocalidadesJalapa } from '../data/localidadesJalapa';
+import { agregarMembrete } from '../utils/pdfMembrete';
 
 function Problemas() {
   const MUNICIPIO_JALAPA_ID = 1;
@@ -24,6 +25,7 @@ function Problemas() {
 
   const idUsuarioLogueado = Number(sesionActiva?.id_usuario) || 0;
   const nombreUsuarioLogueado = sesionActiva?.nombre || "SISTEMA";
+  const rolUsuarioLogueado = sesionActiva?.rol || "Operador";
 
   // Estados de la entidad Problemas
   const [id_problema, setId_problema] = useState("");
@@ -56,19 +58,20 @@ function Problemas() {
   // =========================================================================
   const descargarPDFIndividual = (val) => {
     const doc = new jsPDF();
+    agregarMembrete(doc);
 
     // 🏢 ENCABEZADO INSTITUCIONAL
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
+    doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Gestión Compartida y Reportes Comunitarios", 14, 25);
-    doc.text("Atención Ciudadana e Infraestructura Regional", 14, 30);
-    doc.text(`Generado por: ${nombreUsuarioLogueado}`, 14, 35);
+    doc.text("Gestión Compartida y Reportes Comunitarios", 38, 25);
+    doc.text("Atención Ciudadana e Infraestructura Regional", 38, 30);
+    doc.text(`Generado por: ${nombreUsuarioLogueado}`, 38, 35);
 
     // 🔒 BLOQUE DE CONTROL
     doc.setFillColor(245, 247, 250); 
@@ -120,7 +123,7 @@ function Problemas() {
         ['ID ÚNICO DEL PROBLEMA', `#${val.id_problema}`],
         ['TÍTULO DE LA INCIDENCIA', val.titulo ? val.titulo.toUpperCase() : 'N/A'],
         ['DESCRIPCIÓN DETALLADA', val.descripcion || 'Sin descripción.'],
-        ['BARRIO / COLONIA', val.barrio_colonia ? val.barrio_colonia.toUpperCase() : 'N/A'],
+        ['BARRIO / COLONIA / COMUNIDAD', val.barrio_colonia ? val.barrio_colonia.toUpperCase() : 'N/A'],
         ['MUNICIPIO AFECTADO', val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'N/A'],
         ['FECHA DE REGISTRO', new Date(val.fecha_reporte).toLocaleString()],
         ['COCODE REPORTANTE', val.nombre_cocode ? `${val.nombre_cocode} (DPI: ${val.dpi_cocode || 'N/A'})` : (val.id_afiliado ? `ID #${val.id_afiliado}` : 'N/A')],
@@ -272,7 +275,7 @@ function Problemas() {
   };
 
   const getProblemas = useCallback(() => {
-    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    Axios.get(API_URL, { params: { pagina, limite: 10, id_usuario: idUsuarioLogueado, rol: rolUsuarioLogueado } })
     .then((response) => {
       const payload = response.data;
       const data = Array.isArray(payload) ? payload : (payload.data || []);
@@ -281,7 +284,7 @@ function Problemas() {
       setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
     })
     .catch((error) => { console.error("Error al obtener problemas", error); });
-  }, [API_URL, pagina]);
+  }, [API_URL, pagina, idUsuarioLogueado, rolUsuarioLogueado]);
 
   const getComunidadesJalapa = useCallback(() => {
     Axios.get(`${API_BASE_URL}/comunidades`, {
@@ -301,13 +304,13 @@ function Problemas() {
   }, [API_BASE_URL]);
 
   const getCocodes = useCallback(() => {
-    Axios.get(`${API_BASE_URL}/afiliados`, { params: { pagina: 1, limite: 500 } })
+    Axios.get(`${API_BASE_URL}/afiliados`, { params: { pagina: 1, limite: 500, id_usuario: idUsuarioLogueado, rol: rolUsuarioLogueado } })
     .then((response) => {
       const payload = response.data;
       setCocodesList(Array.isArray(payload) ? payload : (payload.data || []));
     })
     .catch((error) => { console.error("Error al obtener cocodes", error); });
-  }, [API_BASE_URL]);
+  }, [API_BASE_URL, idUsuarioLogueado, rolUsuarioLogueado]);
 
   useEffect(() => { 
     getProblemas(); 

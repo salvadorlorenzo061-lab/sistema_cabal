@@ -43,8 +43,9 @@ const initRolesTable = () => {
         const permisosTotal = JSON.stringify(todosLosModulos);
         db.query(`
             INSERT IGNORE INTO roles (nombre_rol, descripcion, estado, permisos) VALUES
-            ('Usuario', 'Acceso general al sistema', 'Activo', ?)
-        `, [permisosTotal], (seedErr) => {
+            ('Usuario', 'Acceso general al sistema', 'Activo', ?),
+            ('Supervisor General', 'Consulta los registros de todos los usuarios', 'Activo', ?)
+        `, [permisosTotal, permisosTotal], (seedErr) => {
             if (seedErr) console.error("Error en seed de roles:", seedErr);
         });
     });

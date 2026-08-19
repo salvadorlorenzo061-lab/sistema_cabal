@@ -80,7 +80,7 @@ function PersonaCrudBase({
   };
 
   const getRegistros = useCallback(() => {
-    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    Axios.get(API_URL, { params: { pagina, limite: 10, id_usuario: usuarioLogueado.id_usuario, rol: usuarioLogueado.rol } })
       .then((res) => {
         const payload = res.data;
         const data = Array.isArray(payload) ? payload : (payload.data || []);
@@ -89,7 +89,7 @@ function PersonaCrudBase({
         setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
       })
       .catch((err) => console.error(err));
-  }, [API_URL, pagina]);
+  }, [API_URL, pagina, usuarioLogueado.id_usuario, usuarioLogueado.rol]);
 
   useEffect(() => {
     getRegistros();

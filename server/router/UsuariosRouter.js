@@ -109,7 +109,7 @@ router.post("/login", (req, res) => {
 
 // === CREAR USUARIO ===
 router.post("/crear", (req, res) => {
-    const { nombre, correo, clave, rol, fecha_creacion, estado, ejecutado_por } = req.body;
+    const { nombre, correo, numero_celular, clave, rol, fecha_creacion, estado, ejecutado_por } = req.body;
     const operador = ejecutado_por || "DESCONOCIDO"; 
 
     db.query('SELECT * FROM usuarios WHERE correo = ?', [correo], (err, result) => {
@@ -123,8 +123,8 @@ router.post("/crear", (req, res) => {
         }
 
         db.query(
-            'INSERT INTO usuarios(nombre, correo, clave, rol, fecha_creacion, estado) VALUES (?,?,?,?,?,?)',
-            [nombre, correo, clave, rol, fecha_creacion, estado],
+            'INSERT INTO usuarios(nombre, correo, numero_celular, clave, rol, fecha_creacion, estado) VALUES (?,?,?,?,?,?,?)',
+            [nombre, correo, numero_celular || null, clave, rol, fecha_creacion, estado],
             (insertErr, insertResult) => {
                 if (insertErr) {
                     console.error(insertErr);
@@ -188,7 +188,7 @@ router.get("/", (req, res) => {
 
 // === ACTUALIZAR USUARIO ===
 router.put("/actualizar", (req, res) => {
-    const { id_usuario, nombre, correo, clave, rol, fecha_creacion, estado, ejecutado_por } = req.body;
+    const { id_usuario, nombre, correo, numero_celular, clave, rol, fecha_creacion, estado, ejecutado_por } = req.body;
     const operador = ejecutado_por || "DESCONOCIDO";
     const fechaFinal = fecha_creacion ? fecha_creacion.split('T')[0] : new Date().toISOString().split('T')[0];
 
@@ -200,8 +200,8 @@ router.put("/actualizar", (req, res) => {
         const ant = searchResult[0];
 
         db.query(
-            'UPDATE usuarios SET nombre=?, correo=?, clave=?, rol=?, fecha_creacion=?, estado=? WHERE id_usuario=?',
-            [nombre, correo, clave, rol, fechaFinal, estado, id_usuario],
+            'UPDATE usuarios SET nombre=?, correo=?, numero_celular=?, clave=?, rol=?, fecha_creacion=?, estado=? WHERE id_usuario=?',
+            [nombre, correo, numero_celular || null, clave, rol, fechaFinal, estado, id_usuario],
             (err, result) => {
                 if (err) {
                     console.error(err);

@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
+import { agregarMembrete } from '../utils/pdfMembrete';
 
 function Bitacora() {
   const [bitacoraList, setBitacoraList] = useState([]);
@@ -77,14 +78,15 @@ function Bitacora() {
     }
 
     const doc = new jsPDF({ orientation: "landscape" });
+    agregarMembrete(doc);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("JALAPA", 14, 15);
+    doc.text("JALAPA", 38, 15);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text("REPORTE MAESTRO DE AUDITORÍA Y BITÁCORA DE SISTEMAS", 14, 21);
-    doc.text(`Fecha de Emisión: ${new Date().toLocaleString()} | Región: Jalapa | Vista: Página ${pagina}`, 14, 26);
+    doc.text("REPORTE MAESTRO DE AUDITORÍA Y BITÁCORA DE SISTEMAS", 38, 21);
+    doc.text(`Fecha de Emisión: ${new Date().toLocaleString()} | Región: Jalapa | Vista: Página ${pagina}`, 38, 26);
 
     const dataTabla = bitacoraList.map((reg) => [
       reg.id_bitacora,
@@ -119,15 +121,16 @@ function Bitacora() {
 
   const descargarPDFIndividual = (reg) => {
     const doc = new jsPDF();
+    agregarMembrete(doc);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
     doc.setTextColor(30, 58, 138);
-    doc.text("COMPROBANTE DE AUDITORÍA INTERNA", 14, 20);
+    doc.text("COMPROBANTE DE AUDITORÍA INTERNA", 38, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text("SISTEMA DE REGISTROS DE OBRAS MUNICIPALES JALAPA 2024-2026", 14, 25);
+    doc.text("SISTEMA DE REGISTROS DE OBRAS MUNICIPALES JALAPA 2024-2026", 38, 25);
 
     doc.setFillColor(240, 244, 248);
     doc.rect(135, 12, 61, 22, "F");

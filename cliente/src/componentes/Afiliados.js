@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import * as XLSX from 'xlsx';
 import PaginationBar from './PaginationBar';
+import { agregarMembrete } from '../utils/pdfMembrete';
 
 function Afiliados() {
   // =========================================================================
@@ -30,6 +31,7 @@ function Afiliados() {
     nombre: sesionActiva?.nombre || "SISTEMA",
     rol: sesionActiva?.rol || "Operador"
   };
+  const puedeVerTodos = ['administrador', 'supervisor general'].includes(usuarioLogueado.rol.trim().toLowerCase());
 
   const fechaHoy = new Date().toISOString().split('T')[0];
 
@@ -37,6 +39,7 @@ function Afiliados() {
   const [dpi, setDpi] = useState("");
   const [nombre_completo, setNombre_completo] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [numero_celular, setNumero_celular] = useState("");
   const [direccion, setDireccion] = useState("");
   const [barrio_colonia, setBarrio_colonia] = useState("");
   const [id_municipio, setId_municipio] = useState(String(MUNICIPIO_JALAPA_ID));
@@ -91,8 +94,9 @@ function Afiliados() {
       
       "NOMBRE COMPLETO": afi.nombre_completo?.toUpperCase(),
       "TELÉFONO": afi.telefono,
+      "NÚMERO DE CELULAR": afi.numero_celular || "No registrado",
       "DIRECCIÓN DE RESIDENCIA": afi.direccion || "No registrada",
-      "BARRIO / COLONIA": afi.barrio_colonia || "No registrado",
+      "BARRIO / COLONIA / COMUNIDAD": afi.barrio_colonia || "No registrado",
       "MUNICIPIO": afi.nombre_municipio || "N/A",
       "LUGAR": afi.lugar_votacion || "No asignado",
       "FECHA AFILIACIÓN": afi.fecha_afiliacion ? new Date(afi.fecha_afiliacion).toLocaleDateString() : "N/A",
@@ -116,17 +120,18 @@ function Afiliados() {
   // === EXPORTAR CERTIFICADO INDIVIDUAL (PDF) ===
   const descargarPDFIndividual = (val) => {
     const doc = new jsPDF();
+    agregarMembrete(doc);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
+    doc.setFontSize(11);
     doc.setTextColor(40, 40, 40);
-    doc.text("MUNICIPALIDAD DE JALAPA, ADMINISTRACION 2024-2028", 14, 20);
+    doc.text("MUNICIPALIDAD DE JALAPA, ADMINISTRACION 2024-2028", 38, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("DEPARTAMENTO DE REGISTRO DE COCODES", 14, 25);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 30);
-    doc.text(`GENERADO POR: DIRECTOR DE OBRAS `, 14, 35);
+    doc.text("DEPARTAMENTO DE REGISTRO DE COCODES", 38, 25);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 30);
+    doc.text(`GENERADO POR: DIRECTOR DE OBRAS `, 38, 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
@@ -179,8 +184,9 @@ function Afiliados() {
         ['COMUNIDAD AFECTADA', val.lugar_votacion ? val.lugar_votacion.toUpperCase() : 'No asignada'],
         ['NOMBRE COMPLETO', val.nombre_completo.toUpperCase()],
         ['TELÉFONO DE CONTACTO', val.telefono],
+        ['NÚMERO DE CELULAR', val.numero_celular || 'No registrado'],
         ['DIRECCIÓN DE RESIDENCIA', val.direccion || 'No registrada'],
-        ['BARRIO / COLONIA', val.barrio_colonia || 'No registrado'],
+        ['BARRIO / COLONIA / COMUNIDAD', val.barrio_colonia || 'No registrado'],
         ['MUNICIPIO ASOCIADO', val.nombre_municipio || 'No especificado'],
         ['FECHA', val.fecha_afiliacion ? new Date(val.fecha_afiliacion).toLocaleDateString() : 'No registrada'],
         ['REGISTRADO POR USUARIO', val.nombre_usuario || 'Sistema'],
@@ -213,6 +219,7 @@ function Afiliados() {
       lugar_votacion: lugar_votacion.trim(),
       nombre_completo: nombre_completo.trim(), 
       telefono: telefono.trim(), 
+      numero_celular: numero_celular.trim(),
       direccion: direccion.trim(), 
       barrio_colonia: barrio_colonia.trim(), 
       id_municipio: Number(id_municipio), 
@@ -249,6 +256,7 @@ function Afiliados() {
       lugar_votacion: lugar_votacion.trim(),
       nombre_completo: nombre_completo.trim(), 
       telefono: telefono.trim(), 
+      numero_celular: numero_celular.trim(),
       direccion: direccion.trim(), 
       barrio_colonia: barrio_colonia.trim(), 
       id_municipio: Number(id_municipio), 
@@ -308,14 +316,14 @@ function Afiliados() {
   };
 
   const limpiarCampos = () => {
-    setId_afiliado(""); setDpi(""); setNombre_completo(""); setTelefono("");
+    setId_afiliado(""); setDpi(""); setNombre_completo(""); setTelefono(""); setNumero_celular("");
     setDireccion(""); setBarrio_colonia(""); setId_municipio(String(MUNICIPIO_JALAPA_ID));
-    setFecha_afiliacion(fechaHoy); setId_usuario(""); setFoto("");
+    setFecha_afiliacion(fechaHoy); setId_usuario(String(usuarioLogueado.id_usuario || "")); setFoto("");
   
   };
 
   const getAfiliados = useCallback(() => {
-    Axios.get(API_URL, { params: { pagina, limite: 10 } })
+    Axios.get(API_URL, { params: { pagina, limite: 10, id_usuario: usuarioLogueado.id_usuario, rol: usuarioLogueado.rol } })
       .then((res) => {
         const payload = res.data;
         const data = Array.isArray(payload) ? payload : (payload.data || []);
@@ -324,7 +332,7 @@ function Afiliados() {
         setTotalRegistros(Array.isArray(payload) ? data.length : (payload.total || data.length));
       })
       .catch(err => console.error(err));
-  }, [API_URL, pagina]);
+  }, [API_URL, pagina, usuarioLogueado.id_usuario, usuarioLogueado.rol]);
 
   const getCatalogos = useCallback(() => {
     // El catálogo de municipios ya no se consulta: el sistema opera solo en Jalapa.
@@ -344,6 +352,7 @@ function Afiliados() {
     setDpi(val.dpi);
     setNombre_completo(val.nombre_completo);
     setTelefono(val.telefono);
+    setNumero_celular(val.numero_celular || "");
     setDireccion(val.direccion || "");
     setBarrio_colonia(val.barrio_colonia || "");
     setId_municipio(String(MUNICIPIO_JALAPA_ID));
@@ -491,6 +500,10 @@ function Afiliados() {
                     <label className="form-label fw-bold">Teléfono:</label>
                     <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} className="form-control" placeholder="Número telefónico" />
                   </div>
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label fw-bold">Número de celular:</label>
+                    <input type="tel" value={numero_celular} onChange={(e) => setNumero_celular(e.target.value)} className="form-control" placeholder="Número de celular" />
+                  </div>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Nombre cocode:</label>
@@ -507,7 +520,7 @@ function Afiliados() {
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Barrio / Colonia:</label>
+                    <label className="form-label fw-bold">Barrio / Colonia / Comunidad:</label>
                     <input type="text" value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-control" placeholder="Ej: Barrio El Centro" />
                   </div>
                   <div className="col-md-6 mb-3">
@@ -524,7 +537,7 @@ function Afiliados() {
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
-                    <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
+                    <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select" disabled={!puedeVerTodos}>
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
                     </select>
@@ -574,6 +587,10 @@ function Afiliados() {
                     <label className="form-label fw-bold">Teléfono:</label>
                     <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} className="form-control" />
                   </div>
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label fw-bold">Número de celular:</label>
+                    <input type="tel" value={numero_celular} onChange={(e) => setNumero_celular(e.target.value)} className="form-control" />
+                  </div>
                 </div>
                 <div className="mb-3">
                   <label className="form-label fw-bold">Nombre COCODE:</label>
@@ -590,7 +607,7 @@ function Afiliados() {
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Barrio / Colonia:</label>
+                    <label className="form-label fw-bold">Barrio / Colonia / Comunidad:</label>
                     <input type="text" value={barrio_colonia} onChange={(e) => setBarrio_colonia(e.target.value)} className="form-control" />
                   </div>
                   <div className="col-md-6 mb-3">
@@ -607,7 +624,7 @@ function Afiliados() {
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
-                    <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select">
+                    <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select" disabled={!puedeVerTodos}>
                       <option value="">-- Seleccione Usuario --</option>
                       {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
                     </select>

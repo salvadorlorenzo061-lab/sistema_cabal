@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
+import { agregarMembrete } from '../utils/pdfMembrete';
 
 function Departamentos() {
   // =========================================================================
@@ -44,19 +45,20 @@ function Departamentos() {
   // =========================================================================
   const descargarPDFIndividual = (val) => {
     const doc = new jsPDF();
+    agregarMembrete(doc);
 
     // 🏢 ENCABEZADO INSTITUCIONAL
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
+    doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("JALAPA", 14, 25);
-    doc.text("ADMINISTRACION 2024-2028", 14, 30);
-    doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
+    doc.text("JALAPA", 38, 25);
+    doc.text("ADMINISTRACION 2024-2028", 38, 30);
+    doc.text(`Generado por: Auditoría de Sistemas`, 38, 35);
 
     // 🔒 BLOQUE DE CONTROL
     doc.setFillColor(245, 247, 250); 

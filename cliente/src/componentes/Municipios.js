@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
+import { agregarMembrete } from '../utils/pdfMembrete';
 
 function Municipios() {
   // =========================================================================
@@ -43,18 +44,19 @@ function Municipios() {
   // =========================================================================
   const descargarPDFIndividual = (val) => {
     const doc = new jsPDF();
+    agregarMembrete(doc);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
+    doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 14, 20);
+    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Control y Catálogo Geográfico Regional", 14, 25);
-    doc.text("Infraestructura y Cobertura de Operaciones", 14, 30);
-    doc.text(`Generado por: Auditoría de Sistemas`, 14, 35);
+    doc.text("Control y Catálogo Geográfico Regional", 38, 25);
+    doc.text("Infraestructura y Cobertura de Operaciones", 38, 30);
+    doc.text(`Generado por: Auditoría de Sistemas`, 38, 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  

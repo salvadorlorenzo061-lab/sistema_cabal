@@ -24,23 +24,34 @@ router.get("/", (req, res) => {
     const pagina = Math.max(parseInt(req.query.pagina || '1', 10), 1);
     const limite = Math.max(parseInt(req.query.limite || '10', 10), 1);
     const offset = (pagina - 1) * limite;
+    const idUsuario = parseInt(req.query.id_usuario || '0', 10);
+    const rol = String(req.query.rol || '').trim().toLowerCase();
+    const puedeVerTodos = rol === 'administrador' || rol === 'supervisor general';
+
+    if (!puedeVerTodos && !idUsuario) {
+        return res.status(400).json({ message: "No se pudo identificar al usuario de la sesión." });
+    }
+
+    const filtroPropietario = puedeVerTodos ? '' : 'WHERE a.id_usuario = ?';
+    const paramsPropietario = puedeVerTodos ? [] : [idUsuario];
 
     const sqlQuery = `
         SELECT a.*, m.nombre_municipio, u.nombre AS nombre_usuario
         FROM afiliados a
         LEFT JOIN municipios m ON a.id_municipio = m.id_municipio
         LEFT JOIN usuarios u ON a.id_usuario = u.id_usuario
+        ${filtroPropietario}
         ORDER BY a.id_afiliado DESC
         LIMIT ? OFFSET ?
     `;
 
-    db.query('SELECT COUNT(*) AS total FROM afiliados', (countErr, countResult) => {
+    db.query(`SELECT COUNT(*) AS total FROM afiliados a ${filtroPropietario}`, paramsPropietario, (countErr, countResult) => {
         if (countErr) {
             console.error("Error MySQL en count cocodes:", countErr);
             return res.status(500).json({ message: "Error al obtener el listado de cocodes." });
         }
 
-        db.query(sqlQuery, [limite, offset], (err, result) => {
+        db.query(sqlQuery, [...paramsPropietario, limite, offset], (err, result) => {
             if (err) {
                 console.error("Error MySQL en GET /:", err);
                 return res.status(500).json({ message: "Error al obtener el listado de cocodes." });
@@ -65,7 +76,7 @@ router.get("/", (req, res) => {
 router.post("/crear", (req, res) => {
     const { 
         dpi, lugar_votacion, nombre_completo, 
-        telefono, direccion, barrio_colonia, id_municipio, 
+        telefono, numero_celular, direccion, barrio_colonia, id_municipio,
         fecha_afiliacion, id_usuario, foto, 
         operador_id, operador_nombre, operador_rol 
     } = req.body;
@@ -93,13 +104,13 @@ router.post("/crear", (req, res) => {
 
         // Inserción del nuevo cocode
         const sqlInsert = `
-            INSERT INTO afiliados (dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO afiliados (dpi, lugar_votacion, nombre_completo, telefono, numero_celular, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         db.query(
             sqlInsert,
-            [dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null],
+            [dpi, lugar_votacion, nombre_completo, telefono, numero_celular || null, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null],
             (insertErr) => {
                 if (insertErr) {
                     console.error("Error MySQL en /crear:", insertErr);
@@ -120,7 +131,7 @@ router.post("/crear", (req, res) => {
 router.put("/actualizar", (req, res) => {
     const { 
         id_afiliado, dpi, lugar_votacion, nombre_completo, 
-        telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto, 
+        telefono, numero_celular, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto,
         operador_id, operador_nombre, operador_rol 
     } = req.body;
     
@@ -151,10 +162,10 @@ router.put("/actualizar", (req, res) => {
 
             const sqlUpdate = `
                 UPDATE afiliados 
-                SET dpi=?, lugar_votacion=?, nombre_completo=?, telefono=?, direccion=?, barrio_colonia=?, id_municipio=?, fecha_afiliacion=?, id_usuario=?, foto=? 
+                SET dpi=?, lugar_votacion=?, nombre_completo=?, telefono=?, numero_celular=?, direccion=?, barrio_colonia=?, id_municipio=?, fecha_afiliacion=?, id_usuario=?, foto=?
                 WHERE id_afiliado=?
             `;
-            db.query(sqlUpdate, [dpi, lugar_votacion, nombre_completo, telefono, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null, id_afiliado], (upErr) => {
+            db.query(sqlUpdate, [dpi, lugar_votacion, nombre_completo, telefono, numero_celular || null, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null, id_afiliado], (upErr) => {
                 if (upErr) {
                     console.error("Error al actualizar:", upErr);
                     return res.status(500).json({ message: "Error interno al guardar los cambios del cocode." });
