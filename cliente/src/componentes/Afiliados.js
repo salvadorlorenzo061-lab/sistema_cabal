@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import * as XLSX from 'xlsx';
 import PaginationBar from './PaginationBar';
-import { agregarMembrete } from '../utils/pdfMembrete';
+import { agregarMembrete, escribirLineaMembrete } from '../utils/pdfMembrete';
 
 function Afiliados() {
   // =========================================================================
@@ -124,14 +124,14 @@ function Afiliados() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(40, 40, 40);
-    doc.text("MUNICIPALIDAD DE JALAPA, ADMINISTRACION 2024-2028", 38, 20);
+    escribirLineaMembrete(doc, "MUNICIPALIDAD DE JALAPA, ADMINISTRACION 2024-2028", 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("DEPARTAMENTO DE REGISTRO DE COCODES", 38, 25);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 30);
-    doc.text(`GENERADO POR: DIRECTOR DE OBRAS `, 38, 35);
+    escribirLineaMembrete(doc, "DEPARTAMENTO DE REGISTRO DE COCODES", 25);
+    escribirLineaMembrete(doc, "SISTEMA DE OBRAS MUNICIPALES JALAPA", 30);
+    escribirLineaMembrete(doc, "GENERADO POR: DIRECTOR DE OBRAS", 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  

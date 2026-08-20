@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
 import { normalizarLocalidadesJalapa } from '../data/localidadesJalapa';
-import { agregarMembrete } from '../utils/pdfMembrete';
+import { agregarMembrete, escribirLineaMembrete } from '../utils/pdfMembrete';
 
 function Problemas() {
   const MUNICIPIO_JALAPA_ID = 1;
@@ -64,14 +64,14 @@ function Problemas() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 20);
+    escribirLineaMembrete(doc, "SISTEMA DE OBRAS MUNICIPALES JALAPA", 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Gestión Compartida y Reportes Comunitarios", 38, 25);
-    doc.text("Atención Ciudadana e Infraestructura Regional", 38, 30);
-    doc.text(`Generado por: ${nombreUsuarioLogueado}`, 38, 35);
+    escribirLineaMembrete(doc, "Gestión Compartida y Reportes Comunitarios", 25);
+    escribirLineaMembrete(doc, "Atención Ciudadana e Infraestructura Regional", 30);
+    escribirLineaMembrete(doc, `Generado por: ${nombreUsuarioLogueado}`, 35);
 
     // 🔒 BLOQUE DE CONTROL
     doc.setFillColor(245, 247, 250); 
