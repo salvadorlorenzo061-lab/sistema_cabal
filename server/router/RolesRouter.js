@@ -2,7 +2,7 @@ const express = require("express");
 const db = require('../Conexion');
 const router = express.Router();
 
-const todosLosModulos = ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales'];
+const todosLosModulos = ['dashboard','usuarios','bitacora','comunidades','roles','cocode','problemas','lideres','propersonales','reporteria'];
 const esNombreRolLegacy = (nombreRol) => {
     const valor = String(nombreRol || '').trim().toLowerCase();
     return valor.includes('coordinador') || valor.includes('sub');

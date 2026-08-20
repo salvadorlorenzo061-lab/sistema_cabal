@@ -87,6 +87,7 @@ const problemasRouter = require('./router/ProblemasRouter');
 const rolesRouter = require('./router/RolesRouter');
 const liderRouter = require('./router/LiderRouter');
 const properRouter = require('./router/ProperRouter');
+const reporteriaRouter = require('./router/ReporteriaRouter');
 
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/municipios', municipiosRouter);
@@ -99,6 +100,7 @@ app.use('/api/bitacora', bitacoraRouter);
 app.use('/api/problemas', problemasRouter);
 app.use('/api/lideres', liderRouter);
 app.use('/api/propersonales', properRouter);
+app.use('/api/reporteria', reporteriaRouter);
 
 // Health check para Render y verificación rápida de identidad del servicio
 app.get('/health', (_req, res) => {

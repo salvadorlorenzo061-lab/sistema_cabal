@@ -13,6 +13,7 @@ import Bitacora from './componentes/Bitacora';
 import Problemas from './componentes/Problemas';
 import LIDER from './componentes/LIDER';
 import PROPERSONALES from './componentes/PROPERSONALES';
+import Reporteria from './componentes/Reporteria';
 
 // Imagen corporativa
 import logoCabal from './img/4.jpeg';
@@ -406,6 +407,12 @@ function App() {
                 </Link>
               )}
 
+              {(tieneAcceso('reporteria') || miRol === 'administrador' || miRol === 'admin') && (
+                <Link to="/reporteria" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
+                  <span className="sidebar-module-icon">📑</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">REPORTERIA</span>}
+                </Link>
+              )}
+
               {tieneAcceso('comunidades') && (
                 <Link to="/comunidades" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
                   <span className="sidebar-module-icon">📍</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">ALDEAS / CASERIOS</span>}
@@ -460,6 +467,12 @@ function App() {
               <Route path="/bitacora" element={
                 <RutaProtegida user={user} rolesPermitidos={['usuario', 'administrador', 'admin']} requiredModule="bitacora">
                   <Bitacora />
+                </RutaProtegida>
+              } />
+
+              <Route path="/reporteria" element={
+                <RutaProtegida user={user} rolesPermitidos={['administrador', 'admin']} requiredModule="reporteria">
+                  <Reporteria />
                 </RutaProtegida>
               } />
 

@@ -3,6 +3,12 @@ const db = require('../Conexion');
 const router = express.Router(); 
 const { listarMunicipios, obtenerDepartamentoPorId, obtenerMunicipioPorId } = require('../catalogosTerritoriales');
 
+db.query('ALTER TABLE comunidades ADD COLUMN id_usuario INT DEFAULT NULL', (err) => {
+    if (err && err.code !== 'ER_DUP_FIELDNAME') {
+        console.error('Error preparando propietario de comunidades:', err);
+    }
+});
+
 // Función auxiliar inmutable para disparar la bitácora automáticamente
 const registrarAuditoria = (idUsuario, afectado, tipo, ejecutor, detalles) => {
     const queryAuditoria = `
@@ -41,8 +47,8 @@ router.post("/crear", (req, res) => {
             }
 
             db.query(
-                'INSERT INTO comunidades (nombre_comunidad, tipo, estado, id_municipio) VALUES (?, ?, ?, ?)',
-                [nombre_comunidad.trim(), tipo, estado || 'activo', municipioId],
+                'INSERT INTO comunidades (nombre_comunidad, tipo, estado, id_municipio, id_usuario) VALUES (?, ?, ?, ?, ?)',
+                [nombre_comunidad.trim(), tipo, estado || 'activo', municipioId, id_usuario || null],
                 (insertErr, insertResult) => {
                     if (insertErr) {
                         console.error("🚨 Error en el INSERT de comunidades:", insertErr);
