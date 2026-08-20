@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable"; 
 import PaginationBar from './PaginationBar';
-import { agregarMembrete } from '../utils/pdfMembrete';
+import { agregarMembrete, escribirLineaMembrete } from '../utils/pdfMembrete';
 
 function Usuarios() {
   const [id_usuario, setId_usuario] = useState("");
@@ -59,14 +59,14 @@ function Usuarios() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text("SISTEMA DE OBRAS MUNICIPALES JALAPA", 38, 20);
+    escribirLineaMembrete(doc, "SISTEMA DE OBRAS MUNICIPALES JALAPA", 20);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    doc.text("Coordinación de TI y Organización Interna", 38, 25);
-    doc.text("SISTEMA DE REGISTRO DE OBRAS MUNICIPALES, JALAPA", 38, 30);
-    doc.text(`GENERADO: DIRECTOR DE OBRAS MUNICIPALES`, 38, 35);
+    escribirLineaMembrete(doc, "Coordinación de TI y Organización Interna", 25);
+    escribirLineaMembrete(doc, "SISTEMA DE REGISTRO DE OBRAS MUNICIPALES, JALAPA", 30);
+    escribirLineaMembrete(doc, "GENERADO: DIRECTOR DE OBRAS MUNICIPALES", 35);
 
     doc.setFillColor(245, 247, 250); 
     doc.rect(130, 12, 66, 26, "F");  
