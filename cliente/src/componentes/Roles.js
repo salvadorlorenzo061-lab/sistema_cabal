@@ -13,6 +13,7 @@ const MODULOS = [
   { key: 'problemas',     label: 'Problemas' },
   { key: 'lideres',       label: 'Lideres' },
   { key: 'propersonales', label: 'Problemas Personales' },
+  { key: 'reporteria',    label: 'Reporteria' },
 ];
 
 const parsePermisos = (raw) => {
