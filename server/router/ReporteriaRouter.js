@@ -174,9 +174,11 @@ router.get('/', async (req, res) => {
         const filtrados = resultados
             .filter((item) => {
                 const flujo = flujoMap.get(`${item.modulo}:${item.id_registro}`);
-                return esSupervisorGeneral(solicitante.rol)
-                    || Number(item.id_propietario) === Number(solicitante.id_usuario)
-                    || Number(flujo?.asignado_a) === Number(solicitante.id_usuario);
+                if (esSupervisorGeneral(solicitante.rol)) return true;
+                if (flujo?.asignado_a) {
+                    return Number(flujo.asignado_a) === Number(solicitante.id_usuario);
+                }
+                return Number(item.id_propietario) === Number(solicitante.id_usuario);
             })
             .filter((item) => !modulo || item.modulo === modulo)
             .filter((item) => !busqueda || [item.titulo, item.detalle, item.propietario, item.modulo]

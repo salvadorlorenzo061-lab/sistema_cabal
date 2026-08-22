@@ -224,7 +224,7 @@ function Reporteria() {
         <div className="col-lg-3 mb-2 mb-lg-0">
           <h3 className="m-0 text-dark fw-bold">REPORTERIA</h3>
           <small className="text-muted">
-            {esSupervisorGeneral ? 'Vista general y asignacion de trabajo' : 'Registros propios y trabajo asignado'}:
+            {esSupervisorGeneral ? 'Vista general y asignacion de trabajo' : 'Tickets a cargo de'}:
             {' '}<strong>{sesion?.nombre || 'Usuario'}</strong>
           </small>
         </div>
