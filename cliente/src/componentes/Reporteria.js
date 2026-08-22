@@ -59,8 +59,10 @@ function Reporteria() {
         limite: 10,
         busqueda: busqueda.trim() || undefined,
         modulo: modulo || undefined,
-        estado: estadoFiltro || undefined
-      }
+        estado: estadoFiltro || undefined,
+        _: Date.now()
+      },
+      headers: { 'Cache-Control': 'no-cache' }
     })
       .then((res) => {
         const payload = res.data || {};

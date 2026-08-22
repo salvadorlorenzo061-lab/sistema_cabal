@@ -158,6 +158,7 @@ router.use(async (req, res, next) => {
 
 router.get('/', async (req, res) => {
     try {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         const pagina = Math.max(Number(req.query.pagina) || 1, 1);
         const limite = Math.min(Math.max(Number(req.query.limite) || 10, 1), 100);
         const busqueda = String(req.query.busqueda || '').trim().toLowerCase();
