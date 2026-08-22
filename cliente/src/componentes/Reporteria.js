@@ -61,8 +61,7 @@ function Reporteria() {
         modulo: modulo || undefined,
         estado: estadoFiltro || undefined,
         _: Date.now()
-      },
-      headers: { 'Cache-Control': 'no-cache' }
+      }
     })
       .then((res) => {
         const payload = res.data || {};
