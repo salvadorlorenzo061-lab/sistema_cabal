@@ -3,6 +3,22 @@ const db = require('../Conexion');
 const router = express.Router(); 
 const { listarMunicipios, obtenerMunicipioPorId } = require('../catalogosTerritoriales');
 
+db.query('ALTER TABLE problemas ADD COLUMN id_usuario INT DEFAULT NULL', (columnErr) => {
+    if (columnErr && columnErr.code !== 'ER_DUP_FIELDNAME') {
+        console.error('Error preparando propietario de problemas:', columnErr);
+        return;
+    }
+
+    db.query(`
+        UPDATE problemas p
+        LEFT JOIN afiliados a ON a.id_afiliado = p.id_afiliado
+        SET p.id_usuario = a.id_usuario
+        WHERE p.id_usuario IS NULL AND a.id_usuario IS NOT NULL
+    `, (backfillErr) => {
+        if (backfillErr) console.error('Error completando propietarios de problemas:', backfillErr);
+    });
+});
+
 let problemasTieneFoto = null;
 
 const resolverColumnaFoto = (callback) => {
@@ -68,12 +84,12 @@ router.post("/crear", (req, res) => {
 
     resolverColumnaFoto((tieneFoto) => {
         const sqlInsert = tieneFoto
-            ? 'INSERT INTO problemas(titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, id_afiliado, foto) VALUES (?,?,?,?,?,?,?,?)'
-            : 'INSERT INTO problemas(titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, id_afiliado) VALUES (?,?,?,?,?,?,?)';
+            ? 'INSERT INTO problemas(titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, id_afiliado, id_usuario, foto) VALUES (?,?,?,?,?,?,?,?,?)'
+            : 'INSERT INTO problemas(titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, id_afiliado, id_usuario) VALUES (?,?,?,?,?,?,?,?)';
 
         const paramsInsert = tieneFoto
-            ? [titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, cocodeId, foto || null]
-            : [titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, cocodeId];
+            ? [titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, cocodeId, id_usuario_operador || null, foto || null]
+            : [titulo, descripcion, barrio_colonia, id_municipio, estado, fecha_reporte, cocodeId, id_usuario_operador || null];
 
         db.query(sqlInsert, paramsInsert, (insertErr, insertResult) => {
             if (insertErr) {
@@ -112,7 +128,7 @@ router.get("/", (req, res) => {
         return res.status(400).json({ message: "No se pudo identificar al usuario de la sesión." });
     }
 
-    const filtroPropietario = puedeVerTodos ? '' : 'WHERE a.id_usuario = ?';
+    const filtroPropietario = puedeVerTodos ? '' : 'WHERE p.id_usuario = ?';
     const paramsPropietario = puedeVerTodos ? [] : [idUsuario];
 
     resolverColumnaFoto((tieneFoto) => {
@@ -129,6 +145,7 @@ router.get("/", (req, res) => {
                 p.estado,
                 p.fecha_reporte,
                 p.id_afiliado,
+                p.id_usuario,
                 p.id_afiliado AS id_cocode,
                 ${campoFoto},
                 m.nombre_municipio,
@@ -142,7 +159,7 @@ router.get("/", (req, res) => {
             LIMIT ? OFFSET ?
         `;
 
-        db.query(`SELECT COUNT(*) AS total FROM problemas p LEFT JOIN afiliados a ON p.id_afiliado = a.id_afiliado ${filtroPropietario}`, paramsPropietario, (countErr, countResult) => {
+        db.query(`SELECT COUNT(*) AS total FROM problemas p ${filtroPropietario}`, paramsPropietario, (countErr, countResult) => {
             if (countErr) {
                 console.error(countErr);
                 return res.status(500).send("Error al obtener el listado de problemas");

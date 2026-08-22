@@ -33,6 +33,7 @@ function Reporteria() {
   const [registros, setRegistros] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [modulo, setModulo] = useState('');
+  const [estadoFiltro, setEstadoFiltro] = useState('');
   const [pagina, setPagina] = useState(1);
   const [paginasTotales, setPaginasTotales] = useState(1);
   const [totalRegistros, setTotalRegistros] = useState(0);
@@ -40,6 +41,12 @@ function Reporteria() {
   const [registroEditar, setRegistroEditar] = useState(null);
   const [titulo, setTitulo] = useState('');
   const [detalle, setDetalle] = useState('');
+
+  const claseEstado = (estado) => {
+    if (estado === 'Finalizada') return 'bg-success';
+    if (estado === 'Activo') return 'bg-primary';
+    return 'bg-warning text-dark';
+  };
 
   const parametrosSesion = useCallback(() => ({
     id_usuario: Number(sesion?.id_usuario) || 0
@@ -53,7 +60,8 @@ function Reporteria() {
         pagina,
         limite: 10,
         busqueda: busqueda.trim() || undefined,
-        modulo: modulo || undefined
+        modulo: modulo || undefined,
+        estado: estadoFiltro || undefined
       }
     })
       .then((res) => {
@@ -70,7 +78,7 @@ function Reporteria() {
         });
       })
       .finally(() => setCargando(false));
-  }, [API_URL, busqueda, modulo, pagina, parametrosSesion]);
+  }, [API_URL, busqueda, estadoFiltro, modulo, pagina, parametrosSesion]);
 
   useEffect(() => {
     cargarRegistros();
@@ -78,7 +86,7 @@ function Reporteria() {
 
   useEffect(() => {
     setPagina(1);
-  }, [busqueda, modulo]);
+  }, [busqueda, estadoFiltro, modulo]);
 
   const abrirEdicion = (registro) => {
     setRegistroEditar(registro);
@@ -109,27 +117,35 @@ function Reporteria() {
       }));
   };
 
-  const finalizar = (registro) => {
-    if (registro.estado_tarea === 'Finalizada') return;
-
+  const cambiarEstado = (registro, estado) => {
+    const requiereObservacion = estado === 'Finalizada';
     Swal.fire({
-      icon: 'question',
-      title: 'Finalizar tarea',
-      text: `Se marcara como finalizada: ${registro.titulo}`,
+      icon: requiereObservacion ? 'question' : 'info',
+      title: requiereObservacion ? 'Finalizar tarea' : `Marcar como ${estado}`,
+      text: requiereObservacion ? `Indique el motivo para finalizar: ${registro.titulo}` : registro.titulo,
+      input: requiereObservacion ? 'textarea' : undefined,
+      inputLabel: requiereObservacion ? 'Observacion / motivo de finalizacion' : undefined,
+      inputPlaceholder: requiereObservacion ? 'Describa por que se finaliza la tarea...' : undefined,
+      inputValue: requiereObservacion ? (registro.observacion || '') : undefined,
+      inputValidator: requiereObservacion ? (valor) => (!valor?.trim() ? 'La observacion es obligatoria.' : undefined) : undefined,
       showCancelButton: true,
-      confirmButtonText: 'Finalizar',
+      confirmButtonText: requiereObservacion ? 'Finalizar' : 'Confirmar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#198754'
+      confirmButtonColor: requiereObservacion ? '#198754' : '#0d6efd'
     }).then((resultado) => {
       if (!resultado.isConfirmed) return;
-      Axios.patch(`${API_URL}/${registro.modulo}/${registro.id_registro}/finalizar`, parametrosSesion())
+      Axios.patch(`${API_URL}/${registro.modulo}/${registro.id_registro}/estado`, {
+        ...parametrosSesion(),
+        estado,
+        observacion: requiereObservacion ? String(resultado.value || '').trim() : ''
+      })
         .then(() => {
           cargarRegistros();
-          Swal.fire({ icon: 'success', title: 'Tarea finalizada', timer: 1800, showConfirmButton: false });
+          Swal.fire({ icon: 'success', title: `Tarea en estado ${estado}`, timer: 1800, showConfirmButton: false });
         })
         .catch((error) => Swal.fire({
           icon: 'error',
-          title: 'No se pudo finalizar',
+          title: 'No se pudo cambiar el estado',
           text: error.response?.data?.message || 'Error del servidor.'
         }));
     });
@@ -199,6 +215,7 @@ function Reporteria() {
         ['DETALLE', registro.detalle || 'Sin detalle'],
         ['ESTADO EN MODULO', registro.estado_origen || 'No definido'],
         ['ESTADO DE TAREA', registro.estado_tarea],
+        ['OBSERVACION DE CIERRE', registro.observacion || 'Sin observacion'],
         ['ROL PROPIETARIO', registro.rol_propietario || 'Sin asignar'],
         ['REGISTRADO POR', registro.propietario || 'Sin asignar'],
         ['FECHA DE REGISTRO', registro.fecha_registro ? new Date(registro.fecha_registro).toLocaleString() : 'No disponible'],
@@ -219,11 +236,11 @@ function Reporteria() {
   return (
     <div className="container-fluid mt-3 px-2 px-md-3">
       <div className="row mb-3 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
-        <div className="col-lg-4 mb-2 mb-lg-0">
+        <div className="col-lg-3 mb-2 mb-lg-0">
           <h3 className="m-0 text-dark fw-bold">REPORTERIA</h3>
-          <small className="text-muted">Registros visibles para el rol: <strong>{sesion?.rol || 'Sin rol'}</strong></small>
+          <small className="text-muted">Registros ingresados por: <strong>{sesion?.nombre || 'Usuario'}</strong></small>
         </div>
-        <div className="col-lg-5 mb-2 mb-lg-0">
+        <div className="col-lg-4 mb-2 mb-lg-0">
           <div className="input-group">
             <span className="input-group-text bg-primary text-white">Buscar</span>
             <input
@@ -234,9 +251,17 @@ function Reporteria() {
             />
           </div>
         </div>
-        <div className="col-lg-3">
+        <div className="col-lg-2 mb-2 mb-lg-0">
           <select className="form-select" value={modulo} onChange={(event) => setModulo(event.target.value)}>
             {MODULOS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+        </div>
+        <div className="col-lg-3">
+          <select className="form-select" value={estadoFiltro} onChange={(event) => setEstadoFiltro(event.target.value)}>
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Activo">Activo</option>
+            <option value="Finalizada">Finalizada</option>
           </select>
         </div>
       </div>
@@ -286,10 +311,11 @@ function Reporteria() {
                   <small className="text-muted">{registro.propietario || 'Sin responsable'}</small>
                 </td>
                 <td>
-                  <span className={`badge ${registro.estado_tarea === 'Finalizada' ? 'bg-success' : 'bg-warning text-dark'}`}>
+                  <span className={`badge ${claseEstado(registro.estado_tarea)}`}>
                     {registro.estado_tarea}
                   </span>
                   <small className="d-block text-muted mt-1">Origen: {registro.estado_origen || 'N/D'}</small>
+                  {registro.observacion && <small className="d-block mt-1" style={{ whiteSpace: 'normal' }}>{registro.observacion}</small>}
                 </td>
                 <td>{registro.fecha_registro ? new Date(registro.fecha_registro).toLocaleDateString() : 'N/D'}</td>
                 <td className="text-center">
@@ -300,7 +326,9 @@ function Reporteria() {
                       const accion = event.target.value;
                       if (accion === 'editar') abrirEdicion(registro);
                       if (accion === 'pdf') descargarPDF(registro);
-                      if (accion === 'finalizar') finalizar(registro);
+                      if (accion === 'pendiente') cambiarEstado(registro, 'Pendiente');
+                      if (accion === 'activo') cambiarEstado(registro, 'Activo');
+                      if (accion === 'finalizar') cambiarEstado(registro, 'Finalizada');
                       if (accion === 'eliminar') eliminar(registro);
                       event.target.value = '';
                     }}
@@ -308,6 +336,8 @@ function Reporteria() {
                     <option value="" disabled>Acciones</option>
                     <option value="editar" disabled={!registro.permite_editar}>Actualizar</option>
                     <option value="pdf">Descargar PDF</option>
+                    <option value="pendiente" disabled={registro.estado_tarea === 'Pendiente'}>Marcar pendiente</option>
+                    <option value="activo" disabled={registro.estado_tarea === 'Activo'}>Marcar activo</option>
                     <option value="finalizar" disabled={registro.estado_tarea === 'Finalizada'}>Finalizar tarea</option>
                     <option value="eliminar" disabled={!registro.permite_eliminar}>Eliminar</option>
                   </select>

@@ -11,6 +11,10 @@ const query = (sql, params = []) => new Promise((resolve, reject) => {
 });
 
 let schemaPromise;
+const agregarColumnaSiFalta = (sql) => query(sql).catch((err) => {
+    if (err.code !== 'ER_DUP_FIELDNAME') throw err;
+});
+
 const prepararEsquema = () => {
     if (schemaPromise) return schemaPromise;
 
@@ -19,14 +23,23 @@ const prepararEsquema = () => {
             modulo VARCHAR(40) NOT NULL,
             id_registro INT NOT NULL,
             estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+            observacion TEXT DEFAULT NULL,
             finalizado_por INT DEFAULT NULL,
             fecha_finalizacion DATETIME DEFAULT NULL,
+            fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (modulo, id_registro)
         )
-    `).then(() => query('ALTER TABLE comunidades ADD COLUMN id_usuario INT DEFAULT NULL', []))
-        .catch((err) => {
-            if (err.code !== 'ER_DUP_FIELDNAME') throw err;
-        });
+    `)
+        .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN observacion TEXT DEFAULT NULL'))
+        .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+        .then(() => agregarColumnaSiFalta('ALTER TABLE comunidades ADD COLUMN id_usuario INT DEFAULT NULL'))
+        .then(() => agregarColumnaSiFalta('ALTER TABLE problemas ADD COLUMN id_usuario INT DEFAULT NULL'))
+        .then(() => query(`
+            UPDATE problemas p
+            LEFT JOIN afiliados a ON a.id_afiliado = p.id_afiliado
+            SET p.id_usuario = a.id_usuario
+            WHERE p.id_usuario IS NULL AND a.id_usuario IS NOT NULL
+        `));
 
     return schemaPromise;
 };
@@ -42,7 +55,7 @@ const FUENTES = {
                 a.id_usuario AS id_propietario, u.nombre AS propietario, u.rol AS rol_propietario
             FROM afiliados a LEFT JOIN usuarios u ON u.id_usuario = a.id_usuario
         `,
-        propietario: 'SELECT u.rol FROM afiliados a LEFT JOIN usuarios u ON u.id_usuario=a.id_usuario WHERE a.id_afiliado=?',
+        propietario: 'SELECT a.id_usuario AS id_propietario FROM afiliados a WHERE a.id_afiliado=?',
         actualizar: 'UPDATE afiliados SET nombre_completo=?, direccion=? WHERE id_afiliado=?',
         eliminar: 'DELETE FROM afiliados WHERE id_afiliado=?'
     },
@@ -51,13 +64,12 @@ const FUENTES = {
         listar: `
             SELECT 'problemas' AS modulo, p.id_problema AS id_registro,
                 p.titulo, p.descripcion AS detalle, p.estado AS estado_origen,
-                p.fecha_reporte AS fecha_registro, a.id_usuario AS id_propietario,
+                p.fecha_reporte AS fecha_registro, p.id_usuario AS id_propietario,
                 u.nombre AS propietario, u.rol AS rol_propietario
             FROM problemas p
-            LEFT JOIN afiliados a ON a.id_afiliado = p.id_afiliado
-            LEFT JOIN usuarios u ON u.id_usuario = a.id_usuario
+            LEFT JOIN usuarios u ON u.id_usuario = p.id_usuario
         `,
-        propietario: 'SELECT u.rol FROM problemas p LEFT JOIN afiliados a ON a.id_afiliado=p.id_afiliado LEFT JOIN usuarios u ON u.id_usuario=a.id_usuario WHERE p.id_problema=?',
+        propietario: 'SELECT p.id_usuario AS id_propietario FROM problemas p WHERE p.id_problema=?',
         actualizar: 'UPDATE problemas SET titulo=?, descripcion=? WHERE id_problema=?',
         eliminar: 'DELETE FROM problemas WHERE id_problema=?'
     },
@@ -70,7 +82,7 @@ const FUENTES = {
                 u.nombre AS propietario, u.rol AS rol_propietario
             FROM lideres l LEFT JOIN usuarios u ON u.id_usuario = l.id_usuario
         `,
-        propietario: 'SELECT u.rol FROM lideres l LEFT JOIN usuarios u ON u.id_usuario=l.id_usuario WHERE l.id_lider=?',
+        propietario: 'SELECT l.id_usuario AS id_propietario FROM lideres l WHERE l.id_lider=?',
         actualizar: 'UPDATE lideres SET nombre=?, observaciones=? WHERE id_lider=?',
         eliminar: 'DELETE FROM lideres WHERE id_lider=?'
     },
@@ -83,7 +95,7 @@ const FUENTES = {
                 u.nombre AS propietario, u.rol AS rol_propietario
             FROM problemas_personales p LEFT JOIN usuarios u ON u.id_usuario = p.id_usuario
         `,
-        propietario: 'SELECT u.rol FROM problemas_personales p LEFT JOIN usuarios u ON u.id_usuario=p.id_usuario WHERE p.id_propersonal=?',
+        propietario: 'SELECT p.id_usuario AS id_propietario FROM problemas_personales p WHERE p.id_propersonal=?',
         actualizar: 'UPDATE problemas_personales SET nombre=?, observaciones=? WHERE id_propersonal=?',
         eliminar: 'DELETE FROM problemas_personales WHERE id_propersonal=?'
     },
@@ -96,7 +108,7 @@ const FUENTES = {
                 u.nombre AS propietario, u.rol AS rol_propietario
             FROM comunidades c LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
         `,
-        propietario: 'SELECT u.rol FROM comunidades c LEFT JOIN usuarios u ON u.id_usuario=c.id_usuario WHERE c.id_comunidad=?',
+        propietario: 'SELECT c.id_usuario AS id_propietario FROM comunidades c WHERE c.id_comunidad=?',
         actualizar: 'UPDATE comunidades SET nombre_comunidad=?, tipo=? WHERE id_comunidad=?',
         eliminar: 'DELETE FROM comunidades WHERE id_comunidad=?'
     },
@@ -108,7 +120,7 @@ const FUENTES = {
                 u.id_usuario AS id_propietario, u.nombre AS propietario, u.rol AS rol_propietario
             FROM usuarios u
         `,
-        propietario: 'SELECT rol FROM usuarios WHERE id_usuario=?',
+        propietario: 'SELECT id_usuario AS id_propietario FROM usuarios WHERE id_usuario=?',
         actualizar: 'UPDATE usuarios SET nombre=?, correo=? WHERE id_usuario=?',
         eliminar: 'DELETE FROM usuarios WHERE id_usuario=?'
     },
@@ -121,7 +133,7 @@ const FUENTES = {
                 r.nombre_rol AS rol_propietario
             FROM roles r
         `,
-        propietario: 'SELECT nombre_rol AS rol FROM roles WHERE id_rol=?'
+        propietario: 'SELECT NULL AS id_propietario FROM roles WHERE id_rol=?'
     },
     bitacora: {
         label: 'Bitacora',
@@ -133,7 +145,7 @@ const FUENTES = {
                 u.rol AS rol_propietario
             FROM bitacora b LEFT JOIN usuarios u ON u.id_usuario = b.id_usuario
         `,
-        propietario: 'SELECT u.rol FROM bitacora b LEFT JOIN usuarios u ON u.id_usuario=b.id_usuario WHERE b.id_bitacora=?'
+        propietario: 'SELECT b.id_usuario AS id_propietario FROM bitacora b WHERE b.id_bitacora=?'
     }
 };
 
@@ -143,14 +155,12 @@ const obtenerSolicitante = async (idUsuario) => {
 };
 
 const esGlobal = (rol) => ['administrador', 'admin', 'supervisor general'].includes(String(rol || '').trim().toLowerCase());
-const mismoRol = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
-
 const autorizarRegistro = async (solicitante, fuente, idRegistro) => {
     const rows = await query(fuente.propietario, [idRegistro]);
     if (!rows.length) return { existe: false, autorizado: false };
     return {
         existe: true,
-        autorizado: esGlobal(solicitante.rol) || mismoRol(rows[0].rol, solicitante.rol)
+        autorizado: esGlobal(solicitante.rol) || Number(rows[0].id_propietario) === Number(solicitante.id_usuario)
     };
 };
 
@@ -164,7 +174,7 @@ const registrarBitacora = (solicitante, tipo, detalle) => query(`
 router.use(async (req, res, next) => {
     try {
         await prepararEsquema();
-        const idUsuario = Number(req.query.id_usuario || req.body.id_usuario_operador || 0);
+        const idUsuario = Number(req.query.id_usuario || req.body?.id_usuario_operador || 0);
         if (!idUsuario) return res.status(401).json({ message: 'Sesion no identificada.' });
 
         const solicitante = await obtenerSolicitante(idUsuario);
@@ -184,6 +194,7 @@ router.get('/', async (req, res) => {
         const limite = Math.min(Math.max(Number(req.query.limite) || 10, 1), 100);
         const busqueda = String(req.query.busqueda || '').trim().toLowerCase();
         const modulo = String(req.query.modulo || '').trim().toLowerCase();
+        const estadoTarea = String(req.query.estado || '').trim();
         const solicitante = req.solicitante;
 
         const resultados = (await Promise.all(Object.values(FUENTES).map((fuente) => query(fuente.listar)))).flat();
@@ -191,7 +202,7 @@ router.get('/', async (req, res) => {
         const flujoMap = new Map(flujos.map((item) => [`${item.modulo}:${item.id_registro}`, item]));
 
         const filtrados = resultados
-            .filter((item) => esGlobal(solicitante.rol) || mismoRol(item.rol_propietario, solicitante.rol))
+            .filter((item) => esGlobal(solicitante.rol) || Number(item.id_propietario) === Number(solicitante.id_usuario))
             .filter((item) => !modulo || item.modulo === modulo)
             .filter((item) => !busqueda || [item.titulo, item.detalle, item.propietario, item.modulo]
                 .some((valor) => String(valor || '').toLowerCase().includes(busqueda)))
@@ -203,9 +214,11 @@ router.get('/', async (req, res) => {
                     permite_editar: Boolean(FUENTES[item.modulo].actualizar),
                     permite_eliminar: Boolean(FUENTES[item.modulo].eliminar),
                     estado_tarea: flujo?.estado || 'Pendiente',
+                    observacion: flujo?.observacion || '',
                     fecha_finalizacion: flujo?.fecha_finalizacion || null
                 };
             })
+            .filter((item) => !estadoTarea || item.estado_tarea === estadoTarea)
             .sort((a, b) => new Date(b.fecha_registro || 0) - new Date(a.fecha_registro || 0));
 
         const offset = (pagina - 1) * limite;
@@ -243,23 +256,43 @@ router.put('/:modulo/:id', async (req, res) => {
     }
 });
 
-router.patch('/:modulo/:id/finalizar', async (req, res) => {
+router.patch('/:modulo/:id/estado', async (req, res) => {
     try {
         const fuente = FUENTES[req.params.modulo];
         const idRegistro = Number(req.params.id);
+        const estado = String(req.body.estado || '').trim();
+        const observacion = String(req.body.observacion || '').trim();
         if (!fuente || !idRegistro) return res.status(400).json({ message: 'Registro invalido.' });
+        if (!['Pendiente', 'Activo', 'Finalizada'].includes(estado)) {
+            return res.status(400).json({ message: 'Estado de tarea invalido.' });
+        }
+        if (estado === 'Finalizada' && !observacion) {
+            return res.status(400).json({ message: 'Debe indicar el motivo u observacion de finalizacion.' });
+        }
 
         const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
         if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
         if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro rol.' });
 
         await query(`
-            INSERT INTO reporteria_flujo (modulo, id_registro, estado, finalizado_por, fecha_finalizacion)
-            VALUES (?, ?, 'Finalizada', ?, NOW())
-            ON DUPLICATE KEY UPDATE estado='Finalizada', finalizado_por=VALUES(finalizado_por), fecha_finalizacion=NOW()
-        `, [req.params.modulo, idRegistro, req.solicitante.id_usuario]);
-        await registrarBitacora(req.solicitante, 'FINALIZACION_REPORTERIA', `Finalizo ${fuente.label} #${idRegistro} desde Reporteria.`);
-        return res.json({ message: 'Tarea finalizada correctamente.' });
+            INSERT INTO reporteria_flujo (modulo, id_registro, estado, observacion, finalizado_por, fecha_finalizacion)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE estado=VALUES(estado), observacion=VALUES(observacion),
+                finalizado_por=VALUES(finalizado_por), fecha_finalizacion=VALUES(fecha_finalizacion)
+        `, [
+            req.params.modulo,
+            idRegistro,
+            estado,
+            observacion || null,
+            estado === 'Finalizada' ? req.solicitante.id_usuario : null,
+            estado === 'Finalizada' ? new Date() : null
+        ]);
+        await registrarBitacora(
+            req.solicitante,
+            estado === 'Finalizada' ? 'FINALIZACION_REPORTERIA' : 'ESTADO_REPORTERIA',
+            `Cambio ${fuente.label} #${idRegistro} a ${estado}.${observacion ? ` Observacion: ${observacion}` : ''}`
+        );
+        return res.json({ message: `Tarea actualizada a ${estado}.` });
     } catch (err) {
         console.error('Error finalizando tarea:', err);
         return res.status(500).json({ message: 'No se pudo finalizar la tarea.' });
