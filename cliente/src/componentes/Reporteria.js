@@ -36,10 +36,13 @@ function Reporteria() {
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [usuariosAsignables, setUsuariosAsignables] = useState([]);
+  const [ticketGestion, setTicketGestion] = useState(null);
+  const [estadoGestion, setEstadoGestion] = useState('Pendiente');
+  const [observacionGestion, setObservacionGestion] = useState('');
 
   const claseEstado = (estado) => {
-    if (estado === 'Finalizada') return 'bg-success';
-    if (estado === 'Activo') return 'bg-primary';
+    if (estado === 'Trabajado') return 'bg-success';
+    if (estado === 'No trabajado') return 'bg-danger';
     return 'bg-warning text-dark';
   };
 
@@ -90,38 +93,37 @@ function Reporteria() {
     setPagina(1);
   }, [busqueda, estadoFiltro, modulo]);
 
-  const cambiarEstado = (registro, estado) => {
-    const requiereObservacion = estado === 'Finalizada';
-    Swal.fire({
-      icon: requiereObservacion ? 'question' : 'info',
-      title: requiereObservacion ? 'Finalizar tarea' : `Marcar como ${estado}`,
-      text: requiereObservacion ? `Indique el motivo para finalizar: ${registro.titulo}` : registro.titulo,
-      input: requiereObservacion ? 'textarea' : undefined,
-      inputLabel: requiereObservacion ? 'Observacion / motivo de finalizacion' : undefined,
-      inputPlaceholder: requiereObservacion ? 'Describa por que se finaliza la tarea...' : undefined,
-      inputValue: requiereObservacion ? (registro.observacion || '') : undefined,
-      inputValidator: requiereObservacion ? (valor) => (!valor?.trim() ? 'La observacion es obligatoria.' : undefined) : undefined,
-      showCancelButton: true,
-      confirmButtonText: requiereObservacion ? 'Finalizar' : 'Confirmar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: requiereObservacion ? '#198754' : '#0d6efd'
-    }).then((resultado) => {
-      if (!resultado.isConfirmed) return;
-      Axios.patch(`${API_URL}/${registro.modulo}/${registro.id_registro}/estado`, {
-        ...parametrosSesion(),
-        estado,
-        observacion: requiereObservacion ? String(resultado.value || '').trim() : ''
+  const abrirGestionTicket = (registro) => {
+    setTicketGestion(registro);
+    setEstadoGestion(['Pendiente', 'Trabajado', 'No trabajado'].includes(registro.estado_tarea)
+      ? registro.estado_tarea
+      : 'Pendiente');
+    setObservacionGestion(registro.observacion || '');
+  };
+
+  const guardarGestionTicket = () => {
+    if (!ticketGestion) return;
+    const esResultadoFinal = estadoGestion === 'Trabajado' || estadoGestion === 'No trabajado';
+    if (esResultadoFinal && !observacionGestion.trim()) {
+      Swal.fire({ icon: 'warning', title: 'Observación requerida', text: 'Indique el resultado o motivo del cierre.' });
+      return;
+    }
+
+    Axios.patch(`${API_URL}/${ticketGestion.modulo}/${ticketGestion.id_registro}/estado`, {
+      ...parametrosSesion(),
+      estado: estadoGestion,
+      observacion: observacionGestion.trim()
+    })
+      .then(() => {
+        setTicketGestion(null);
+        cargarRegistros();
+        Swal.fire({ icon: 'success', title: `Ticket ${estadoGestion}`, timer: 1800, showConfirmButton: false });
       })
-        .then(() => {
-          cargarRegistros();
-          Swal.fire({ icon: 'success', title: `Tarea en estado ${estado}`, timer: 1800, showConfirmButton: false });
-        })
-        .catch((error) => Swal.fire({
-          icon: 'error',
-          title: 'No se pudo cambiar el estado',
-          text: error.response?.data?.message || 'Error del servidor.'
-        }));
-    });
+      .catch((error) => Swal.fire({
+        icon: 'error',
+        title: 'No se pudo guardar el resultado',
+        text: error.response?.data?.message || 'Error del servidor.'
+      }));
   };
 
   const asignarTrabajo = (registro) => {
@@ -197,7 +199,7 @@ function Reporteria() {
         ['DETALLE', registro.detalle || 'Sin detalle'],
         ['ESTADO EN MODULO', registro.estado_origen || 'No definido'],
         ['ESTADO DE TAREA', registro.estado_tarea],
-        ['OBSERVACION DE CIERRE', registro.observacion || 'Sin observacion'],
+        ['OBSERVACIONES', registro.observacion || 'Sin observaciones'],
         ['ROL PROPIETARIO', registro.rol_propietario || 'Sin asignar'],
         ['REGISTRADO POR', registro.propietario || 'Sin asignar'],
         ['ASIGNADO A', registro.asignado_nombre || 'Sin asignar'],
@@ -246,8 +248,8 @@ function Reporteria() {
           <select className="form-select" value={estadoFiltro} onChange={(event) => setEstadoFiltro(event.target.value)}>
             <option value="">Todos los estados</option>
             <option value="Pendiente">Pendiente</option>
-            <option value="Activo">Activo</option>
-            <option value="Finalizada">Finalizada</option>
+            <option value="Trabajado">Trabajado</option>
+            <option value="No trabajado">No trabajado</option>
           </select>
         </div>
       </div>
@@ -314,9 +316,7 @@ function Reporteria() {
                     onChange={(event) => {
                       const accion = event.target.value;
                       if (accion === 'pdf') descargarPDF(registro);
-                      if (accion === 'pendiente') cambiarEstado(registro, 'Pendiente');
-                      if (accion === 'activo') cambiarEstado(registro, 'Activo');
-                      if (accion === 'finalizar') cambiarEstado(registro, 'Finalizada');
+                      if (accion === 'gestionar') abrirGestionTicket(registro);
                       if (accion === 'asignar') asignarTrabajo(registro);
                       event.target.value = '';
                     }}
@@ -324,9 +324,7 @@ function Reporteria() {
                     <option value="" disabled>Acciones</option>
                     <option value="pdf">Descargar PDF</option>
                     {esSupervisorGeneral && <option value="asignar">Asignar trabajo</option>}
-                    <option value="pendiente" disabled={!registro.puede_gestionar || registro.estado_tarea === 'Pendiente'}>Marcar pendiente</option>
-                    <option value="activo" disabled={!registro.puede_gestionar || registro.estado_tarea === 'Activo'}>Iniciar seguimiento</option>
-                    <option value="finalizar" disabled={!registro.puede_gestionar || registro.estado_tarea === 'Finalizada'}>Finalizar ticket</option>
+                    <option value="gestionar" disabled={!registro.puede_gestionar}>Gestionar / finalizar ticket</option>
                   </select>
                 </td>
               </tr>
@@ -334,6 +332,48 @@ function Reporteria() {
           </tbody>
         </table>
       </div>
+
+      {ticketGestion && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content shadow-lg">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title fw-bold">Gestionar ticket #{ticketGestion.id_registro}</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setTicketGestion(null)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <strong className="d-block">{ticketGestion.titulo}</strong>
+                  <small className="text-muted">Encargado: {ticketGestion.asignado_nombre || ticketGestion.propietario}</small>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Resultado del ticket:</label>
+                  <select className="form-select" value={estadoGestion} onChange={(event) => setEstadoGestion(event.target.value)}>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Trabajado">Trabajado</option>
+                    <option value="No trabajado">No trabajado</option>
+                  </select>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Observaciones:</label>
+                  <textarea
+                    className="form-control"
+                    rows="5"
+                    value={observacionGestion}
+                    onChange={(event) => setObservacionGestion(event.target.value)}
+                    placeholder="Describa el trabajo realizado o el motivo por el que no se trabajó..."
+                  ></textarea>
+                  <small className="text-muted">Obligatoria para Trabajado y No trabajado.</small>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setTicketGestion(null)}>Cancelar</button>
+                <button className="btn btn-primary fw-bold" onClick={guardarGestionTicket}>Guardar resultado</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

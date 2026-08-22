@@ -35,10 +35,12 @@ function Problemas() {
   const [id_municipio, setId_municipio] = useState(String(MUNICIPIO_JALAPA_ID));
   const [estado, setEstado] = useState("Pendiente"); 
   const [id_afiliado, setId_afiliado] = useState("");
+  const [asignado_a, setAsignado_a] = useState("");
   const [foto, setFoto] = useState("");
   const [mostrarCargaFoto, setMostrarCargaFoto] = useState(false);
   const [cocodesList, setCocodesList] = useState([]);
   const [comunidadesJalapa, setComunidadesJalapa] = useState([]);
+  const [usuariosAsignables, setUsuariosAsignables] = useState([]);
 
   // Listas para catálogos y grilla
   const [problemasList, setProblemasList] = useState([]);
@@ -127,6 +129,7 @@ function Problemas() {
         ['MUNICIPIO AFECTADO', val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'N/A'],
         ['FECHA DE REGISTRO', new Date(val.fecha_reporte).toLocaleString()],
         ['COCODE REPORTANTE', val.nombre_cocode ? `${val.nombre_cocode} (DPI: ${val.dpi_cocode || 'N/A'})` : (val.id_afiliado ? `ID #${val.id_afiliado}` : 'N/A')],
+        ['ENCARGADO DE SOLUCIÓN', val.nombre_asignado || 'SIN ASIGNAR'],
         ['ESTADO OPERATIVO', val.estado ? val.estado.toUpperCase() : 'N/A'],
         ['EVIDENCIA FOTOGRÁFICA', val.foto ? 'ADJUNTA EN EL TICKET' : 'NO ADJUNTA'],
       ],
@@ -154,6 +157,11 @@ function Problemas() {
   //   CONTROLADORES DE BASE DE DATOS (CRUD + BITÁCORA)
   // =========================================================================
   const add = () => {
+    if (!asignado_a) {
+      Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Seleccione quién dará solución al ticket.' });
+      return;
+    }
+
     Axios.post(`${API_URL}/crear`, { 
       titulo, 
       descripcion, 
@@ -161,6 +169,7 @@ function Problemas() {
       id_municipio: MUNICIPIO_JALAPA_ID, 
       estado, 
       id_afiliado,
+      asignado_a: Number(asignado_a),
       foto: foto || null,
       id_usuario_operador: idUsuarioLogueado,
       nombre_usuario_operador: nombreUsuarioLogueado
@@ -188,6 +197,11 @@ function Problemas() {
   };
 
   const actualizar = () => {
+    if (!asignado_a) {
+      Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Seleccione quién dará solución al ticket.' });
+      return;
+    }
+
     Axios.put(`${API_URL}/actualizar`, { 
       id_problema,
       titulo, 
@@ -196,6 +210,7 @@ function Problemas() {
       id_municipio: MUNICIPIO_JALAPA_ID, 
       estado, 
       id_afiliado,
+      asignado_a: Number(asignado_a),
       foto: foto || null,
       id_usuario_operador: idUsuarioLogueado,
       nombre_usuario_operador: nombreUsuarioLogueado
@@ -255,6 +270,7 @@ function Problemas() {
     setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setEstado("Pendiente"); 
     setId_afiliado("");
+    setAsignado_a("");
     setFoto("");
     setMostrarCargaFoto(false);
   };
@@ -312,11 +328,18 @@ function Problemas() {
     .catch((error) => { console.error("Error al obtener cocodes", error); });
   }, [API_BASE_URL, idUsuarioLogueado, rolUsuarioLogueado]);
 
+  const getUsuariosAsignables = useCallback(() => {
+    Axios.get(`${API_URL}/usuarios-asignables`, { params: { id_usuario: idUsuarioLogueado } })
+      .then((response) => setUsuariosAsignables(Array.isArray(response.data) ? response.data : []))
+      .catch((error) => console.error("Error al obtener encargados", error));
+  }, [API_URL, idUsuarioLogueado]);
+
   useEffect(() => { 
     getProblemas(); 
     getComunidadesJalapa();
     getCocodes();
-  }, [getProblemas, getComunidadesJalapa, getCocodes]);
+    getUsuariosAsignables();
+  }, [getProblemas, getComunidadesJalapa, getCocodes, getUsuariosAsignables]);
 
   const abrirEditarModal = (val) => {
     setId_problema(val.id_problema);
@@ -326,6 +349,7 @@ function Problemas() {
     setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setEstado(val.estado || "Pendiente");
     setId_afiliado(val.id_afiliado || "");
+    setAsignado_a(val.asignado_a ? String(val.asignado_a) : "");
     setFoto(val.foto || "");
     setMostrarCargaFoto(Boolean(val.foto));
     setShowEditModal(true);
@@ -404,6 +428,7 @@ function Problemas() {
               <th>TÍTULO / ASUNTO</th>
               <th>UBICACIÓN (BARRIO Y MUNI)</th>
               <th>COCODE</th>
+              <th>ENCARGADO</th>
               <th>ESTADO</th>
               <th className="text-center">OPERACIÓN</th>
             </tr>
@@ -423,6 +448,9 @@ function Problemas() {
                   <td>
                     <div className="fw-bold">{val.nombre_cocode || `COCODE #${val.id_afiliado}`}</div>
                     <small className="text-muted">DPI: {val.dpi_cocode || 'No disponible'}</small>
+                  </td>
+                  <td>
+                    <strong>{val.nombre_asignado || 'Sin asignar'}</strong>
                   </td>
                   <td>
                     <span className={`badge bg-${
@@ -463,7 +491,7 @@ function Problemas() {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center text-muted py-3">No se encontraron problemas reportados.</td>
+                <td colSpan="7" className="text-center text-muted py-3">No se encontraron problemas reportados.</td>
               </tr>
             )}
           </tbody>
@@ -561,14 +589,22 @@ function Problemas() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Estado Inicial del Ticket:</label>
-                  <select value={estado} onChange={(e) => setEstado(e.target.value)} className="form-select">
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Activo">Activo</option>
-                    <option value="Trabajando">Trabajando</option>
-                    <option value="Seguimiento">Seguimiento</option>
-                    <option value="Finalizado">Finalizado</option>
+                  <label className="form-label fw-bold">Asignar solución a:</label>
+                  <select value={asignado_a} onChange={(e) => setAsignado_a(e.target.value)} className="form-select">
+                    <option value="">-- Seleccione encargado --</option>
+                    {usuariosAsignables.map((usuario) => (
+                      <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                        {usuario.nombre} - {usuario.rol}
+                      </option>
+                    ))}
                   </select>
+                  <small className="text-muted">Solo el encargado seleccionado podrá resolver y finalizar el ticket.</small>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Estado Inicial del Ticket:</label>
+                  <input value="Pendiente" className="form-control" readOnly />
+                  <small className="text-muted">El encargado actualizará el resultado desde Reportería.</small>
                 </div>
 
                 <div className="mb-3">
@@ -696,14 +732,22 @@ function Problemas() {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Estado del Ticket:</label>
-                  <select value={estado} onChange={(e) => setEstado(e.target.value)} className="form-select">
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Activo">Activo</option>
-                    <option value="Trabajando">Trabajando</option>
-                    <option value="Seguimiento">Seguimiento</option>
-                    <option value="Finalizado">Finalizado</option>
+                  <label className="form-label fw-bold">Asignar solución a:</label>
+                  <select value={asignado_a} onChange={(e) => setAsignado_a(e.target.value)} className="form-select">
+                    <option value="">-- Seleccione encargado --</option>
+                    {usuariosAsignables.map((usuario) => (
+                      <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                        {usuario.nombre} - {usuario.rol}
+                      </option>
+                    ))}
                   </select>
+                  <small className="text-muted">El cambio de encargado se reflejará en Reportería.</small>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Estado del Ticket:</label>
+                  <input value={estado || "Pendiente"} className="form-control" readOnly />
+                  <small className="text-muted">El seguimiento y cierre se administran desde Reportería.</small>
                 </div>
 
                 <div className="mb-3">

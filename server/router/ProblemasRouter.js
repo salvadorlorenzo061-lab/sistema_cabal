@@ -3,6 +3,24 @@ const db = require('../Conexion');
 const router = express.Router(); 
 const { listarMunicipios, obtenerMunicipioPorId } = require('../catalogosTerritoriales');
 
+db.query(`
+    CREATE TABLE IF NOT EXISTS reporteria_flujo (
+        modulo VARCHAR(40) NOT NULL,
+        id_registro INT NOT NULL,
+        estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+        observacion TEXT DEFAULT NULL,
+        asignado_a INT DEFAULT NULL,
+        asignado_por INT DEFAULT NULL,
+        fecha_asignacion DATETIME DEFAULT NULL,
+        finalizado_por INT DEFAULT NULL,
+        fecha_finalizacion DATETIME DEFAULT NULL,
+        fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (modulo, id_registro)
+    )
+`, (flujoErr) => {
+    if (flujoErr) console.error('Error preparando flujo de reportería:', flujoErr);
+});
+
 db.query('ALTER TABLE problemas ADD COLUMN id_usuario INT DEFAULT NULL', (columnErr) => {
     if (columnErr && columnErr.code !== 'ER_DUP_FIELDNAME') {
         console.error('Error preparando propietario de problemas:', columnErr);
@@ -43,6 +61,22 @@ router.get("/municipios", (req, res) => {
     return res.send(listarMunicipios());
 });
 
+router.get("/usuarios-asignables", (req, res) => {
+    const idUsuario = Number(req.query.id_usuario || 0);
+    if (!idUsuario) return res.status(401).json({ message: "Sesión no identificada." });
+
+    db.query(
+        "SELECT id_usuario, nombre, rol FROM usuarios WHERE LOWER(estado)='activo' ORDER BY nombre ASC",
+        (err, result) => {
+            if (err) {
+                console.error("Error obteniendo usuarios asignables:", err);
+                return res.status(500).json({ message: "No se pudo cargar la lista de encargados." });
+            }
+            return res.json(result);
+        }
+    );
+});
+
 // === OBTENER CATÁLOGO DE COCODES (AUXILIAR PARA TICKETS) ===
 router.get("/cocodes", (req, res) => {
     const idUsuario = parseInt(req.query.id_usuario || '0', 10);
@@ -75,6 +109,7 @@ router.post("/crear", (req, res) => {
         id_cocode,
         id_afiliado,
         foto,
+        asignado_a,
         id_usuario_operador,
         nombre_usuario_operador
     } = req.body;
@@ -107,9 +142,25 @@ router.post("/crear", (req, res) => {
                 VALUES (?, 'INSERCION', ?, ?)
             `;
 
-            db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detalles], (bitacoraErr) => {
-                if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
-                return res.status(200).send("Problema de la comunidad registrado con éxito");
+            const finalizarCreacion = () => {
+                db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detalles], (bitacoraErr) => {
+                    if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
+                    return res.status(200).json({ message: "Problema de la comunidad registrado con éxito", id_problema: nuevoId });
+                });
+            };
+
+            if (!asignado_a) return finalizarCreacion();
+
+            db.query(`
+                INSERT INTO reporteria_flujo (modulo, id_registro, estado, asignado_a, asignado_por, fecha_asignacion)
+                VALUES ('problemas', ?, 'Pendiente', ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE asignado_a=VALUES(asignado_a), asignado_por=VALUES(asignado_por), fecha_asignacion=NOW()
+            `, [nuevoId, Number(asignado_a), id_usuario_operador || null], (asignacionErr) => {
+                if (asignacionErr) {
+                    console.error("Error asignando ticket recién creado:", asignacionErr);
+                    return res.status(500).json({ message: "El problema se creó, pero no se pudo asignar al encargado." });
+                }
+                return finalizarCreacion();
             });
         });
     });
@@ -146,6 +197,8 @@ router.get("/", (req, res) => {
                 p.fecha_reporte,
                 p.id_afiliado,
                 p.id_usuario,
+                rf.asignado_a,
+                ua.nombre AS nombre_asignado,
                 p.id_afiliado AS id_cocode,
                 ${campoFoto},
                 m.nombre_municipio,
@@ -154,6 +207,8 @@ router.get("/", (req, res) => {
             FROM problemas p
             LEFT JOIN municipios m ON p.id_municipio = m.id_municipio
             LEFT JOIN afiliados a ON p.id_afiliado = a.id_afiliado
+            LEFT JOIN reporteria_flujo rf ON rf.modulo='problemas' AND rf.id_registro=p.id_problema
+            LEFT JOIN usuarios ua ON ua.id_usuario=rf.asignado_a
             ${filtroPropietario}
             ORDER BY p.fecha_reporte DESC
             LIMIT ? OFFSET ?
@@ -199,6 +254,7 @@ router.put("/actualizar", (req, res) => {
         id_cocode,
         id_afiliado,
         foto,
+        asignado_a,
         id_usuario_operador,
         nombre_usuario_operador
     } = req.body;
@@ -226,7 +282,7 @@ router.put("/actualizar", (req, res) => {
                 ? [titulo, descripcion, barrio_colonia, id_municipio, estado, cocodeId, foto || null, id_problema]
                 : [titulo, descripcion, barrio_colonia, id_municipio, estado, cocodeId, id_problema];
 
-            db.query(sqlUpdate, paramsUpdate, (updateErr, updateResult) => {
+                db.query(sqlUpdate, paramsUpdate, (updateErr, updateResult) => {
                 if (updateErr) {
                     console.error(updateErr);
                     return res.status(500).send("Error al actualizar la incidencia");
@@ -249,9 +305,25 @@ router.put("/actualizar", (req, res) => {
                     VALUES (?, 'ACTUALIZACION', ?, ?)
                 `;
 
-                db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detallesString], (bitacoraErr) => {
-                    if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
-                    return res.status(200).send("Incidencia actualizada correctamente");
+                const finalizarActualizacion = () => {
+                    db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detallesString], (bitacoraErr) => {
+                        if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
+                        return res.status(200).send("Incidencia actualizada correctamente");
+                    });
+                };
+
+                if (!asignado_a) return finalizarActualizacion();
+
+                db.query(`
+                    INSERT INTO reporteria_flujo (modulo, id_registro, estado, asignado_a, asignado_por, fecha_asignacion)
+                    VALUES ('problemas', ?, 'Pendiente', ?, ?, NOW())
+                    ON DUPLICATE KEY UPDATE asignado_a=VALUES(asignado_a), asignado_por=VALUES(asignado_por), fecha_asignacion=NOW()
+                `, [id_problema, Number(asignado_a), id_usuario_operador || null], (asignacionErr) => {
+                    if (asignacionErr) {
+                        console.error("Error actualizando encargado del ticket:", asignacionErr);
+                        return res.status(500).send("La incidencia se actualizó, pero no se pudo cambiar el encargado");
+                    }
+                    return finalizarActualizacion();
                 });
             });
         });

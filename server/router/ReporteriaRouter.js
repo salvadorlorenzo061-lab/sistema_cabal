@@ -38,6 +38,8 @@ const prepararEsquema = () => {
         .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN asignado_por INT DEFAULT NULL'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN fecha_asignacion DATETIME DEFAULT NULL'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+        .then(() => query("UPDATE reporteria_flujo SET estado='Trabajado' WHERE estado='Finalizada'"))
+        .then(() => query("UPDATE reporteria_flujo SET estado='Pendiente' WHERE estado='Activo'"))
         .then(() => agregarColumnaSiFalta('ALTER TABLE comunidades ADD COLUMN id_usuario INT DEFAULT NULL'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE afiliados ADD COLUMN id_creador INT DEFAULT NULL AFTER id_usuario'))
         .then(() => query('UPDATE afiliados SET id_creador=id_usuario WHERE id_creador IS NULL'))
@@ -277,11 +279,12 @@ router.patch('/:modulo/:id/estado', async (req, res) => {
         const estado = String(req.body.estado || '').trim();
         const observacion = String(req.body.observacion || '').trim();
         if (!fuente || !idRegistro) return res.status(400).json({ message: 'Registro invalido.' });
-        if (!['Pendiente', 'Activo', 'Finalizada'].includes(estado)) {
+        if (!['Pendiente', 'Trabajado', 'No trabajado'].includes(estado)) {
             return res.status(400).json({ message: 'Estado de tarea invalido.' });
         }
-        if (estado === 'Finalizada' && !observacion) {
-            return res.status(400).json({ message: 'Debe indicar el motivo u observacion de finalizacion.' });
+        const esResultadoFinal = estado === 'Trabajado' || estado === 'No trabajado';
+        if (esResultadoFinal && !observacion) {
+            return res.status(400).json({ message: 'Debe indicar la observacion del resultado del ticket.' });
         }
 
         const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
@@ -305,12 +308,12 @@ router.patch('/:modulo/:id/estado', async (req, res) => {
             idRegistro,
             estado,
             observacion || null,
-            estado === 'Finalizada' ? req.solicitante.id_usuario : null,
-            estado === 'Finalizada' ? new Date() : null
+            esResultadoFinal ? req.solicitante.id_usuario : null,
+            esResultadoFinal ? new Date() : null
         ]);
         await registrarBitacora(
             req.solicitante,
-            estado === 'Finalizada' ? 'FINALIZACION_REPORTERIA' : 'ESTADO_REPORTERIA',
+            esResultadoFinal ? 'FINALIZACION_REPORTERIA' : 'ESTADO_REPORTERIA',
             `Cambio ${fuente.label} #${idRegistro} a ${estado}.${observacion ? ` Observacion: ${observacion}` : ''}`
         );
         return res.json({ message: `Tarea actualizada a ${estado}.` });
