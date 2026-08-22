@@ -29,6 +29,7 @@ const obtenerSesion = () => {
 function Reporteria() {
   const sesion = obtenerSesion();
   const API_URL = 'https://sistema-cabal.onrender.com/api/reporteria';
+  const esSupervisorGeneral = String(sesion?.rol || '').trim().toLowerCase() === 'supervisor general';
 
   const [registros, setRegistros] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -41,6 +42,7 @@ function Reporteria() {
   const [registroEditar, setRegistroEditar] = useState(null);
   const [titulo, setTitulo] = useState('');
   const [detalle, setDetalle] = useState('');
+  const [usuariosAsignables, setUsuariosAsignables] = useState([]);
 
   const claseEstado = (estado) => {
     if (estado === 'Finalizada') return 'bg-success';
@@ -83,6 +85,13 @@ function Reporteria() {
   useEffect(() => {
     cargarRegistros();
   }, [cargarRegistros]);
+
+  useEffect(() => {
+    if (!esSupervisorGeneral) return;
+    Axios.get(`${API_URL}/usuarios-asignables/lista`, { params: parametrosSesion() })
+      .then((res) => setUsuariosAsignables(Array.isArray(res.data) ? res.data : []))
+      .catch((error) => console.error('No se pudieron cargar usuarios asignables:', error));
+  }, [API_URL, esSupervisorGeneral, parametrosSesion]);
 
   useEffect(() => {
     setPagina(1);
@@ -146,6 +155,41 @@ function Reporteria() {
         .catch((error) => Swal.fire({
           icon: 'error',
           title: 'No se pudo cambiar el estado',
+          text: error.response?.data?.message || 'Error del servidor.'
+        }));
+    });
+  };
+
+  const asignarTrabajo = (registro) => {
+    const opciones = usuariosAsignables.reduce((resultado, usuario) => ({
+      ...resultado,
+      [usuario.id_usuario]: `${usuario.nombre} (${usuario.rol})`
+    }), {});
+
+    Swal.fire({
+      title: 'Asignar trabajo',
+      text: registro.titulo,
+      input: 'select',
+      inputOptions: opciones,
+      inputPlaceholder: 'Seleccione un usuario',
+      inputValue: registro.asignado_a || '',
+      showCancelButton: true,
+      confirmButtonText: 'Asignar',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (valor) => (!valor ? 'Seleccione un usuario.' : undefined)
+    }).then((resultado) => {
+      if (!resultado.isConfirmed) return;
+      Axios.patch(`${API_URL}/${registro.modulo}/${registro.id_registro}/asignar`, {
+        ...parametrosSesion(),
+        asignado_a: Number(resultado.value)
+      })
+        .then((res) => {
+          cargarRegistros();
+          Swal.fire({ icon: 'success', title: res.data?.message || 'Trabajo asignado', timer: 1800, showConfirmButton: false });
+        })
+        .catch((error) => Swal.fire({
+          icon: 'error',
+          title: 'No se pudo asignar',
           text: error.response?.data?.message || 'Error del servidor.'
         }));
     });
@@ -218,6 +262,7 @@ function Reporteria() {
         ['OBSERVACION DE CIERRE', registro.observacion || 'Sin observacion'],
         ['ROL PROPIETARIO', registro.rol_propietario || 'Sin asignar'],
         ['REGISTRADO POR', registro.propietario || 'Sin asignar'],
+        ['ASIGNADO A', registro.asignado_nombre || 'Sin asignar'],
         ['FECHA DE REGISTRO', registro.fecha_registro ? new Date(registro.fecha_registro).toLocaleString() : 'No disponible'],
         ['FECHA DE FINALIZACION', registro.fecha_finalizacion ? new Date(registro.fecha_finalizacion).toLocaleString() : 'Pendiente']
       ],
@@ -238,7 +283,10 @@ function Reporteria() {
       <div className="row mb-3 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-lg-3 mb-2 mb-lg-0">
           <h3 className="m-0 text-dark fw-bold">REPORTERIA</h3>
-          <small className="text-muted">Registros ingresados por: <strong>{sesion?.nombre || 'Usuario'}</strong></small>
+          <small className="text-muted">
+            {esSupervisorGeneral ? 'Vista general y asignacion de trabajo' : 'Registros propios y trabajo asignado'}:
+            {' '}<strong>{sesion?.nombre || 'Usuario'}</strong>
+          </small>
         </div>
         <div className="col-lg-4 mb-2 mb-lg-0">
           <div className="input-group">
@@ -309,6 +357,9 @@ function Reporteria() {
                 <td>
                   <strong className="d-block">{registro.rol_propietario || 'Sin rol'}</strong>
                   <small className="text-muted">{registro.propietario || 'Sin responsable'}</small>
+                  {registro.asignado_nombre && (
+                    <small className="d-block text-primary mt-1">Asignado a: {registro.asignado_nombre}</small>
+                  )}
                 </td>
                 <td>
                   <span className={`badge ${claseEstado(registro.estado_tarea)}`}>
@@ -329,6 +380,7 @@ function Reporteria() {
                       if (accion === 'pendiente') cambiarEstado(registro, 'Pendiente');
                       if (accion === 'activo') cambiarEstado(registro, 'Activo');
                       if (accion === 'finalizar') cambiarEstado(registro, 'Finalizada');
+                      if (accion === 'asignar') asignarTrabajo(registro);
                       if (accion === 'eliminar') eliminar(registro);
                       event.target.value = '';
                     }}
@@ -336,6 +388,7 @@ function Reporteria() {
                     <option value="" disabled>Acciones</option>
                     <option value="editar" disabled={!registro.permite_editar}>Actualizar</option>
                     <option value="pdf">Descargar PDF</option>
+                    {esSupervisorGeneral && <option value="asignar">Asignar trabajo</option>}
                     <option value="pendiente" disabled={registro.estado_tarea === 'Pendiente'}>Marcar pendiente</option>
                     <option value="activo" disabled={registro.estado_tarea === 'Activo'}>Marcar activo</option>
                     <option value="finalizar" disabled={registro.estado_tarea === 'Finalizada'}>Finalizar tarea</option>

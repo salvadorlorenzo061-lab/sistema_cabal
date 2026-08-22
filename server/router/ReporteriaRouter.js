@@ -24,6 +24,9 @@ const prepararEsquema = () => {
             id_registro INT NOT NULL,
             estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
             observacion TEXT DEFAULT NULL,
+            asignado_a INT DEFAULT NULL,
+            asignado_por INT DEFAULT NULL,
+            fecha_asignacion DATETIME DEFAULT NULL,
             finalizado_por INT DEFAULT NULL,
             fecha_finalizacion DATETIME DEFAULT NULL,
             fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -31,6 +34,9 @@ const prepararEsquema = () => {
         )
     `)
         .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN observacion TEXT DEFAULT NULL'))
+        .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN asignado_a INT DEFAULT NULL'))
+        .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN asignado_por INT DEFAULT NULL'))
+        .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN fecha_asignacion DATETIME DEFAULT NULL'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE comunidades ADD COLUMN id_usuario INT DEFAULT NULL'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE problemas ADD COLUMN id_usuario INT DEFAULT NULL'))
@@ -154,13 +160,25 @@ const obtenerSolicitante = async (idUsuario) => {
     return rows[0] || null;
 };
 
-const esGlobal = (rol) => ['administrador', 'admin', 'supervisor general'].includes(String(rol || '').trim().toLowerCase());
+const esSupervisorGeneral = (rol) => String(rol || '').trim().toLowerCase() === 'supervisor general';
+
+const obtenerFlujo = async (modulo, idRegistro) => {
+    const rows = await query(
+        'SELECT asignado_a FROM reporteria_flujo WHERE modulo=? AND id_registro=?',
+        [modulo, idRegistro]
+    );
+    return rows[0] || null;
+};
+
 const autorizarRegistro = async (solicitante, fuente, idRegistro) => {
     const rows = await query(fuente.propietario, [idRegistro]);
     if (!rows.length) return { existe: false, autorizado: false };
+    const flujo = await obtenerFlujo(Object.keys(FUENTES).find((key) => FUENTES[key] === fuente), idRegistro);
     return {
         existe: true,
-        autorizado: esGlobal(solicitante.rol) || Number(rows[0].id_propietario) === Number(solicitante.id_usuario)
+        autorizado: esSupervisorGeneral(solicitante.rol)
+            || Number(rows[0].id_propietario) === Number(solicitante.id_usuario)
+            || Number(flujo?.asignado_a) === Number(solicitante.id_usuario)
     };
 };
 
@@ -174,7 +192,7 @@ const registrarBitacora = (solicitante, tipo, detalle) => query(`
 router.use(async (req, res, next) => {
     try {
         await prepararEsquema();
-        const idUsuario = Number(req.query.id_usuario || req.body?.id_usuario_operador || 0);
+        const idUsuario = Number(req.query.id_usuario || req.body?.id_usuario || req.body?.id_usuario_operador || 0);
         if (!idUsuario) return res.status(401).json({ message: 'Sesion no identificada.' });
 
         const solicitante = await obtenerSolicitante(idUsuario);
@@ -200,9 +218,16 @@ router.get('/', async (req, res) => {
         const resultados = (await Promise.all(Object.values(FUENTES).map((fuente) => query(fuente.listar)))).flat();
         const flujos = await query('SELECT * FROM reporteria_flujo');
         const flujoMap = new Map(flujos.map((item) => [`${item.modulo}:${item.id_registro}`, item]));
+        const usuariosAsignados = await query('SELECT id_usuario, nombre FROM usuarios');
+        const usuariosMap = new Map(usuariosAsignados.map((item) => [Number(item.id_usuario), item.nombre]));
 
         const filtrados = resultados
-            .filter((item) => esGlobal(solicitante.rol) || Number(item.id_propietario) === Number(solicitante.id_usuario))
+            .filter((item) => {
+                const flujo = flujoMap.get(`${item.modulo}:${item.id_registro}`);
+                return esSupervisorGeneral(solicitante.rol)
+                    || Number(item.id_propietario) === Number(solicitante.id_usuario)
+                    || Number(flujo?.asignado_a) === Number(solicitante.id_usuario);
+            })
             .filter((item) => !modulo || item.modulo === modulo)
             .filter((item) => !busqueda || [item.titulo, item.detalle, item.propietario, item.modulo]
                 .some((valor) => String(valor || '').toLowerCase().includes(busqueda)))
@@ -215,6 +240,9 @@ router.get('/', async (req, res) => {
                     permite_eliminar: Boolean(FUENTES[item.modulo].eliminar),
                     estado_tarea: flujo?.estado || 'Pendiente',
                     observacion: flujo?.observacion || '',
+                    asignado_a: flujo?.asignado_a || null,
+                    asignado_nombre: flujo?.asignado_a ? usuariosMap.get(Number(flujo.asignado_a)) || 'Usuario no disponible' : '',
+                    fecha_asignacion: flujo?.fecha_asignacion || null,
                     fecha_finalizacion: flujo?.fecha_finalizacion || null
                 };
             })
@@ -234,6 +262,64 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/usuarios-asignables/lista', async (req, res) => {
+    try {
+        if (!esSupervisorGeneral(req.solicitante.rol)) {
+            return res.status(403).json({ message: 'Solo Supervisor General puede asignar trabajo.' });
+        }
+
+        const usuarios = await query(`
+            SELECT id_usuario, nombre, rol
+            FROM usuarios
+            WHERE LOWER(estado)='activo'
+            ORDER BY nombre ASC
+        `);
+        return res.json(usuarios);
+    } catch (err) {
+        console.error('Error listando usuarios asignables:', err);
+        return res.status(500).json({ message: 'No se pudo cargar la lista de usuarios.' });
+    }
+});
+
+router.patch('/:modulo/:id/asignar', async (req, res) => {
+    try {
+        if (!esSupervisorGeneral(req.solicitante.rol)) {
+            return res.status(403).json({ message: 'Solo Supervisor General puede asignar trabajo.' });
+        }
+
+        const fuente = FUENTES[req.params.modulo];
+        const idRegistro = Number(req.params.id);
+        const asignadoA = Number(req.body.asignado_a || 0);
+        if (!fuente || !idRegistro || !asignadoA) {
+            return res.status(400).json({ message: 'Registro o usuario de asignacion invalido.' });
+        }
+
+        const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
+        if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
+
+        const usuarios = await query(
+            "SELECT id_usuario, nombre FROM usuarios WHERE id_usuario=? AND LOWER(estado)='activo'",
+            [asignadoA]
+        );
+        if (!usuarios.length) return res.status(404).json({ message: 'Usuario asignado no encontrado o inactivo.' });
+
+        await query(`
+            INSERT INTO reporteria_flujo (modulo, id_registro, estado, asignado_a, asignado_por, fecha_asignacion)
+            VALUES (?, ?, 'Pendiente', ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE asignado_a=VALUES(asignado_a), asignado_por=VALUES(asignado_por), fecha_asignacion=NOW()
+        `, [req.params.modulo, idRegistro, asignadoA, req.solicitante.id_usuario]);
+        await registrarBitacora(
+            req.solicitante,
+            'ASIGNACION_REPORTERIA',
+            `Asigno ${fuente.label} #${idRegistro} a ${usuarios[0].nombre}.`
+        );
+        return res.json({ message: `Trabajo asignado a ${usuarios[0].nombre}.` });
+    } catch (err) {
+        console.error('Error asignando trabajo:', err);
+        return res.status(500).json({ message: 'No se pudo asignar el trabajo.' });
+    }
+});
+
 router.put('/:modulo/:id', async (req, res) => {
     try {
         const fuente = FUENTES[req.params.modulo];
@@ -245,7 +331,7 @@ router.put('/:modulo/:id', async (req, res) => {
 
         const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
         if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
-        if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro rol.' });
+        if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro usuario y no le ha sido asignado.' });
 
         await query(fuente.actualizar, [titulo, detalle || null, idRegistro]);
         await registrarBitacora(req.solicitante, 'ACTUALIZACION_REPORTERIA', `Actualizo ${fuente.label} #${idRegistro} desde Reporteria.`);
@@ -272,7 +358,7 @@ router.patch('/:modulo/:id/estado', async (req, res) => {
 
         const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
         if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
-        if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro rol.' });
+        if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro usuario y no le ha sido asignado.' });
 
         await query(`
             INSERT INTO reporteria_flujo (modulo, id_registro, estado, observacion, finalizado_por, fecha_finalizacion)
@@ -311,7 +397,7 @@ router.delete('/:modulo/:id', async (req, res) => {
 
         const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
         if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
-        if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro rol.' });
+        if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro usuario y no le ha sido asignado.' });
 
         await query(fuente.eliminar, [idRegistro]);
         await query('DELETE FROM reporteria_flujo WHERE modulo=? AND id_registro=?', [req.params.modulo, idRegistro]);
