@@ -9,6 +9,17 @@ db.query('ALTER TABLE afiliados ADD COLUMN numero_celular VARCHAR(25) DEFAULT NU
     }
 });
 
+db.query('ALTER TABLE afiliados ADD COLUMN id_creador INT DEFAULT NULL AFTER id_usuario', (err) => {
+    if (err && err.code !== 'ER_DUP_FIELDNAME') {
+        console.error('Error agregando creador a afiliados:', err);
+        return;
+    }
+
+    db.query('UPDATE afiliados SET id_creador=id_usuario WHERE id_creador IS NULL', (backfillErr) => {
+        if (backfillErr) console.error('Error completando creadores de afiliados:', backfillErr);
+    });
+});
+
 /**
  * 🛡️ FUNCIÓN DE AUDITORÍA INTERNA (Bitácora)
  * Inserta de manera automática las trazas de movimientos en la base de datos.
@@ -110,13 +121,13 @@ router.post("/crear", (req, res) => {
 
         // Inserción del nuevo cocode
         const sqlInsert = `
-            INSERT INTO afiliados (dpi, lugar_votacion, nombre_completo, telefono, numero_celular, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO afiliados (dpi, lugar_votacion, nombre_completo, telefono, numero_celular, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, id_creador, foto)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         db.query(
             sqlInsert,
-            [dpi, lugar_votacion, nombre_completo, telefono, numero_celular || null, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, foto || null],
+            [dpi, lugar_votacion, nombre_completo, telefono, numero_celular || null, direccion, barrio_colonia, id_municipio, fecha_afiliacion, id_usuario, operador_id || id_usuario || null, foto || null],
             (insertErr) => {
                 if (insertErr) {
                     console.error("Error MySQL en /crear:", insertErr);

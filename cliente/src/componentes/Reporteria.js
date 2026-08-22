@@ -11,11 +11,7 @@ const MODULOS = [
   { value: 'cocode', label: 'COCODE' },
   { value: 'problemas', label: 'Problemas' },
   { value: 'lideres', label: 'Lideres' },
-  { value: 'propersonales', label: 'Problemas personales' },
-  { value: 'comunidades', label: 'Comunidades' },
-  { value: 'usuarios', label: 'Usuarios' },
-  { value: 'roles', label: 'Roles' },
-  { value: 'bitacora', label: 'Bitacora' }
+  { value: 'propersonales', label: 'Problemas personales' }
 ];
 
 const obtenerSesion = () => {
@@ -39,9 +35,6 @@ function Reporteria() {
   const [paginasTotales, setPaginasTotales] = useState(1);
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [cargando, setCargando] = useState(false);
-  const [registroEditar, setRegistroEditar] = useState(null);
-  const [titulo, setTitulo] = useState('');
-  const [detalle, setDetalle] = useState('');
   const [usuariosAsignables, setUsuariosAsignables] = useState([]);
 
   const claseEstado = (estado) => {
@@ -96,35 +89,6 @@ function Reporteria() {
   useEffect(() => {
     setPagina(1);
   }, [busqueda, estadoFiltro, modulo]);
-
-  const abrirEdicion = (registro) => {
-    setRegistroEditar(registro);
-    setTitulo(registro.titulo || '');
-    setDetalle(registro.detalle || '');
-  };
-
-  const actualizar = () => {
-    if (!registroEditar || !titulo.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Titulo requerido' });
-      return;
-    }
-
-    Axios.put(`${API_URL}/${registroEditar.modulo}/${registroEditar.id_registro}`, {
-      ...parametrosSesion(),
-      titulo: titulo.trim(),
-      detalle: detalle.trim()
-    })
-      .then(() => {
-        setRegistroEditar(null);
-        cargarRegistros();
-        Swal.fire({ icon: 'success', title: 'Registro actualizado', timer: 1800, showConfirmButton: false });
-      })
-      .catch((error) => Swal.fire({
-        icon: 'error',
-        title: 'No se pudo actualizar',
-        text: error.response?.data?.message || 'Error del servidor.'
-      }));
-  };
 
   const cambiarEstado = (registro, estado) => {
     const requiereObservacion = estado === 'Finalizada';
@@ -190,32 +154,6 @@ function Reporteria() {
         .catch((error) => Swal.fire({
           icon: 'error',
           title: 'No se pudo asignar',
-          text: error.response?.data?.message || 'Error del servidor.'
-        }));
-    });
-  };
-
-  const eliminar = (registro) => {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Eliminar registro',
-      html: `Esta accion eliminara <strong>${registro.titulo}</strong> del modulo original.`,
-      showCancelButton: true,
-      confirmButtonText: 'Si, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#dc3545'
-    }).then((resultado) => {
-      if (!resultado.isConfirmed) return;
-      Axios.delete(`${API_URL}/${registro.modulo}/${registro.id_registro}`, {
-        params: parametrosSesion()
-      })
-        .then(() => {
-          cargarRegistros();
-          Swal.fire({ icon: 'success', title: 'Registro eliminado', timer: 1800, showConfirmButton: false });
-        })
-        .catch((error) => Swal.fire({
-          icon: 'error',
-          title: 'No se pudo eliminar',
           text: error.response?.data?.message || 'Error del servidor.'
         }));
     });
@@ -336,7 +274,7 @@ function Reporteria() {
               <th>MODULO</th>
               <th>REGISTRO</th>
               <th>DETALLE</th>
-              <th>ROL / RESPONSABLE</th>
+              <th>CREADOR / ENCARGADO</th>
               <th>ESTADO</th>
               <th>FECHA</th>
               <th className="text-center">OPERACION</th>
@@ -355,11 +293,11 @@ function Reporteria() {
                 </td>
                 <td style={{ minWidth: '220px', whiteSpace: 'normal' }}>{registro.detalle || 'Sin detalle'}</td>
                 <td>
-                  <strong className="d-block">{registro.rol_propietario || 'Sin rol'}</strong>
-                  <small className="text-muted">{registro.propietario || 'Sin responsable'}</small>
+                  <strong className="d-block">Creado por: {registro.propietario || 'Sin responsable'}</strong>
                   {registro.asignado_nombre && (
-                    <small className="d-block text-primary mt-1">Asignado a: {registro.asignado_nombre}</small>
+                    <small className="d-block text-primary mt-1">Encargado: {registro.asignado_nombre}</small>
                   )}
+                  {!registro.asignado_nombre && <small className="d-block text-muted mt-1">Sin asignar</small>}
                 </td>
                 <td>
                   <span className={`badge ${claseEstado(registro.estado_tarea)}`}>
@@ -375,24 +313,20 @@ function Reporteria() {
                     defaultValue=""
                     onChange={(event) => {
                       const accion = event.target.value;
-                      if (accion === 'editar') abrirEdicion(registro);
                       if (accion === 'pdf') descargarPDF(registro);
                       if (accion === 'pendiente') cambiarEstado(registro, 'Pendiente');
                       if (accion === 'activo') cambiarEstado(registro, 'Activo');
                       if (accion === 'finalizar') cambiarEstado(registro, 'Finalizada');
                       if (accion === 'asignar') asignarTrabajo(registro);
-                      if (accion === 'eliminar') eliminar(registro);
                       event.target.value = '';
                     }}
                   >
                     <option value="" disabled>Acciones</option>
-                    <option value="editar" disabled={!registro.permite_editar}>Actualizar</option>
                     <option value="pdf">Descargar PDF</option>
                     {esSupervisorGeneral && <option value="asignar">Asignar trabajo</option>}
-                    <option value="pendiente" disabled={registro.estado_tarea === 'Pendiente'}>Marcar pendiente</option>
-                    <option value="activo" disabled={registro.estado_tarea === 'Activo'}>Marcar activo</option>
-                    <option value="finalizar" disabled={registro.estado_tarea === 'Finalizada'}>Finalizar tarea</option>
-                    <option value="eliminar" disabled={!registro.permite_eliminar}>Eliminar</option>
+                    <option value="pendiente" disabled={!registro.puede_gestionar || registro.estado_tarea === 'Pendiente'}>Marcar pendiente</option>
+                    <option value="activo" disabled={!registro.puede_gestionar || registro.estado_tarea === 'Activo'}>Iniciar seguimiento</option>
+                    <option value="finalizar" disabled={!registro.puede_gestionar || registro.estado_tarea === 'Finalizada'}>Finalizar ticket</option>
                   </select>
                 </td>
               </tr>
@@ -401,33 +335,6 @@ function Reporteria() {
         </table>
       </div>
 
-      {registroEditar && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content shadow-lg">
-              <div className="modal-header bg-primary text-white">
-                <h5 className="modal-title fw-bold">Actualizar {registroEditar.modulo_label} #{registroEditar.id_registro}</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setRegistroEditar(null)}></button>
-              </div>
-              <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label fw-bold">Titulo / nombre:</label>
-                  <input className="form-control" value={titulo} onChange={(event) => setTitulo(event.target.value)} />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label fw-bold">Detalle principal:</label>
-                  <textarea className="form-control" rows="4" value={detalle} onChange={(event) => setDetalle(event.target.value)}></textarea>
-                  <small className="text-muted">El detalle corresponde al campo principal del modulo de origen.</small>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setRegistroEditar(null)}>Cancelar</button>
-                <button className="btn btn-primary fw-bold" onClick={actualizar}>Guardar cambios</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
