@@ -35,6 +35,7 @@ function Problemas() {
   const [id_municipio, setId_municipio] = useState(String(MUNICIPIO_JALAPA_ID));
   const [estado, setEstado] = useState("Pendiente"); 
   const [id_afiliado, setId_afiliado] = useState("");
+  const [cocodeBusqueda, setCocodeBusqueda] = useState("");
   const [asignado_a, setAsignado_a] = useState("");
   const [foto, setFoto] = useState("");
   const [mostrarCargaFoto, setMostrarCargaFoto] = useState(false);
@@ -157,6 +158,10 @@ function Problemas() {
   //   CONTROLADORES DE BASE DE DATOS (CRUD + BITÁCORA)
   // =========================================================================
   const add = () => {
+    if (!id_afiliado) {
+      Swal.fire({ icon: 'warning', title: 'COCODE requerido', text: 'Teclee el DPI o nombre y seleccione un COCODE de la lista.' });
+      return;
+    }
     if (!asignado_a) {
       Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Seleccione quién dará solución al ticket.' });
       return;
@@ -197,6 +202,10 @@ function Problemas() {
   };
 
   const actualizar = () => {
+    if (!id_afiliado) {
+      Swal.fire({ icon: 'warning', title: 'COCODE requerido', text: 'Teclee el DPI o nombre y seleccione un COCODE de la lista.' });
+      return;
+    }
     if (!asignado_a) {
       Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Seleccione quién dará solución al ticket.' });
       return;
@@ -270,6 +279,7 @@ function Problemas() {
     setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setEstado("Pendiente"); 
     setId_afiliado("");
+    setCocodeBusqueda("");
     setAsignado_a("");
     setFoto("");
     setMostrarCargaFoto(false);
@@ -320,13 +330,13 @@ function Problemas() {
   }, [API_BASE_URL]);
 
   const getCocodes = useCallback(() => {
-    Axios.get(`${API_BASE_URL}/afiliados`, { params: { pagina: 1, limite: 500, id_usuario: idUsuarioLogueado, rol: rolUsuarioLogueado } })
+    Axios.get(`${API_URL}/cocodes`, { params: { id_usuario: idUsuarioLogueado, rol: rolUsuarioLogueado } })
     .then((response) => {
       const payload = response.data;
       setCocodesList(Array.isArray(payload) ? payload : (payload.data || []));
     })
     .catch((error) => { console.error("Error al obtener cocodes", error); });
-  }, [API_BASE_URL, idUsuarioLogueado, rolUsuarioLogueado]);
+  }, [API_URL, idUsuarioLogueado, rolUsuarioLogueado]);
 
   const getUsuariosAsignables = useCallback(() => {
     Axios.get(`${API_URL}/usuarios-asignables`, { params: { id_usuario: idUsuarioLogueado } })
@@ -349,6 +359,11 @@ function Problemas() {
     setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setEstado(val.estado || "Pendiente");
     setId_afiliado(val.id_afiliado || "");
+    setCocodeBusqueda(
+      val.id_afiliado
+        ? `${val.dpi_cocode || ''} - ${val.nombre_cocode || `COCODE #${val.id_afiliado}`}`
+        : ""
+    );
     setAsignado_a(val.asignado_a ? String(val.asignado_a) : "");
     setFoto(val.foto || "");
     setMostrarCargaFoto(Boolean(val.foto));
@@ -373,6 +388,15 @@ function Problemas() {
 
     return normalizadas;
   })();
+
+  const seleccionarCocode = (valor) => {
+    setCocodeBusqueda(valor);
+    const normalizado = valor.trim().toLowerCase();
+    const seleccionado = cocodesList.find((cocode) =>
+      `${cocode.dpi} - ${cocode.nombre_completo}`.toLowerCase() === normalizado
+    );
+    setId_afiliado(seleccionado ? String(seleccionado.id_afiliado) : "");
+  };
 
   const problemasFiltrados = problemasList.filter((prob) => 
     prob.titulo?.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -515,14 +539,20 @@ function Problemas() {
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Cocode Afectado:</label>
-                    <select value={id_afiliado} onChange={(e) => setId_afiliado(e.target.value)} className="form-select">
-                      <option value="" disabled>-- Seleccione Cocode (DPI - Nombre) --</option>
+                    <input
+                      type="text"
+                      value={cocodeBusqueda}
+                      onChange={(e) => seleccionarCocode(e.target.value)}
+                      className="form-control"
+                      list="cocodes-afectados-crear"
+                      placeholder="Escriba DPI o nombre del COCODE"
+                    />
+                    <datalist id="cocodes-afectados-crear">
                       {cocodesList.map((coc) => (
-                        <option key={coc.id_afiliado} value={coc.id_afiliado}>
-                          {coc.dpi} - {coc.nombre_completo}
-                        </option>
+                        <option key={coc.id_afiliado} value={`${coc.dpi} - ${coc.nombre_completo}`} />
                       ))}
-                    </select>
+                    </datalist>
+                    <small className="text-muted">Teclee el DPI o nombre y seleccione una coincidencia.</small>
                   </div>
                 </div>
 
@@ -658,14 +688,20 @@ function Problemas() {
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Cocode Afectado:</label>
-                    <select value={id_afiliado} onChange={(e) => setId_afiliado(e.target.value)} className="form-select">
-                      <option value="" disabled>-- Seleccione Cocode (DPI - Nombre) --</option>
+                    <input
+                      type="text"
+                      value={cocodeBusqueda}
+                      onChange={(e) => seleccionarCocode(e.target.value)}
+                      className="form-control"
+                      list="cocodes-afectados-editar"
+                      placeholder="Escriba DPI o nombre del COCODE"
+                    />
+                    <datalist id="cocodes-afectados-editar">
                       {cocodesList.map((coc) => (
-                        <option key={coc.id_afiliado} value={coc.id_afiliado}>
-                          {coc.dpi} - {coc.nombre_completo}
-                        </option>
+                        <option key={coc.id_afiliado} value={`${coc.dpi} - ${coc.nombre_completo}`} />
                       ))}
-                    </select>
+                    </datalist>
+                    <small className="text-muted">Teclee el DPI o nombre y seleccione una coincidencia.</small>
                   </div>
                 </div>
 

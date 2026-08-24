@@ -6,12 +6,20 @@ import autoTable from 'jspdf-autotable';
 import PaginationBar from './PaginationBar';
 import { agregarMembrete, escribirLineaMembrete } from '../utils/pdfMembrete';
 
-const MODULOS = [
+const MODULOS_OPERATIVOS = [
   { value: '', label: 'Todos los modulos' },
   { value: 'cocode', label: 'COCODE' },
   { value: 'problemas', label: 'Problemas' },
   { value: 'lideres', label: 'Lideres' },
   { value: 'propersonales', label: 'Problemas personales' }
+];
+
+const MODULOS_ADMIN = [
+  ...MODULOS_OPERATIVOS,
+  { value: 'comunidades', label: 'Aldeas / Comunidades' },
+  { value: 'usuarios', label: 'Usuarios' },
+  { value: 'roles', label: 'Roles' },
+  { value: 'bitacora', label: 'Bitacora' }
 ];
 
 const obtenerSesion = () => {
@@ -26,6 +34,9 @@ function Reporteria() {
   const sesion = obtenerSesion();
   const API_URL = 'https://sistema-cabal.onrender.com/api/reporteria';
   const esSupervisorGeneral = String(sesion?.rol || '').trim().toLowerCase() === 'supervisor general';
+  const esAdministrador = String(sesion?.rol || '').trim().toLowerCase() === 'admin';
+  const tieneAccesoGlobal = esAdministrador || esSupervisorGeneral;
+  const modulosDisponibles = esAdministrador ? MODULOS_ADMIN : MODULOS_OPERATIVOS;
 
   const [registros, setRegistros] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -39,6 +50,9 @@ function Reporteria() {
   const [ticketGestion, setTicketGestion] = useState(null);
   const [estadoGestion, setEstadoGestion] = useState('Pendiente');
   const [observacionGestion, setObservacionGestion] = useState('');
+  const [ticketEditar, setTicketEditar] = useState(null);
+  const [tituloEditar, setTituloEditar] = useState('');
+  const [detalleEditar, setDetalleEditar] = useState('');
 
   const claseEstado = (estado) => {
     if (estado === 'Trabajado') return 'bg-success';
@@ -84,11 +98,11 @@ function Reporteria() {
   }, [cargarRegistros]);
 
   useEffect(() => {
-    if (!esSupervisorGeneral) return;
+    if (!tieneAccesoGlobal) return;
     Axios.get(`${API_URL}/usuarios-asignables/lista`, { params: parametrosSesion() })
       .then((res) => setUsuariosAsignables(Array.isArray(res.data) ? res.data : []))
       .catch((error) => console.error('No se pudieron cargar usuarios asignables:', error));
-  }, [API_URL, esSupervisorGeneral, parametrosSesion]);
+  }, [API_URL, tieneAccesoGlobal, parametrosSesion]);
 
   useEffect(() => {
     setPagina(1);
@@ -162,6 +176,59 @@ function Reporteria() {
     });
   };
 
+  const abrirEdicion = (registro) => {
+    setTicketEditar(registro);
+    setTituloEditar(registro.titulo || '');
+    setDetalleEditar(registro.detalle || '');
+  };
+
+  const guardarEdicion = () => {
+    if (!ticketEditar || !tituloEditar.trim()) {
+      Swal.fire({ icon: 'warning', title: 'Título requerido' });
+      return;
+    }
+
+    Axios.put(`${API_URL}/${ticketEditar.modulo}/${ticketEditar.id_registro}`, {
+      ...parametrosSesion(),
+      titulo: tituloEditar.trim(),
+      detalle: detalleEditar.trim()
+    })
+      .then(() => {
+        setTicketEditar(null);
+        cargarRegistros();
+        Swal.fire({ icon: 'success', title: 'Registro actualizado', timer: 1800, showConfirmButton: false });
+      })
+      .catch((error) => Swal.fire({
+        icon: 'error',
+        title: 'No se pudo actualizar',
+        text: error.response?.data?.message || 'Error del servidor.'
+      }));
+  };
+
+  const eliminarTicket = (registro) => {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Eliminar registro',
+      html: `Se eliminará <strong>${registro.titulo}</strong> del módulo ${registro.modulo_label}.`,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc3545'
+    }).then((resultado) => {
+      if (!resultado.isConfirmed) return;
+      Axios.delete(`${API_URL}/${registro.modulo}/${registro.id_registro}`, { params: parametrosSesion() })
+        .then(() => {
+          cargarRegistros();
+          Swal.fire({ icon: 'success', title: 'Registro eliminado', timer: 1800, showConfirmButton: false });
+        })
+        .catch((error) => Swal.fire({
+          icon: 'error',
+          title: 'No se pudo eliminar',
+          text: error.response?.data?.message || 'Error del servidor.'
+        }));
+    });
+  };
+
   const descargarPDF = (registro) => {
     const doc = new jsPDF();
     agregarMembrete(doc);
@@ -225,7 +292,7 @@ function Reporteria() {
         <div className="col-lg-3 mb-2 mb-lg-0">
           <h3 className="m-0 text-dark fw-bold">REPORTERIA</h3>
           <small className="text-muted">
-            {esSupervisorGeneral ? 'Vista general y asignacion de trabajo' : 'Tickets a cargo de'}:
+            {esAdministrador ? 'Vista global de toda la información' : esSupervisorGeneral ? 'Vista global de tickets' : 'Tickets a cargo de'}:
             {' '}<strong>{sesion?.nombre || 'Usuario'}</strong>
           </small>
         </div>
@@ -242,7 +309,7 @@ function Reporteria() {
         </div>
         <div className="col-lg-2 mb-2 mb-lg-0">
           <select className="form-select" value={modulo} onChange={(event) => setModulo(event.target.value)}>
-            {MODULOS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            {modulosDisponibles.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
         </div>
         <div className="col-lg-3">
@@ -319,13 +386,17 @@ function Reporteria() {
                       if (accion === 'pdf') descargarPDF(registro);
                       if (accion === 'gestionar') abrirGestionTicket(registro);
                       if (accion === 'asignar') asignarTrabajo(registro);
+                      if (accion === 'editar') abrirEdicion(registro);
+                      if (accion === 'eliminar') eliminarTicket(registro);
                       event.target.value = '';
                     }}
                   >
                     <option value="" disabled>Acciones</option>
                     <option value="pdf">Descargar PDF</option>
-                    {esSupervisorGeneral && <option value="asignar">Asignar trabajo</option>}
+                    {registro.puede_asignar && <option value="asignar">Asignar trabajo</option>}
                     <option value="gestionar" disabled={!registro.puede_gestionar}>Gestionar / finalizar ticket</option>
+                    {esAdministrador && <option value="editar">Editar registro</option>}
+                    {esAdministrador && <option value="eliminar">Eliminar registro</option>}
                   </select>
                 </td>
               </tr>
@@ -370,6 +441,33 @@ function Reporteria() {
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setTicketGestion(null)}>Cancelar</button>
                 <button className="btn btn-primary fw-bold" onClick={guardarGestionTicket}>Guardar resultado</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {ticketEditar && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content shadow-lg">
+              <div className="modal-header bg-warning text-dark">
+                <h5 className="modal-title fw-bold">Editar {ticketEditar.modulo_label} #{ticketEditar.id_registro}</h5>
+                <button type="button" className="btn-close" onClick={() => setTicketEditar(null)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Título / nombre:</label>
+                  <input className="form-control" value={tituloEditar} onChange={(event) => setTituloEditar(event.target.value)} />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Detalle principal:</label>
+                  <textarea className="form-control" rows="5" value={detalleEditar} onChange={(event) => setDetalleEditar(event.target.value)}></textarea>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setTicketEditar(null)}>Cancelar</button>
+                <button className="btn btn-warning fw-bold" onClick={guardarEdicion}>Guardar cambios</button>
               </div>
             </div>
           </div>

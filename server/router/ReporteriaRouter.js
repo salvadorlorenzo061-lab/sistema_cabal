@@ -66,7 +66,9 @@ const FUENTES = {
                 u.nombre AS propietario, u.rol AS rol_propietario
             FROM afiliados a LEFT JOIN usuarios u ON u.id_usuario = COALESCE(a.id_creador, a.id_usuario)
         `,
-        propietario: 'SELECT COALESCE(a.id_creador, a.id_usuario) AS id_propietario FROM afiliados a WHERE a.id_afiliado=?'
+        propietario: 'SELECT COALESCE(a.id_creador, a.id_usuario) AS id_propietario FROM afiliados a WHERE a.id_afiliado=?',
+        actualizar: 'UPDATE afiliados SET nombre_completo=?, direccion=? WHERE id_afiliado=?',
+        eliminar: 'DELETE FROM afiliados WHERE id_afiliado=?'
     },
     problemas: {
         label: 'Problemas',
@@ -78,7 +80,9 @@ const FUENTES = {
             FROM problemas p
             LEFT JOIN usuarios u ON u.id_usuario = p.id_usuario
         `,
-        propietario: 'SELECT p.id_usuario AS id_propietario FROM problemas p WHERE p.id_problema=?'
+        propietario: 'SELECT p.id_usuario AS id_propietario FROM problemas p WHERE p.id_problema=?',
+        actualizar: 'UPDATE problemas SET titulo=?, descripcion=? WHERE id_problema=?',
+        eliminar: 'DELETE FROM problemas WHERE id_problema=?'
     },
     lideres: {
         label: 'Lideres',
@@ -89,7 +93,9 @@ const FUENTES = {
                 u.nombre AS propietario, u.rol AS rol_propietario
             FROM lideres l LEFT JOIN usuarios u ON u.id_usuario = l.id_usuario
         `,
-        propietario: 'SELECT l.id_usuario AS id_propietario FROM lideres l WHERE l.id_lider=?'
+        propietario: 'SELECT l.id_usuario AS id_propietario FROM lideres l WHERE l.id_lider=?',
+        actualizar: 'UPDATE lideres SET nombre=?, observaciones=? WHERE id_lider=?',
+        eliminar: 'DELETE FROM lideres WHERE id_lider=?'
     },
     propersonales: {
         label: 'Problemas personales',
@@ -100,7 +106,65 @@ const FUENTES = {
                 u.nombre AS propietario, u.rol AS rol_propietario
             FROM problemas_personales p LEFT JOIN usuarios u ON u.id_usuario = p.id_usuario
         `,
-        propietario: 'SELECT p.id_usuario AS id_propietario FROM problemas_personales p WHERE p.id_propersonal=?'
+        propietario: 'SELECT p.id_usuario AS id_propietario FROM problemas_personales p WHERE p.id_propersonal=?',
+        actualizar: 'UPDATE problemas_personales SET nombre=?, observaciones=? WHERE id_propersonal=?',
+        eliminar: 'DELETE FROM problemas_personales WHERE id_propersonal=?'
+    },
+    comunidades: {
+        label: 'Aldeas / Comunidades',
+        soloAdmin: true,
+        listar: `
+            SELECT 'comunidades' AS modulo, c.id_comunidad AS id_registro,
+                c.nombre_comunidad AS titulo, c.tipo AS detalle, c.estado AS estado_origen,
+                NULL AS fecha_registro, c.id_usuario AS id_propietario,
+                u.nombre AS propietario, u.rol AS rol_propietario
+            FROM comunidades c LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+        `,
+        propietario: 'SELECT c.id_usuario AS id_propietario FROM comunidades c WHERE c.id_comunidad=?',
+        actualizar: 'UPDATE comunidades SET nombre_comunidad=?, tipo=? WHERE id_comunidad=?',
+        eliminar: 'DELETE FROM comunidades WHERE id_comunidad=?'
+    },
+    usuarios: {
+        label: 'Usuarios',
+        soloAdmin: true,
+        listar: `
+            SELECT 'usuarios' AS modulo, u.id_usuario AS id_registro, u.nombre AS titulo,
+                u.correo AS detalle, u.estado AS estado_origen, u.fecha_creacion AS fecha_registro,
+                u.id_usuario AS id_propietario, u.nombre AS propietario, u.rol AS rol_propietario
+            FROM usuarios u
+        `,
+        propietario: 'SELECT id_usuario AS id_propietario FROM usuarios WHERE id_usuario=?',
+        actualizar: 'UPDATE usuarios SET nombre=?, correo=? WHERE id_usuario=?',
+        eliminar: 'DELETE FROM usuarios WHERE id_usuario=?'
+    },
+    roles: {
+        label: 'Roles',
+        soloAdmin: true,
+        listar: `
+            SELECT 'roles' AS modulo, r.id_rol AS id_registro, r.nombre_rol AS titulo,
+                r.descripcion AS detalle, r.estado AS estado_origen, NULL AS fecha_registro,
+                NULL AS id_propietario, 'Sistema' AS propietario, r.nombre_rol AS rol_propietario
+            FROM roles r
+        `,
+        propietario: 'SELECT NULL AS id_propietario FROM roles WHERE id_rol=?',
+        actualizar: 'UPDATE roles SET nombre_rol=?, descripcion=? WHERE id_rol=?',
+        eliminar: 'DELETE FROM roles WHERE id_rol=?'
+    },
+    bitacora: {
+        label: 'Bitácora',
+        soloAdmin: true,
+        listar: `
+            SELECT 'bitacora' AS modulo, b.id_bitacora AS id_registro,
+                b.tipo_movimiento AS titulo, b.detalles AS detalle,
+                'Registrado' AS estado_origen, b.fecha_movimiento AS fecha_registro,
+                b.id_usuario AS id_propietario,
+                COALESCE(u.nombre, b.ejecutado_por, 'Sistema') AS propietario,
+                u.rol AS rol_propietario
+            FROM bitacora b LEFT JOIN usuarios u ON u.id_usuario = b.id_usuario
+        `,
+        propietario: 'SELECT b.id_usuario AS id_propietario FROM bitacora b WHERE b.id_bitacora=?',
+        actualizar: 'UPDATE bitacora SET tipo_movimiento=?, detalles=? WHERE id_bitacora=?',
+        eliminar: 'DELETE FROM bitacora WHERE id_bitacora=?'
     }
 };
 
@@ -110,6 +174,8 @@ const obtenerSolicitante = async (idUsuario) => {
 };
 
 const esSupervisorGeneral = (rol) => String(rol || '').trim().toLowerCase() === 'supervisor general';
+const esAdministrador = (rol) => String(rol || '').trim().toLowerCase() === 'admin';
+const tieneVistaGlobal = (rol) => esAdministrador(rol) || esSupervisorGeneral(rol);
 
 const obtenerFlujo = async (modulo, idRegistro) => {
     const rows = await query(
@@ -126,7 +192,7 @@ const autorizarRegistro = async (solicitante, fuente, idRegistro) => {
     return {
         existe: true,
         idPropietario: Number(rows[0].id_propietario) || null,
-        autorizado: esSupervisorGeneral(solicitante.rol)
+        autorizado: tieneVistaGlobal(solicitante.rol)
             || Number(rows[0].id_propietario) === Number(solicitante.id_usuario)
             || Number(flujo?.asignado_a) === Number(solicitante.id_usuario)
     };
@@ -175,7 +241,8 @@ router.get('/', async (req, res) => {
         const filtrados = resultados
             .filter((item) => {
                 const flujo = flujoMap.get(`${item.modulo}:${item.id_registro}`);
-                if (esSupervisorGeneral(solicitante.rol)) return true;
+                if (FUENTES[item.modulo].soloAdmin) return esAdministrador(solicitante.rol);
+                if (tieneVistaGlobal(solicitante.rol)) return true;
                 if (flujo?.asignado_a) {
                     return Number(flujo.asignado_a) === Number(solicitante.id_usuario);
                 }
@@ -195,10 +262,15 @@ router.get('/', async (req, res) => {
                     asignado_nombre: flujo?.asignado_a ? usuariosMap.get(Number(flujo.asignado_a)) || 'Usuario no disponible' : '',
                     fecha_asignacion: flujo?.fecha_asignacion || null,
                     fecha_finalizacion: flujo?.fecha_finalizacion || null,
-                    puede_gestionar: esSupervisorGeneral(solicitante.rol)
+                    es_ticket: !FUENTES[item.modulo].soloAdmin,
+                    puede_gestionar: !FUENTES[item.modulo].soloAdmin && (
+                        tieneVistaGlobal(solicitante.rol)
                         || Number(flujo?.asignado_a) === Number(solicitante.id_usuario)
-                        || (!flujo?.asignado_a && Number(item.id_propietario) === Number(solicitante.id_usuario)),
-                    puede_asignar: esSupervisorGeneral(solicitante.rol)
+                        || (!flujo?.asignado_a && Number(item.id_propietario) === Number(solicitante.id_usuario))
+                    ),
+                    puede_asignar: !FUENTES[item.modulo].soloAdmin && tieneVistaGlobal(solicitante.rol),
+                    puede_editar: esAdministrador(solicitante.rol),
+                    puede_eliminar: esAdministrador(solicitante.rol)
                 };
             })
             .filter((item) => !estadoTarea || item.estado_tarea === estadoTarea)
@@ -219,8 +291,8 @@ router.get('/', async (req, res) => {
 
 router.get('/usuarios-asignables/lista', async (req, res) => {
     try {
-        if (!esSupervisorGeneral(req.solicitante.rol)) {
-            return res.status(403).json({ message: 'Solo Supervisor General puede asignar trabajo.' });
+        if (!tieneVistaGlobal(req.solicitante.rol)) {
+            return res.status(403).json({ message: 'Solo ADMIN o Supervisor General puede asignar trabajo.' });
         }
 
         const usuarios = await query(`
@@ -238,8 +310,8 @@ router.get('/usuarios-asignables/lista', async (req, res) => {
 
 router.patch('/:modulo/:id/asignar', async (req, res) => {
     try {
-        if (!esSupervisorGeneral(req.solicitante.rol)) {
-            return res.status(403).json({ message: 'Solo Supervisor General puede asignar trabajo.' });
+        if (!tieneVistaGlobal(req.solicitante.rol)) {
+            return res.status(403).json({ message: 'Solo ADMIN o Supervisor General puede asignar trabajo.' });
         }
 
         const fuente = FUENTES[req.params.modulo];
@@ -275,6 +347,68 @@ router.patch('/:modulo/:id/asignar', async (req, res) => {
     }
 });
 
+router.put('/:modulo/:id', async (req, res) => {
+    try {
+        if (!esAdministrador(req.solicitante.rol)) {
+            return res.status(403).json({ message: 'Solo el rol ADMIN puede editar cualquier registro.' });
+        }
+
+        const fuente = FUENTES[req.params.modulo];
+        const idRegistro = Number(req.params.id);
+        const titulo = String(req.body.titulo || '').trim();
+        const detalle = String(req.body.detalle || '').trim();
+        if (!fuente || !fuente.actualizar || !idRegistro || !titulo) {
+            return res.status(400).json({ message: 'Datos de actualización inválidos.' });
+        }
+
+        const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
+        if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
+
+        await query(fuente.actualizar, [titulo, detalle || null, idRegistro]);
+        await registrarBitacora(
+            req.solicitante,
+            'ACTUALIZACION_REPORTERIA',
+            `ADMIN actualizó ${fuente.label} #${idRegistro} desde Reportería.`
+        );
+        return res.json({ message: 'Registro actualizado correctamente.' });
+    } catch (err) {
+        console.error('Error actualizando ticket desde Reportería:', err);
+        return res.status(500).json({ message: 'No se pudo actualizar el ticket.' });
+    }
+});
+
+router.delete('/:modulo/:id', async (req, res) => {
+    try {
+        if (!esAdministrador(req.solicitante.rol)) {
+            return res.status(403).json({ message: 'Solo el rol ADMIN puede eliminar cualquier registro.' });
+        }
+
+        const fuente = FUENTES[req.params.modulo];
+        const idRegistro = Number(req.params.id);
+        if (!fuente || !fuente.eliminar || !idRegistro) {
+            return res.status(400).json({ message: 'Registro inválido.' });
+        }
+
+        const acceso = await autorizarRegistro(req.solicitante, fuente, idRegistro);
+        if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
+
+        await query(fuente.eliminar, [idRegistro]);
+        await query('DELETE FROM reporteria_flujo WHERE modulo=? AND id_registro=?', [req.params.modulo, idRegistro]);
+        await registrarBitacora(
+            req.solicitante,
+            'ELIMINACION_REPORTERIA',
+            `ADMIN eliminó ${fuente.label} #${idRegistro} desde Reportería.`
+        );
+        return res.json({ message: 'Registro eliminado correctamente.' });
+    } catch (err) {
+        console.error('Error eliminando ticket desde Reportería:', err);
+        const message = err.code === 'ER_ROW_IS_REFERENCED_2'
+            ? 'El registro tiene información relacionada y no puede eliminarse.'
+            : 'No se pudo eliminar el registro.';
+        return res.status(500).json({ message });
+    }
+});
+
 router.patch('/:modulo/:id/estado', async (req, res) => {
     try {
         const fuente = FUENTES[req.params.modulo];
@@ -294,7 +428,7 @@ router.patch('/:modulo/:id/estado', async (req, res) => {
         if (!acceso.existe) return res.status(404).json({ message: 'Registro no encontrado.' });
         if (!acceso.autorizado) return res.status(403).json({ message: 'El registro pertenece a otro usuario y no le ha sido asignado.' });
         const flujo = await obtenerFlujo(req.params.modulo, idRegistro);
-        const puedeGestionar = esSupervisorGeneral(req.solicitante.rol)
+        const puedeGestionar = tieneVistaGlobal(req.solicitante.rol)
             || Number(flujo?.asignado_a) === Number(req.solicitante.id_usuario)
             || (!flujo?.asignado_a && Number(acceso.idPropietario) === Number(req.solicitante.id_usuario));
         if (!puedeGestionar) {
