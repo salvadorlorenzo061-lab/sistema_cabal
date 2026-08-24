@@ -74,8 +74,17 @@ const crearRouterCrudPersona = ({
             }
 
             db.query(
-                `SELECT * FROM ${tableName} ${whereSQL} ORDER BY ${idColumn} DESC LIMIT ? OFFSET ?`,
-                [...params, limite, offset],
+                `SELECT ${tableName}.*,
+                    rf.asignado_a,
+                    COALESCE(encargado.nombre, creador.nombre) AS encargado_registro
+                 FROM ${tableName}
+                 LEFT JOIN reporteria_flujo rf
+                    ON rf.modulo = ? AND rf.id_registro = ${tableName}.${idColumn}
+                 LEFT JOIN usuarios encargado ON encargado.id_usuario = rf.asignado_a
+                 LEFT JOIN usuarios creador ON creador.id_usuario = ${tableName}.id_usuario
+                 ${puedeVerTodos ? '' : `WHERE ${tableName}.id_usuario = ?`}
+                 ORDER BY ${tableName}.${idColumn} DESC LIMIT ? OFFSET ?`,
+                [auditPrefix === 'problema_personal' ? 'propersonales' : auditPrefix === 'lider' ? 'lideres' : auditPrefix, ...params, limite, offset],
                 (err, result) => {
                     if (err) {
                         console.error(err);

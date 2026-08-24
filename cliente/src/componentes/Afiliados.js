@@ -554,7 +554,7 @@ function Afiliados() {
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
+                    <label className="form-label fw-bold">Encargado del registro:</label>
                     <input
                       type="text"
                       value={encargadoBusqueda}
@@ -651,7 +651,7 @@ function Afiliados() {
                     </select>
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
+                    <label className="form-label fw-bold">Encargado del registro:</label>
                     <input
                       type="text"
                       value={encargadoBusqueda}

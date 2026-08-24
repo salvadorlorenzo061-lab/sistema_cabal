@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import Axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import PaginationBar from './PaginationBar';
 import { normalizarLocalidadesJalapa } from '../data/localidadesJalapa';
+import { agregarMembrete, escribirLineaMembrete } from '../utils/pdfMembrete';
 
 function PersonaCrudBase({
   apiPath,
@@ -47,6 +50,11 @@ function PersonaCrudBase({
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [showRegModal, setShowRegModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [usuariosAsignables, setUsuariosAsignables] = useState([]);
+
+  const rolNormalizado = String(usuarioLogueado.rol).trim().toLowerCase();
+  const puedeAsignar = rolNormalizado === 'admin' || rolNormalizado === 'administrador' || rolNormalizado === 'supervisor general';
+  const reporteriaModulo = apiPath === 'propersonales' ? 'propersonales' : apiPath;
 
   const localidadesOptions = normalizarLocalidadesJalapa();
 
@@ -94,6 +102,15 @@ function PersonaCrudBase({
   useEffect(() => {
     getRegistros();
   }, [getRegistros]);
+
+  useEffect(() => {
+    if (!puedeAsignar) return;
+    Axios.get('https://sistema-cabal.onrender.com/api/reporteria/usuarios-asignables/lista', {
+      params: { id_usuario: usuarioLogueado.id_usuario }
+    })
+      .then((res) => setUsuariosAsignables(Array.isArray(res.data) ? res.data : []))
+      .catch((error) => console.error('No se pudieron cargar los usuarios asignables:', error));
+  }, [puedeAsignar, usuarioLogueado.id_usuario]);
 
   const buildPayload = () => ({
     dpi: dpi.trim(),
@@ -191,6 +208,78 @@ function PersonaCrudBase({
     setShowEditModal(true);
   };
 
+  const descargarPDF = (val) => {
+    const doc = new jsPDF();
+    agregarMembrete(doc);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    escribirLineaMembrete(doc, 'SISTEMA DE OBRAS MUNICIPALES JALAPA', 20);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    escribirLineaMembrete(doc, `FICHA DE ${entityLabel.toUpperCase()}`, 27);
+    doc.line(14, 38, 196, 38);
+
+    autoTable(doc, {
+      startY: 45,
+      head: [['PARAMETRO', 'INFORMACION REGISTRADA']],
+      body: [
+        ['ID DEL REGISTRO', `#${val[idField]}`],
+        ['DPI', val.dpi || 'No registrado'],
+        ['NOMBRE', val.nombre || 'No registrado'],
+        ['CELULAR', val.telefono || 'No registrado'],
+        ['DIRECCION', val.direccion || 'No registrada'],
+        ['OBSERVACIONES', val.observaciones || 'Sin observaciones'],
+        ['ESTADO', val.estado || 'No definido'],
+        ['ENCARGADO DEL REGISTRO', val.encargado_registro || 'Sin asignar'],
+        ['FECHA DE REGISTRO', val.fecha_creacion ? new Date(val.fecha_creacion).toLocaleString() : 'No disponible']
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [41, 128, 185], fontSize: 9.5 },
+      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 62 },
+        1: { cellWidth: 119 }
+      }
+    });
+
+    doc.save(`${entityLabel.replace(/\s+/g, '_')}_${val[idField]}.pdf`);
+  };
+
+  const asignarRegistro = (val) => {
+    const opciones = usuariosAsignables.reduce((resultado, usuario) => ({
+      ...resultado,
+      [usuario.id_usuario]: `${usuario.nombre} (${usuario.rol})`
+    }), {});
+
+    Swal.fire({
+      title: 'Asignar encargado del registro',
+      text: val.nombre,
+      input: 'select',
+      inputOptions: opciones,
+      inputPlaceholder: 'Seleccione un usuario',
+      inputValue: val.asignado_a || '',
+      showCancelButton: true,
+      confirmButtonText: 'Asignar',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (valor) => (!valor ? 'Seleccione un usuario.' : undefined)
+    }).then((resultado) => {
+      if (!resultado.isConfirmed) return;
+      Axios.patch(`https://sistema-cabal.onrender.com/api/reporteria/${reporteriaModulo}/${val[idField]}/asignar`, {
+        id_usuario: usuarioLogueado.id_usuario,
+        asignado_a: Number(resultado.value)
+      })
+        .then(() => {
+          getRegistros();
+          Swal.fire({ icon: 'success', title: 'Encargado asignado', timer: 1800, showConfirmButton: false });
+        })
+        .catch((error) => Swal.fire({
+          icon: 'error',
+          title: 'No se pudo asignar',
+          text: error.response?.data?.message || 'Error del servidor.'
+        }));
+    });
+  };
+
   const registrosFiltrados = registros.filter((item) =>
     item.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
     item.dpi?.includes(busqueda) ||
@@ -243,6 +332,7 @@ function PersonaCrudBase({
               <th>NOMBRE</th>
               <th>CELULAR</th>
               <th>DIRECCION</th>
+              <th>ENCARGADO DEL REGISTRO</th>
               <th>ESTADO</th>
               <th className="text-center">OPERACION</th>
             </tr>
@@ -265,6 +355,7 @@ function PersonaCrudBase({
                   </td>
                   <td>{val.telefono || 'N/A'}</td>
                   <td>{val.direccion || 'N/A'}</td>
+                  <td><strong>{val.encargado_registro || 'Sin asignar'}</strong></td>
                   <td>
                     <span className={`badge bg-${String(val.estado).toLowerCase() === 'activo' ? 'success' : 'secondary'}`}>
                       {(val.estado || 'Desactivado').toUpperCase()}
@@ -279,19 +370,23 @@ function PersonaCrudBase({
                         if (!accion) return;
                         if (accion === 'actualizar') abrirEditarModal(val);
                         if (accion === 'eliminar') eliminar(val);
+                        if (accion === 'pdf') descargarPDF(val);
+                        if (accion === 'asignar') asignarRegistro(val);
                         e.target.value = '';
                       }}
                     >
                       <option value="" disabled>Acciones</option>
                       <option value="actualizar">Actualizar</option>
                       <option value="eliminar">Eliminar</option>
+                      <option value="pdf">PDF</option>
+                      {puedeAsignar && <option value="asignar">Asignar encargado</option>}
                     </select>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center text-muted py-3">No se encontraron {entityLabelPlural}.</td>
+                <td colSpan="8" className="text-center text-muted py-3">No se encontraron {entityLabelPlural}.</td>
               </tr>
             )}
           </tbody>
