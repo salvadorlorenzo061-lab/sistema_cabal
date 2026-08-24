@@ -271,7 +271,7 @@ function Reporteria() {
       styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 62 },
-        1: { cellWidth: 120 }
+        1: { cellWidth: 119 }
       }
     });
 

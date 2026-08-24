@@ -141,7 +141,7 @@ function Problemas() {
       styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 65, textColor: [50, 50, 50] },
-        1: { cellWidth: 117 }
+        1: { cellWidth: 116 }
       }
     });
 

@@ -112,7 +112,7 @@ function Bitacora() {
         3: { halign: 'center', cellWidth: 40 },
         4: { fontStyle: 'bold', halign: 'center', cellWidth: 35 },
         5: { halign: 'center', cellWidth: 35 },
-        6: { cellWidth: 75 }
+        6: { cellWidth: 73 }
       }
     });
 
@@ -161,7 +161,7 @@ function Bitacora() {
       styles: { fontSize: 9.5, cellPadding: 4 },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 60, textColor: [70, 70, 70] },
-        1: { cellWidth: 122 }
+        1: { cellWidth: 121 }
       }
     });
 

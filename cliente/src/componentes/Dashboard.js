@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -11,10 +11,10 @@ function Dashboard() {
       return null;
     }
   })();
-  const parametrosSesion = {
+  const parametrosSesion = useMemo(() => ({
     id_usuario: Number(sesionActiva?.id_usuario) || 0,
     rol: sesionActiva?.rol || ''
-  };
+  }), [sesionActiva?.id_usuario, sesionActiva?.rol]);
 
   const [cocodes, setCocodes] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
@@ -53,7 +53,7 @@ function Dashboard() {
         console.error('Error cargando dashboard:', err);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [parametrosSesion]);
 
   useEffect(() => {
     const rafId = window.requestAnimationFrame(() => setChartsReady(true));
@@ -282,7 +282,7 @@ function Dashboard() {
                   Preparando gráfico...
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
+                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 500, height: 280 }}>
                   <BarChart data={datosMunicipios} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
@@ -333,7 +333,7 @@ function Dashboard() {
                   Preparando gráfico...
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
+                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 500, height: 280 }}>
                   <LineChart data={datosLineaTiempo} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="Fecha" tick={{ fontSize: 11 }} />
@@ -357,7 +357,7 @@ function Dashboard() {
                   Preparando gráfico...
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
+                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 500, height: 280 }}>
                   <BarChart data={datosProblemasEstado} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="Estado" tick={{ fontSize: 11 }} />

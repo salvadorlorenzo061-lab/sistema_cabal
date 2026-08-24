@@ -117,7 +117,7 @@ function Usuarios() {
       styles: { fontSize: 9, cellPadding: 3.5 },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 65, textColor: [50, 50, 50] },
-        1: { cellWidth: 117 }
+        1: { cellWidth: 116 }
       }
     });
 
@@ -149,7 +149,7 @@ function Usuarios() {
         0: { halign: 'center', cellWidth: 35 },
         1: { fontStyle: 'bold', cellWidth: 45 },
         2: { halign: 'center', cellWidth: 30 },
-        3: { cellWidth: 74 }
+        3: { cellWidth: 71 }
       }
     });
 

@@ -78,6 +78,7 @@ function App() {
   const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
   const [errorLogin, setErrorLogin] = useState('');
+  const [iniciandoSesion, setIniciandoSesion] = useState(false);
 
   // Referencia para el control del temporizador de inactividad
   const timerRef = useRef(null);
@@ -168,7 +169,10 @@ function App() {
   // 🔐 CONTROLADOR DE INICIO DE SESIÓN
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (iniciandoSesion) return;
+
     setErrorLogin('');
+    setIniciandoSesion(true);
 
     try {
       const response = await fetch(`${USUARIOS_URL}/login`, {
@@ -205,6 +209,8 @@ function App() {
     } catch (err) {
       console.error("Error en conexión Login:", err);
       setErrorLogin('No hay conexión con el servidor central en la nube.');
+    } finally {
+      setIniciandoSesion(false);
     }
   };
 
@@ -268,7 +274,9 @@ function App() {
                 required 
               />
             </div>
-            <button type="submit" className="btn w-100 fw-bold text-white shadow-sm p-2" style={{ backgroundColor: '#1e3a8a' }}>INGRESAR AL SISTEMA</button>
+            <button type="submit" disabled={iniciandoSesion} className="btn w-100 fw-bold text-white shadow-sm p-2" style={{ backgroundColor: '#1e3a8a' }}>
+              {iniciandoSesion ? 'VALIDANDO CREDENCIALES...' : 'INGRESAR AL SISTEMA'}
+            </button>
           </form>
         </div>
       </div>
