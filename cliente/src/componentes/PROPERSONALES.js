@@ -11,6 +11,7 @@ function PROPERSONALES() {
       createLabel="AGREGAR INCIDENTE PERSONAL"
       accentClass="danger"
       useLocalidadesEnDireccion={true}
+      showAssignmentSelect={true}
     />
   );
 }

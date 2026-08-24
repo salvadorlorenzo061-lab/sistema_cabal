@@ -16,7 +16,8 @@ function PersonaCrudBase({
   heading,
   createLabel,
   accentClass = 'primary',
-  useLocalidadesEnDireccion = false
+  useLocalidadesEnDireccion = false,
+  showAssignmentSelect = false
 }) {
   const sesionActiva = (() => {
     try {
@@ -42,6 +43,7 @@ function PersonaCrudBase({
   const [observaciones, setObservaciones] = useState('');
   const [estado, setEstado] = useState('Activo');
   const [foto, setFoto] = useState('');
+  const [asignadoA, setAsignadoA] = useState('');
 
   const [registros, setRegistros] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -70,6 +72,7 @@ function PersonaCrudBase({
     setObservaciones('');
     setEstado('Activo');
     setFoto('');
+    setAsignadoA('');
   };
 
   const handleFotoChange = (e) => {
@@ -120,12 +123,18 @@ function PersonaCrudBase({
     observaciones: observaciones.trim(),
     estado,
     foto: foto || null,
+    asignado_a: asignadoA ? Number(asignadoA) : null,
     operador_id: usuarioLogueado.id_usuario,
     operador_nombre: usuarioLogueado.nombre,
     operador_rol: usuarioLogueado.rol
   });
 
   const add = () => {
+    if (showAssignmentSelect && puedeAsignar && !asignadoA) {
+      Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Seleccione quién será el encargado del registro.' });
+      return;
+    }
+
     Axios.post(`${API_URL}/crear`, buildPayload())
       .then(() => {
         getRegistros();
@@ -205,6 +214,7 @@ function PersonaCrudBase({
     setObservaciones(val.observaciones || '');
     setEstado(val.estado || 'Activo');
     setFoto(val.foto || '');
+    setAsignadoA(val.asignado_a ? String(val.asignado_a) : '');
     setShowEditModal(true);
   };
 
@@ -450,6 +460,20 @@ function PersonaCrudBase({
                   <label className="form-label fw-bold">Observaciones</label>
                   <textarea className="form-control" rows="3" value={observaciones} onChange={(e) => setObservaciones(e.target.value)}></textarea>
                 </div>
+                {showAssignmentSelect && puedeAsignar && (
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Asignar encargado del registro</label>
+                    <select className="form-select" value={asignadoA} onChange={(e) => setAsignadoA(e.target.value)}>
+                      <option value="">-- Seleccione encargado --</option>
+                      {usuariosAsignables.map((usuario) => (
+                        <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                          {usuario.nombre} - {usuario.rol}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="text-muted">Solo el encargado seleccionado podrá gestionar y finalizar el ticket desde Reportería.</small>
+                  </div>
+                )}
                 <div className="row align-items-center">
                   <div className="col-md-8 mb-3">
                     <label className="form-label fw-bold">Fotografia (Opcional)</label>
@@ -526,6 +550,20 @@ function PersonaCrudBase({
                   <label className="form-label fw-bold">Observaciones</label>
                   <textarea className="form-control" rows="3" value={observaciones} onChange={(e) => setObservaciones(e.target.value)}></textarea>
                 </div>
+                {showAssignmentSelect && puedeAsignar && (
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">Asignar encargado del registro</label>
+                    <select className="form-select" value={asignadoA} onChange={(e) => setAsignadoA(e.target.value)}>
+                      <option value="">-- Seleccione encargado --</option>
+                      {usuariosAsignables.map((usuario) => (
+                        <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                          {usuario.nombre} - {usuario.rol}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="text-muted">El cambio se reflejará también en Reportería.</small>
+                  </div>
+                )}
                 <div className="row align-items-center">
                   <div className="col-md-8 mb-3">
                     <label className="form-label fw-bold">Fotografia (Opcional)</label>

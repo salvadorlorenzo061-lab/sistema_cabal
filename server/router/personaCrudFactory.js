@@ -22,6 +22,9 @@ const crearRouterCrudPersona = ({
     auditPrefix
 }) => {
     const router = express.Router();
+    const moduloReporteria = auditPrefix === 'problema_personal'
+        ? 'propersonales'
+        : auditPrefix === 'lider' ? 'lideres' : auditPrefix;
 
     const crearTablaSiNoExiste = () => {
         const sql = `
@@ -84,7 +87,7 @@ const crearRouterCrudPersona = ({
                  LEFT JOIN usuarios creador ON creador.id_usuario = ${tableName}.id_usuario
                  ${puedeVerTodos ? '' : `WHERE ${tableName}.id_usuario = ?`}
                  ORDER BY ${tableName}.${idColumn} DESC LIMIT ? OFFSET ?`,
-                [auditPrefix === 'problema_personal' ? 'propersonales' : auditPrefix === 'lider' ? 'lideres' : auditPrefix, ...params, limite, offset],
+                [moduloReporteria, ...params, limite, offset],
                 (err, result) => {
                     if (err) {
                         console.error(err);
@@ -113,7 +116,8 @@ const crearRouterCrudPersona = ({
             estado,
             operador_id,
             operador_nombre,
-            operador_rol
+            operador_rol,
+            asignado_a
         } = req.body;
 
         if (!dpi?.trim() || !nombre?.trim()) {
@@ -147,16 +151,31 @@ const crearRouterCrudPersona = ({
                     observaciones?.trim() || null,
                     estado || 'Activo'
                 ],
-                (insertErr) => {
+                (insertErr, insertResult) => {
                     if (insertErr) {
                         console.error(insertErr);
                         return res.status(500).json({ message: `No se pudo crear ${entityLabel}.` });
                     }
 
-                    const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] registro ${auditPrefix} '${nombre.trim().toUpperCase()}' con DPI ${dpi.trim()}.`;
-                    registrarBitacora(operador_id, nombre.trim(), `ALTA_${auditPrefix.toUpperCase()}`, operador_nombre, detalles);
+                    const finalizarCreacion = () => {
+                        const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] registro ${auditPrefix} '${nombre.trim().toUpperCase()}' con DPI ${dpi.trim()}.`;
+                        registrarBitacora(operador_id, nombre.trim(), `ALTA_${auditPrefix.toUpperCase()}`, operador_nombre, detalles);
+                        return res.status(200).send(`${entityLabel} registrado con exito`);
+                    };
 
-                    return res.status(200).send(`${entityLabel} registrado con exito`);
+                    if (!asignado_a) return finalizarCreacion();
+
+                    db.query(`
+                        INSERT INTO reporteria_flujo (modulo, id_registro, estado, asignado_a, asignado_por, fecha_asignacion)
+                        VALUES (?, ?, 'Pendiente', ?, ?, NOW())
+                        ON DUPLICATE KEY UPDATE asignado_a=VALUES(asignado_a), asignado_por=VALUES(asignado_por), fecha_asignacion=NOW()
+                    `, [moduloReporteria, insertResult.insertId, Number(asignado_a), operador_id || null], (asignacionErr) => {
+                        if (asignacionErr) {
+                            console.error(`Error asignando ${entityLabel}:`, asignacionErr);
+                            return res.status(500).json({ message: `El ${entityLabel} se creó, pero no se pudo asignar al encargado.` });
+                        }
+                        return finalizarCreacion();
+                    });
                 }
             );
         });
@@ -174,7 +193,8 @@ const crearRouterCrudPersona = ({
             estado,
             operador_id,
             operador_nombre,
-            operador_rol
+            operador_rol,
+            asignado_a
         } = req.body;
 
         if (!idRegistro || !dpi?.trim() || !nombre?.trim()) {
@@ -227,10 +247,25 @@ const crearRouterCrudPersona = ({
                                     return res.status(500).json({ message: `No se pudo actualizar ${entityLabel}.` });
                                 }
 
-                                const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] actualizo ${auditPrefix} ID #${idRegistro}. Antes: ${anterior.nombre} / ${anterior.dpi}. Ahora: ${nombre.trim()} / ${dpi.trim()}.`;
-                                registrarBitacora(operador_id, nombre.trim(), `CAMBIO_${auditPrefix.toUpperCase()}`, operador_nombre, detalles);
+                                const finalizarActualizacion = () => {
+                                    const detalles = `El ${operador_rol || 'Operador'} [${operador_nombre || 'Desconocido'}] actualizo ${auditPrefix} ID #${idRegistro}. Antes: ${anterior.nombre} / ${anterior.dpi}. Ahora: ${nombre.trim()} / ${dpi.trim()}.`;
+                                    registrarBitacora(operador_id, nombre.trim(), `CAMBIO_${auditPrefix.toUpperCase()}`, operador_nombre, detalles);
+                                    return res.status(200).send(`${entityLabel} actualizado con exito`);
+                                };
 
-                                return res.status(200).send(`${entityLabel} actualizado con exito`);
+                                if (!asignado_a) return finalizarActualizacion();
+
+                                db.query(`
+                                    INSERT INTO reporteria_flujo (modulo, id_registro, estado, asignado_a, asignado_por, fecha_asignacion)
+                                    VALUES (?, ?, 'Pendiente', ?, ?, NOW())
+                                    ON DUPLICATE KEY UPDATE asignado_a=VALUES(asignado_a), asignado_por=VALUES(asignado_por), fecha_asignacion=NOW()
+                                `, [moduloReporteria, idRegistro, Number(asignado_a), operador_id || null], (asignacionErr) => {
+                                    if (asignacionErr) {
+                                        console.error(`Error actualizando encargado de ${entityLabel}:`, asignacionErr);
+                                        return res.status(500).json({ message: `El ${entityLabel} se actualizó, pero no se pudo cambiar el encargado.` });
+                                    }
+                                    return finalizarActualizacion();
+                                });
                             }
                         );
                     }
