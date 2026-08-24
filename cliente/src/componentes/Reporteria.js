@@ -14,14 +14,6 @@ const MODULOS_OPERATIVOS = [
   { value: 'propersonales', label: 'Incidentes personales' }
 ];
 
-const MODULOS_ADMIN = [
-  ...MODULOS_OPERATIVOS,
-  { value: 'comunidades', label: 'Aldeas / Comunidades' },
-  { value: 'usuarios', label: 'Usuarios' },
-  { value: 'roles', label: 'Roles' },
-  { value: 'bitacora', label: 'Bitacora' }
-];
-
 const obtenerSesion = () => {
   try {
     return JSON.parse(localStorage.getItem('sesion_cabal') || 'null');
@@ -36,7 +28,7 @@ function Reporteria() {
   const esSupervisorGeneral = String(sesion?.rol || '').trim().toLowerCase() === 'supervisor general';
   const esAdministrador = String(sesion?.rol || '').trim().toLowerCase() === 'admin';
   const tieneAccesoGlobal = esAdministrador || esSupervisorGeneral;
-  const modulosDisponibles = esAdministrador ? MODULOS_ADMIN : MODULOS_OPERATIVOS;
+  const modulosDisponibles = MODULOS_OPERATIVOS;
 
   const [registros, setRegistros] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -292,7 +284,7 @@ function Reporteria() {
         <div className="col-lg-3 mb-2 mb-lg-0">
           <h3 className="m-0 text-dark fw-bold">REPORTERIA</h3>
           <small className="text-muted">
-            {esAdministrador ? 'Vista global de toda la información' : esSupervisorGeneral ? 'Vista global de tickets' : 'Tickets a cargo de'}:
+            {tieneAccesoGlobal ? 'Vista global de todos los tickets' : 'Tickets a cargo de'}:
             {' '}<strong>{sesion?.nombre || 'Usuario'}</strong>
           </small>
         </div>

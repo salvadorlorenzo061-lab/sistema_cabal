@@ -40,7 +40,6 @@ const prepararEsquema = () => {
         .then(() => agregarColumnaSiFalta('ALTER TABLE reporteria_flujo ADD COLUMN fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
         .then(() => query("UPDATE reporteria_flujo SET estado='Trabajado' WHERE estado='Finalizada'"))
         .then(() => query("UPDATE reporteria_flujo SET estado='Pendiente' WHERE estado='Activo'"))
-        .then(() => agregarColumnaSiFalta('ALTER TABLE comunidades ADD COLUMN id_usuario INT DEFAULT NULL'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE afiliados ADD COLUMN id_creador INT DEFAULT NULL AFTER id_usuario'))
         .then(() => query('UPDATE afiliados SET id_creador=id_usuario WHERE id_creador IS NULL'))
         .then(() => agregarColumnaSiFalta('ALTER TABLE problemas ADD COLUMN id_usuario INT DEFAULT NULL'))
@@ -109,62 +108,6 @@ const FUENTES = {
         propietario: 'SELECT p.id_usuario AS id_propietario FROM problemas_personales p WHERE p.id_propersonal=?',
         actualizar: 'UPDATE problemas_personales SET nombre=?, observaciones=? WHERE id_propersonal=?',
         eliminar: 'DELETE FROM problemas_personales WHERE id_propersonal=?'
-    },
-    comunidades: {
-        label: 'Aldeas / Comunidades',
-        soloAdmin: true,
-        listar: `
-            SELECT 'comunidades' AS modulo, c.id_comunidad AS id_registro,
-                c.nombre_comunidad AS titulo, c.tipo AS detalle, c.estado AS estado_origen,
-                NULL AS fecha_registro, c.id_usuario AS id_propietario,
-                u.nombre AS propietario, u.rol AS rol_propietario
-            FROM comunidades c LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
-        `,
-        propietario: 'SELECT c.id_usuario AS id_propietario FROM comunidades c WHERE c.id_comunidad=?',
-        actualizar: 'UPDATE comunidades SET nombre_comunidad=?, tipo=? WHERE id_comunidad=?',
-        eliminar: 'DELETE FROM comunidades WHERE id_comunidad=?'
-    },
-    usuarios: {
-        label: 'Usuarios',
-        soloAdmin: true,
-        listar: `
-            SELECT 'usuarios' AS modulo, u.id_usuario AS id_registro, u.nombre AS titulo,
-                u.correo AS detalle, u.estado AS estado_origen, u.fecha_creacion AS fecha_registro,
-                u.id_usuario AS id_propietario, u.nombre AS propietario, u.rol AS rol_propietario
-            FROM usuarios u
-        `,
-        propietario: 'SELECT id_usuario AS id_propietario FROM usuarios WHERE id_usuario=?',
-        actualizar: 'UPDATE usuarios SET nombre=?, correo=? WHERE id_usuario=?',
-        eliminar: 'DELETE FROM usuarios WHERE id_usuario=?'
-    },
-    roles: {
-        label: 'Roles',
-        soloAdmin: true,
-        listar: `
-            SELECT 'roles' AS modulo, r.id_rol AS id_registro, r.nombre_rol AS titulo,
-                r.descripcion AS detalle, r.estado AS estado_origen, NULL AS fecha_registro,
-                NULL AS id_propietario, 'Sistema' AS propietario, r.nombre_rol AS rol_propietario
-            FROM roles r
-        `,
-        propietario: 'SELECT NULL AS id_propietario FROM roles WHERE id_rol=?',
-        actualizar: 'UPDATE roles SET nombre_rol=?, descripcion=? WHERE id_rol=?',
-        eliminar: 'DELETE FROM roles WHERE id_rol=?'
-    },
-    bitacora: {
-        label: 'Bitácora',
-        soloAdmin: true,
-        listar: `
-            SELECT 'bitacora' AS modulo, b.id_bitacora AS id_registro,
-                b.tipo_movimiento AS titulo, b.detalles AS detalle,
-                'Registrado' AS estado_origen, b.fecha_movimiento AS fecha_registro,
-                b.id_usuario AS id_propietario,
-                COALESCE(u.nombre, b.ejecutado_por, 'Sistema') AS propietario,
-                u.rol AS rol_propietario
-            FROM bitacora b LEFT JOIN usuarios u ON u.id_usuario = b.id_usuario
-        `,
-        propietario: 'SELECT b.id_usuario AS id_propietario FROM bitacora b WHERE b.id_bitacora=?',
-        actualizar: 'UPDATE bitacora SET tipo_movimiento=?, detalles=? WHERE id_bitacora=?',
-        eliminar: 'DELETE FROM bitacora WHERE id_bitacora=?'
     }
 };
 
@@ -241,7 +184,6 @@ router.get('/', async (req, res) => {
         const filtrados = resultados
             .filter((item) => {
                 const flujo = flujoMap.get(`${item.modulo}:${item.id_registro}`);
-                if (FUENTES[item.modulo].soloAdmin) return esAdministrador(solicitante.rol);
                 if (tieneVistaGlobal(solicitante.rol)) return true;
                 if (flujo?.asignado_a) {
                     return Number(flujo.asignado_a) === Number(solicitante.id_usuario);
@@ -262,13 +204,13 @@ router.get('/', async (req, res) => {
                     asignado_nombre: flujo?.asignado_a ? usuariosMap.get(Number(flujo.asignado_a)) || 'Usuario no disponible' : '',
                     fecha_asignacion: flujo?.fecha_asignacion || null,
                     fecha_finalizacion: flujo?.fecha_finalizacion || null,
-                    es_ticket: !FUENTES[item.modulo].soloAdmin,
-                    puede_gestionar: !FUENTES[item.modulo].soloAdmin && (
+                    es_ticket: true,
+                    puede_gestionar: (
                         tieneVistaGlobal(solicitante.rol)
                         || Number(flujo?.asignado_a) === Number(solicitante.id_usuario)
                         || (!flujo?.asignado_a && Number(item.id_propietario) === Number(solicitante.id_usuario))
                     ),
-                    puede_asignar: !FUENTES[item.modulo].soloAdmin && tieneVistaGlobal(solicitante.rol),
+                    puede_asignar: tieneVistaGlobal(solicitante.rol),
                     puede_editar: esAdministrador(solicitante.rol),
                     puede_eliminar: esAdministrador(solicitante.rol)
                 };
