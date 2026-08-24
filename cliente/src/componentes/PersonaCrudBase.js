@@ -107,13 +107,13 @@ function PersonaCrudBase({
   }, [getRegistros]);
 
   useEffect(() => {
-    if (!puedeAsignar) return;
+    if (!puedeAsignar && !showAssignmentSelect) return;
     Axios.get('https://sistema-cabal.onrender.com/api/reporteria/usuarios-asignables/lista', {
       params: { id_usuario: usuarioLogueado.id_usuario }
     })
       .then((res) => setUsuariosAsignables(Array.isArray(res.data) ? res.data : []))
       .catch((error) => console.error('No se pudieron cargar los usuarios asignables:', error));
-  }, [puedeAsignar, usuarioLogueado.id_usuario]);
+  }, [puedeAsignar, showAssignmentSelect, usuarioLogueado.id_usuario]);
 
   const buildPayload = () => ({
     dpi: dpi.trim(),
@@ -130,7 +130,7 @@ function PersonaCrudBase({
   });
 
   const add = () => {
-    if (showAssignmentSelect && puedeAsignar && !asignadoA) {
+    if (showAssignmentSelect && !asignadoA) {
       Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Seleccione quién será el encargado del registro.' });
       return;
     }
@@ -460,7 +460,7 @@ function PersonaCrudBase({
                   <label className="form-label fw-bold">Observaciones</label>
                   <textarea className="form-control" rows="3" value={observaciones} onChange={(e) => setObservaciones(e.target.value)}></textarea>
                 </div>
-                {showAssignmentSelect && puedeAsignar && (
+                {showAssignmentSelect && (
                   <div className="mb-3">
                     <label className="form-label fw-bold">Asignar encargado del registro</label>
                     <select className="form-select" value={asignadoA} onChange={(e) => setAsignadoA(e.target.value)}>
@@ -550,7 +550,7 @@ function PersonaCrudBase({
                   <label className="form-label fw-bold">Observaciones</label>
                   <textarea className="form-control" rows="3" value={observaciones} onChange={(e) => setObservaciones(e.target.value)}></textarea>
                 </div>
-                {showAssignmentSelect && puedeAsignar && (
+                {showAssignmentSelect && (
                   <div className="mb-3">
                     <label className="form-label fw-bold">Asignar encargado del registro</label>
                     <select className="form-select" value={asignadoA} onChange={(e) => setAsignadoA(e.target.value)}>

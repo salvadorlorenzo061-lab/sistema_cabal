@@ -233,10 +233,6 @@ router.get('/', async (req, res) => {
 
 router.get('/usuarios-asignables/lista', async (req, res) => {
     try {
-        if (!tieneVistaGlobal(req.solicitante.rol)) {
-            return res.status(403).json({ message: 'Solo ADMIN o Supervisor General puede asignar trabajo.' });
-        }
-
         const usuarios = await query(`
             SELECT id_usuario, nombre, rol
             FROM usuarios
