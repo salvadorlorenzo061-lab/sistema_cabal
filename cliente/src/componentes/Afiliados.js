@@ -31,8 +31,6 @@ function Afiliados() {
     nombre: sesionActiva?.nombre || "SISTEMA",
     rol: sesionActiva?.rol || "Operador"
   };
-  const puedeVerTodos = ['administrador', 'supervisor general'].includes(usuarioLogueado.rol.trim().toLowerCase());
-
   const fechaHoy = new Date().toISOString().split('T')[0];
 
   const [id_afiliado, setId_afiliado] = useState("");
@@ -45,6 +43,7 @@ function Afiliados() {
   const [id_municipio, setId_municipio] = useState(String(MUNICIPIO_JALAPA_ID));
   const [fecha_afiliacion, setFecha_afiliacion] = useState(fechaHoy);
   const [id_usuario, setId_usuario] = useState("");
+  const [encargadoBusqueda, setEncargadoBusqueda] = useState("");
   const [foto, setFoto] = useState(""); 
   
   
@@ -129,7 +128,7 @@ function Afiliados() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(90, 90, 90);
-    escribirLineaMembrete(doc, "DEPARTAMENTO DE REGISTRO DE COCODES", 25);
+    escribirLineaMembrete(doc, "DEPARTAMENTO DE INCIDENTES COCODE", 25);
     escribirLineaMembrete(doc, "SISTEMA DE OBRAS MUNICIPALES JALAPA", 30);
     escribirLineaMembrete(doc, "GENERADO POR: DIRECTOR DE OBRAS", 35);
 
@@ -139,11 +138,11 @@ function Afiliados() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(41, 128, 185);  
-    doc.text("EXPEDIENTE DE COCODE", 133, 18);
+    doc.text("INCIDENTE COCODE", 133, 18);
     
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0); 
-    doc.text(`ID COCODE: #${val.id_afiliado}`, 133, 24); 
+    doc.text(`ID INCIDENTE: #${val.id_afiliado}`, 133, 24);
     
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
@@ -212,6 +211,10 @@ function Afiliados() {
 
   // === ACCIÓN: AGREGAR AFILIADO ===
   const add = () => {
+    if (!id_usuario) {
+      Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Teclee un rol o nombre y seleccione un encargado de la lista.' });
+      return;
+    }
     const fechaEnvio = fecha_afiliacion.trim() || new Date().toISOString().split('T')[0];
 
     Axios.post(`${API_URL}/crear`, { 
@@ -234,7 +237,7 @@ function Afiliados() {
       getAfiliados();
       limpiarCampos();
       setShowRegModal(false);
-      Swal.fire({ icon: "success", title: 'Se creó correctamente COCODE', showConfirmButton: false, timer: 2500 });
+      Swal.fire({ icon: "success", title: 'Se creó correctamente el incidente COCODE', showConfirmButton: false, timer: 2500 });
     })
     .catch((error) => {
       console.error(error);
@@ -248,6 +251,10 @@ function Afiliados() {
 
   // === ACCIÓN: ACTUALIZAR AFILIADO ===
   const actualizar = () => {
+    if (!id_usuario) {
+      Swal.fire({ icon: 'warning', title: 'Encargado requerido', text: 'Teclee un rol o nombre y seleccione un encargado de la lista.' });
+      return;
+    }
     const fechaFormateada = fecha_afiliacion ? fecha_afiliacion.split('T')[0] : new Date().toISOString().split('T')[0];
 
     Axios.put(`${API_URL}/actualizar`, { 
@@ -271,7 +278,7 @@ function Afiliados() {
       getAfiliados();
       limpiarCampos();
       setShowEditModal(false);
-      Swal.fire({ title: '¡Éxito!', text: 'Se actualizó correctamente COCODE', icon: 'success', timer: 2500, showConfirmButton: false });
+      Swal.fire({ title: '¡Éxito!', text: 'Se actualizó correctamente el incidente COCODE', icon: 'success', timer: 2500, showConfirmButton: false });
     })
     .catch((error) => {
       console.error(error);
@@ -304,7 +311,7 @@ function Afiliados() {
         })
         .then(() => {
           getAfiliados();
-          Swal.fire('¡Eliminado!', 'Se eliminó correctamente COCODE', 'success');
+          Swal.fire('¡Eliminado!', 'Se eliminó correctamente el incidente COCODE', 'success');
         })
         .catch(err => {
           console.error(err);
@@ -318,7 +325,7 @@ function Afiliados() {
   const limpiarCampos = () => {
     setId_afiliado(""); setDpi(""); setNombre_completo(""); setTelefono(""); setNumero_celular("");
     setDireccion(""); setBarrio_colonia(""); setId_municipio(String(MUNICIPIO_JALAPA_ID));
-    setFecha_afiliacion(fechaHoy); setId_usuario(String(usuarioLogueado.id_usuario || "")); setFoto("");
+    setFecha_afiliacion(fechaHoy); setId_usuario(""); setEncargadoBusqueda(""); setFoto("");
   
   };
 
@@ -336,7 +343,7 @@ function Afiliados() {
 
   const getCatalogos = useCallback(() => {
     // El catálogo de municipios ya no se consulta: el sistema opera solo en Jalapa.
-    Axios.get(`${BASE_URL}/usuarios`).then((res) => {
+    Axios.get(`${BASE_URL}/usuarios`, { params: { pagina: 1, limite: 500 } }).then((res) => {
       const payload = res.data;
       setUsuarios(Array.isArray(payload) ? payload : (payload.data || []));
     }).catch(err => console.error(err));
@@ -358,6 +365,8 @@ function Afiliados() {
     setId_municipio(String(MUNICIPIO_JALAPA_ID));
     setFecha_afiliacion(val.fecha_afiliacion ? val.fecha_afiliacion.split('T')[0] : "");
     setId_usuario(val.id_usuario);
+    const encargado = usuariosList.find((usuario) => String(usuario.id_usuario) === String(val.id_usuario));
+    setEncargadoBusqueda(encargado ? `${encargado.rol} - ${encargado.nombre}` : (val.nombre_usuario || ""));
     setFoto(val.foto || "");
     
     setLugar_votacion(val.lugar_votacion || "");
@@ -369,12 +378,21 @@ function Afiliados() {
     afi.dpi?.includes(busqueda)
   );
 
+  const seleccionarEncargado = (valor) => {
+    setEncargadoBusqueda(valor);
+    const normalizado = valor.trim().toLowerCase();
+    const seleccionado = usuariosList.find((usuario) =>
+      `${usuario.rol} - ${usuario.nombre}`.toLowerCase() === normalizado
+    );
+    setId_usuario(seleccionado ? String(seleccionado.id_usuario) : "");
+  };
+
   return (
     <div className='container-fluid mt-3 px-2 px-md-3'>
       {/* CABECERA */}
       <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-3">
-          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE COCODES</h4>
+          <h4 className="m-0 text-dark fw-bold">GESTIÓN DE INCIDENTES COCODE</h4>
         </div>
         <div className="col-md-4">
           <div className="input-group">
@@ -393,7 +411,7 @@ function Afiliados() {
             📥 DESCARGAR EXCEL
           </button>
           <button className="btn btn-success fw-bold flex-fill" onClick={() => { limpiarCampos(); setShowRegModal(true); }}>
-            ➕ AGREGAR COCODE
+            ➕ AGREGAR INCIDENTE COCODE
           </button>
         </div>
       </div>
@@ -415,7 +433,7 @@ function Afiliados() {
               <th>DPI</th>
               <th>NOMBRE COMPLETO</th>
               <th>TELÉFONO</th>
-              <th>NOMBRE COCODE</th>
+              <th>NOMBRE INCIDENTE COCODE</th>
               <th>MUNICIPIO</th>
               <th className="text-center">OPERACIÓN</th>
             </tr>
@@ -467,7 +485,7 @@ function Afiliados() {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center text-muted py-3">No se encontraron cocodes coincidentes.</td>
+                <td colSpan="8" className="text-center text-muted py-3">No se encontraron incidentes COCODE coincidentes.</td>
               </tr>
             )}
           </tbody>
@@ -480,7 +498,7 @@ function Afiliados() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-success text-white">
-                <h5 className="modal-title fw-bold">REGISTRAR NUEVO COCODE</h5>
+                <h5 className="modal-title fw-bold">REGISTRAR INCIDENTE COCODE</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => { setShowRegModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
@@ -537,10 +555,20 @@ function Afiliados() {
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
-                    <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select" disabled={!puedeVerTodos}>
-                      <option value="">-- Seleccione Usuario --</option>
-                      {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
-                    </select>
+                    <input
+                      type="text"
+                      value={encargadoBusqueda}
+                      onChange={(e) => seleccionarEncargado(e.target.value)}
+                      className="form-control"
+                      list="encargados-incidente-cocode-crear"
+                      placeholder="Teclee rol o nombre del encargado"
+                    />
+                    <datalist id="encargados-incidente-cocode-crear">
+                      {usuariosList.map((usuario) => (
+                        <option key={usuario.id_usuario} value={`${usuario.rol} - ${usuario.nombre}`} />
+                      ))}
+                    </datalist>
+                    <small className="text-muted">Inicia vacío. Teclee el rol o nombre y seleccione una coincidencia.</small>
                   </div>
                 </div>
                 <div className="row align-items-center">
@@ -568,7 +596,7 @@ function Afiliados() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-warning text-dark">
-                <h5 className="modal-title fw-bold">Actualizar Cocode #{id_afiliado}</h5>
+                <h5 className="modal-title fw-bold">Actualizar Incidente Cocode #{id_afiliado}</h5>
                 <button type="button" className="btn-close" onClick={() => { setShowEditModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
@@ -624,10 +652,20 @@ function Afiliados() {
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label fw-bold">Encargado Obra Municipal (Asignado):</label>
-                    <select value={id_usuario} onChange={(e) => setId_usuario(e.target.value)} className="form-select" disabled={!puedeVerTodos}>
-                      <option value="">-- Seleccione Usuario --</option>
-                      {usuariosList.map((u) => <option key={u.id_usuario} value={u.id_usuario}>{u.nombre}</option>)}
-                    </select>
+                    <input
+                      type="text"
+                      value={encargadoBusqueda}
+                      onChange={(e) => seleccionarEncargado(e.target.value)}
+                      className="form-control"
+                      list="encargados-incidente-cocode-editar"
+                      placeholder="Teclee rol o nombre del encargado"
+                    />
+                    <datalist id="encargados-incidente-cocode-editar">
+                      {usuariosList.map((usuario) => (
+                        <option key={usuario.id_usuario} value={`${usuario.rol} - ${usuario.nombre}`} />
+                      ))}
+                    </datalist>
+                    <small className="text-muted">Teclee el rol o nombre y seleccione una coincidencia.</small>
                   </div>
                 </div>
                 <div className="row align-items-center">

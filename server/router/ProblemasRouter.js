@@ -203,7 +203,9 @@ router.get("/", (req, res) => {
                 ${campoFoto},
                 m.nombre_municipio,
                 a.nombre_completo AS nombre_cocode,
-                a.dpi AS dpi_cocode
+                a.dpi AS dpi_cocode,
+                a.telefono AS telefono_cocode,
+                a.numero_celular AS celular_cocode
             FROM problemas p
             LEFT JOIN municipios m ON p.id_municipio = m.id_municipio
             LEFT JOIN afiliados a ON p.id_afiliado = a.id_afiliado

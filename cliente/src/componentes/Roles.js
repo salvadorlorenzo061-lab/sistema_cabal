@@ -9,10 +9,10 @@ const MODULOS = [
   { key: 'bitacora',      label: 'Bitacora' },
   { key: 'comunidades',   label: 'Aldeas / Caserios' },
   { key: 'roles',         label: 'Roles' },
-  { key: 'cocode',        label: 'Cocode' },
+  { key: 'cocode',        label: 'Incidente Cocode' },
   { key: 'problemas',     label: 'Problemas' },
   { key: 'lideres',       label: 'Lideres' },
-  { key: 'propersonales', label: 'Problemas Personales' },
+  { key: 'propersonales', label: 'Incidentes Personales' },
   { key: 'reporteria',    label: 'Reporteria' },
 ];
 

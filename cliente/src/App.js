@@ -379,7 +379,7 @@ function App() {
 
               {tieneAcceso('propersonales') && (
                 <Link to="/propersonales" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">📝</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">PROBLEMAS PERSONALES</span>}
+                  <span className="sidebar-module-icon">📝</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">INCIDENTES PERSONALES</span>}
                 </Link>
               )}
 
@@ -391,7 +391,7 @@ function App() {
 
               {tieneAcceso('cocode') && (
                 <Link to="/cocode" onClick={() => window.innerWidth <= 768 && setIsMenuOpen(false)} className={sidebarModuleClass}>
-                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">COCODE</span>}
+                  <span className="sidebar-module-icon">👨‍⚖️</span> {(isMenuOpen || isMobile) && <span className="sidebar-module-label">INCIDENTE COCODE</span>}
                 </Link>
               )}
 

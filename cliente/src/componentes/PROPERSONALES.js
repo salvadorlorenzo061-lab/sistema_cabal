@@ -5,10 +5,10 @@ function PROPERSONALES() {
     <PersonaCrudBase
       apiPath="propersonales"
       idField="id_propersonal"
-      entityLabel="problema personal"
-      entityLabelPlural="problemas personales"
-      heading="GESTION DE PROBLEMAS PERSONALES"
-      createLabel="AGREGAR PROBLEMA PERSONAL"
+      entityLabel="incidente personal"
+      entityLabelPlural="incidentes personales"
+      heading="GESTIÓN DE INCIDENTES PERSONALES"
+      createLabel="AGREGAR INCIDENTE PERSONAL"
       accentClass="danger"
       useLocalidadesEnDireccion={true}
     />

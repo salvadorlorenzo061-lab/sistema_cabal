@@ -56,7 +56,7 @@ const prepararEsquema = () => {
 
 const FUENTES = {
     cocode: {
-        label: 'COCODE',
+        label: 'Incidente Cocode',
         listar: `
             SELECT 'cocode' AS modulo, a.id_afiliado AS id_registro,
                 a.nombre_completo AS titulo,
@@ -98,7 +98,7 @@ const FUENTES = {
         eliminar: 'DELETE FROM lideres WHERE id_lider=?'
     },
     propersonales: {
-        label: 'Problemas personales',
+        label: 'Incidentes personales',
         listar: `
             SELECT 'propersonales' AS modulo, p.id_propersonal AS id_registro, p.nombre AS titulo,
                 p.observaciones AS detalle, p.estado AS estado_origen,

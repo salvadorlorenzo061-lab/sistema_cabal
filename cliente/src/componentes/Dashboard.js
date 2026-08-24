@@ -194,7 +194,7 @@ function Dashboard() {
       {/* HEADER Y FILTROS */}
       <div className="dashboard-header mb-4">
         <h3 className="m-0 fw-bold">PANEL EJECUTIVO DEL SISTEMA</h3>
-        <small className="text-muted">Visión consolidada de cocodes, incidencias, cobertura territorial y actividad operativa.</small>
+        <small className="text-muted">Visión consolidada de incidentes COCODE, incidencias, cobertura territorial y actividad operativa.</small>
 
         <div className="dashboard-period-filter mt-3 d-flex align-items-center gap-2">
           <button type="button" className={`btn btn-sm ${periodo === 'hoy' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setPeriodo('hoy')}>Hoy</button>
@@ -210,7 +210,7 @@ function Dashboard() {
         <div className="col-12 col-md-6 col-xl-4">
           <div className="card border-0 shadow-sm h-100 dashboard-kpi dashboard-kpi-success">
             <div className="card-body">
-              <h6 className="text-muted fw-bold">INFORMACION DE COCODES</h6>
+              <h6 className="text-muted fw-bold">INCIDENTES COCODE</h6>
               <h2 className="display-6 fw-bold mb-1">{conNombreCocode}</h2>
               <small className="text-muted">Con campo de nombre de cocode</small>
             </div>
@@ -275,7 +275,7 @@ function Dashboard() {
       <div className="row g-3 mb-4">
         <div className="col-12 col-lg-8">
           <div className="card shadow-sm border-0 p-3 h-100">
-            <h5 className="card-title text-muted fw-bold mb-3">COCODES POR MUNICIPIO (TOP 8)</h5>
+            <h5 className="card-title text-muted fw-bold mb-3">INCIDENTES COCODE POR MUNICIPIO (TOP 8)</h5>
             <div style={{ width: '100%', height: 300, minWidth: 0 }}>
               {!chartsReady ? (
                 <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
@@ -289,7 +289,7 @@ function Dashboard() {
                     <YAxis allowDecimals={false} />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="Cantidad" fill="#2980b9" radius={[4, 4, 0, 0]} name="No. Cocodes" />
+                    <Bar dataKey="Cantidad" fill="#2980b9" radius={[4, 4, 0, 0]} name="No. Incidentes COCODE" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -326,7 +326,7 @@ function Dashboard() {
       <div className="row g-3 mb-4">
         <div className="col-12 col-lg-6">
           <div className="card shadow-sm border-0 p-3 h-100">
-            <h5 className="card-title text-muted fw-bold mb-3">TENDENCIA MENSUAL DE COCODES</h5>
+            <h5 className="card-title text-muted fw-bold mb-3">TENDENCIA MENSUAL DE INCIDENTES COCODE</h5>
             <div style={{ width: '100%', height: 300, minWidth: 0 }}>
               {!chartsReady ? (
                 <div className="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
