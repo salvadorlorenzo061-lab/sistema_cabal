@@ -70,7 +70,7 @@ const FUENTES = {
         eliminar: 'DELETE FROM afiliados WHERE id_afiliado=?'
     },
     problemas: {
-        label: 'Problemas',
+        label: 'Incidente COCODE',
         listar: `
             SELECT 'problemas' AS modulo, p.id_problema AS id_registro,
                 p.titulo, p.descripcion AS detalle, p.estado AS estado_origen,

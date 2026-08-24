@@ -9,7 +9,7 @@ import { agregarMembrete, escribirLineaMembrete } from '../utils/pdfMembrete';
 const MODULOS_OPERATIVOS = [
   { value: '', label: 'Todos los modulos' },
   { value: 'cocode', label: 'Incidente Cocode' },
-  { value: 'problemas', label: 'Problemas' },
+  { value: 'problemas', label: 'Incidente COCODE' },
   { value: 'lideres', label: 'Lideres' },
   { value: 'propersonales', label: 'Incidentes personales' }
 ];

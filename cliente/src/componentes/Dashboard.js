@@ -232,7 +232,7 @@ function Dashboard() {
             <div className="card-body">
               <h6 className="text-muted fw-bold">INCIDENCIAS ABIERTAS</h6>
               <h2 className="display-6 fw-bold mb-1">{problemasActivos}</h2>
-              <small className="text-muted">{totalProblemas} problemas registrados</small>
+              <small className="text-muted">{totalProblemas} incidentes COCODE registrados</small>
             </div>
           </div>
         </div>

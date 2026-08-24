@@ -83,7 +83,7 @@ function Problemas() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(231, 76, 60);  // Color rojo/alerta institucional para problemas
-    doc.text("TICKET DE INCIDENCIA", 133, 18);
+    doc.text("TICKET DE INCIDENTE COCODE", 133, 18);
     
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0); 
@@ -100,7 +100,7 @@ function Problemas() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(40, 40, 40);
-    doc.text("DETALLES GENERALES DEL PROBLEMA", 14, 49);
+    doc.text("DETALLES GENERALES DEL INCIDENTE COCODE", 14, 49);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9.5);
@@ -123,8 +123,8 @@ function Problemas() {
       startY: startYTable,
       head: [['PARÁMETRO', 'DETALLE EN BASE DE DATOS']],
       body: [
-        ['ID ÚNICO DEL PROBLEMA', `#${val.id_problema}`],
-        ['TÍTULO DE LA INCIDENCIA', val.titulo ? val.titulo.toUpperCase() : 'N/A'],
+        ['ID ÚNICO DEL INCIDENTE COCODE', `#${val.id_problema}`],
+        ['TÍTULO DEL INCIDENTE COCODE', val.titulo ? val.titulo.toUpperCase() : 'N/A'],
         ['DESCRIPCIÓN DETALLADA', val.descripcion || 'Sin descripción.'],
         ['BARRIO / COLONIA / COMUNIDAD', val.barrio_colonia ? val.barrio_colonia.toUpperCase() : 'N/A'],
         ['MUNICIPIO AFECTADO', val.nombre_municipio ? val.nombre_municipio.toUpperCase() : 'N/A'],
@@ -150,10 +150,10 @@ function Problemas() {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
-    doc.text("Nota de seguridad: Esta ficha contiene datos de incidencias ciudadanas de uso interno.", 14, finalY);
+    doc.text("Nota de seguridad: Esta ficha contiene datos de incidentes COCODE de uso interno.", 14, finalY);
     doc.text("Control de Auditoría Interna de Sistemas de Información.", 14, finalY + 4);
 
-    doc.save(`Problema_${val.id_problema}_${val.titulo ? val.titulo.replace(/\s+/g, '_') : 'Incidencia'}.pdf`);
+    doc.save(`Incidente_COCODE_${val.id_problema}_${val.titulo ? val.titulo.replace(/\s+/g, '_') : 'Incidencia'}.pdf`);
   };
 
   // =========================================================================
@@ -188,7 +188,7 @@ function Problemas() {
       Swal.fire({
         icon: "success",
         title: '¡Registro Exitoso!',
-        text: `El problema "${titulo}" se guardó en el sistema y bitácora de auditoría.`,
+        text: `El incidente COCODE "${titulo}" se guardó en el sistema y bitácora de auditoría.`,
         showConfirmButton: false,
         timer: 3000
       });
@@ -232,7 +232,7 @@ function Problemas() {
       setShowEditModal(false);
       Swal.fire({
         title: '¡Éxito!',
-        text: 'Problema actualizado correctamente y cambios guardados.',
+        text: 'Incidente COCODE actualizado correctamente y cambios guardados.',
         icon: 'success',
         timer: 3000,
         showConfirmButton: false
@@ -251,7 +251,7 @@ function Problemas() {
   const deleteProblema = (val) => {
     Swal.fire({
       title: "Confirmar eliminación",
-      html: `<i>¿Desea eliminar el problema: <strong>${val.titulo}</strong>? El evento se auditará en la bitácora.</i>`,
+      html: `<i>¿Desea eliminar el incidente COCODE: <strong>${val.titulo}</strong>? El evento se auditará en la bitácora.</i>`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -267,7 +267,7 @@ function Problemas() {
         })
         .catch((error) => {
            console.error(error);
-           Swal.fire('Error', 'No se pudo eliminar el problema', 'error');
+           Swal.fire('Error', 'No se pudo eliminar el incidente COCODE', 'error');
         });
       }
     });
@@ -412,7 +412,7 @@ function Problemas() {
       {/* CABECERA DE LA PANTALLA */}
       <div className="row mb-4 align-items-center bg-light p-3 rounded shadow-sm module-toolbar">
         <div className="col-md-4">
-          <h3 className="m-0 text-dark fw-bold">GESTIÓN DE PROBLEMAS</h3>
+          <h3 className="m-0 text-dark fw-bold">INCIDENTE COCODE</h3>
           <small className="text-muted">Operador activo: <strong>{nombreUsuarioLogueado}</strong></small>
         </div>
         <div className="col-md-5">
@@ -432,7 +432,7 @@ function Problemas() {
             className="btn btn-danger fw-bold w-100" 
             onClick={() => { limpiarCampos(); setShowRegModal(true); }}
           >
-            ➕ REPORTAR PROBLEMA
+            ➕ REPORTAR INCIDENTE COCODE
           </button>
         </div>
       </div>
@@ -517,7 +517,7 @@ function Problemas() {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center text-muted py-3">No se encontraron problemas reportados.</td>
+                <td colSpan="7" className="text-center text-muted py-3">No se encontraron incidentes COCODE reportados.</td>
               </tr>
             )}
           </tbody>
@@ -530,13 +530,13 @@ function Problemas() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-danger text-white">
-                <h5 className="modal-title fw-bold">Registrar Incidencia / Problema</h5>
+                <h5 className="modal-title fw-bold">Registrar Incidente COCODE</h5>
                 <button type="button" className="btn-close btn-close-white" onClick={() => { setShowRegModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Título de la Incidencia:</label>
+                    <label className="form-label fw-bold">Título del Incidente COCODE:</label>
                     <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="form-control" placeholder="Ej: Fuga de Agua Potable" />
                   </div>
                   <div className="col-md-6 mb-3">
@@ -582,7 +582,7 @@ function Problemas() {
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Descripción del Problema:</label>
+                  <label className="form-label fw-bold">Descripción del Incidente COCODE:</label>
                   <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} className="form-control" rows="3" placeholder="Detalle la situación observada en la comunidad..."></textarea>
                 </div>
 
@@ -651,12 +651,12 @@ function Problemas() {
 
                 {mostrarCargaFoto && (
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Fotografía del Problema:</label>
+                    <label className="form-label fw-bold">Fotografía del Incidente COCODE:</label>
                     <input type="file" accept="image/*" className="form-control" onChange={handleFotoChange} />
                     {foto && (
                       <img
                         src={foto}
-                        alt="Evidencia del problema"
+                        alt="Evidencia del incidente COCODE"
                         className="img-fluid mt-2 rounded border"
                         style={{ maxHeight: '180px', objectFit: 'cover' }}
                       />
@@ -666,7 +666,7 @@ function Problemas() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowRegModal(false); limpiarCampos(); }}>Cancelar</button>
-                <button type="button" className="btn btn-danger fw-bold" onClick={add}>Guardar Incidencia</button>
+                <button type="button" className="btn btn-danger fw-bold" onClick={add}>Guardar Incidente COCODE</button>
               </div>
             </div>
           </div>
@@ -679,13 +679,13 @@ function Problemas() {
           <div className="modal-dialog modal-lg">
             <div className="modal-content shadow-lg">
               <div className="modal-header bg-warning text-dark">
-                <h5 className="modal-title fw-bold">Actualizar Incidencia #{id_problema}</h5>
+                <h5 className="modal-title fw-bold">Actualizar Incidente COCODE #{id_problema}</h5>
                 <button type="button" className="btn-close" onClick={() => { setShowEditModal(false); limpiarCampos(); }}></button>
               </div>
               <div className="modal-body">
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label fw-bold">Título de la Incidencia:</label>
+                    <label className="form-label fw-bold">Título del Incidente COCODE:</label>
                     <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} className="form-control" />
                   </div>
                   <div className="col-md-6 mb-3">
@@ -731,7 +731,7 @@ function Problemas() {
                 )}
 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Descripción del Problema:</label>
+                  <label className="form-label fw-bold">Descripción del Incidente COCODE:</label>
                   <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} className="form-control" rows="3"></textarea>
                 </div>
 
@@ -800,12 +800,12 @@ function Problemas() {
 
                 {mostrarCargaFoto && (
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Fotografía del Problema:</label>
+                    <label className="form-label fw-bold">Fotografía del Incidente COCODE:</label>
                     <input type="file" accept="image/*" className="form-control" onChange={handleFotoChange} />
                     {foto && (
                       <img
                         src={foto}
-                        alt="Evidencia del problema"
+                        alt="Evidencia del incidente COCODE"
                         className="img-fluid mt-2 rounded border"
                         style={{ maxHeight: '180px', objectFit: 'cover' }}
                       />

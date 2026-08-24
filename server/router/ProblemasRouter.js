@@ -129,13 +129,13 @@ router.post("/crear", (req, res) => {
         db.query(sqlInsert, paramsInsert, (insertErr, insertResult) => {
             if (insertErr) {
                 console.error(insertErr);
-                return res.status(500).send("Error al registrar la incidencia en el sistema");
+                return res.status(500).send("Error al registrar el incidente COCODE en el sistema");
             }
 
             // Consulta descriptiva para enriquecer la bitácora de auditoría
             const muniNombre = obtenerMunicipioPorId(id_municipio)?.nombre_municipio || `ID: ${id_municipio}`;
             const nuevoId = insertResult.insertId;
-            const detalles = `Se reportó la incidencia '${titulo.toUpperCase()}' en el barrio/colonia '${barrio_colonia.toUpperCase()}', ${muniNombre.toUpperCase()}. Registrado con estado inicial '${estado.toUpperCase()}' por COCODE ID #${cocodeId} (Ticket: TCK-${new Date().getFullYear()}-${String(nuevoId).padStart(6, '0')}).`;
+            const detalles = `Se reportó el incidente COCODE '${titulo.toUpperCase()}' en el barrio/colonia '${barrio_colonia.toUpperCase()}', ${muniNombre.toUpperCase()}. Registrado con estado inicial '${estado.toUpperCase()}' por COCODE ID #${cocodeId} (Ticket: TCK-${new Date().getFullYear()}-${String(nuevoId).padStart(6, '0')}).`;
 
             const sqlBitacora = `
                 INSERT INTO bitacora (id_usuario, tipo_movimiento, ejecutado_por, detalles) 
@@ -145,7 +145,7 @@ router.post("/crear", (req, res) => {
             const finalizarCreacion = () => {
                 db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detalles], (bitacoraErr) => {
                     if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
-                    return res.status(200).json({ message: "Problema de la comunidad registrado con éxito", id_problema: nuevoId });
+                    return res.status(200).json({ message: "Incidente COCODE registrado con éxito", id_problema: nuevoId });
                 });
             };
 
@@ -158,7 +158,7 @@ router.post("/crear", (req, res) => {
             `, [nuevoId, Number(asignado_a), id_usuario_operador || null], (asignacionErr) => {
                 if (asignacionErr) {
                     console.error("Error asignando ticket recién creado:", asignacionErr);
-                    return res.status(500).json({ message: "El problema se creó, pero no se pudo asignar al encargado." });
+                    return res.status(500).json({ message: "El incidente COCODE se creó, pero no se pudo asignar al encargado." });
                 }
                 return finalizarCreacion();
             });
@@ -219,13 +219,13 @@ router.get("/", (req, res) => {
         db.query(`SELECT COUNT(*) AS total FROM problemas p ${filtroPropietario}`, paramsPropietario, (countErr, countResult) => {
             if (countErr) {
                 console.error(countErr);
-                return res.status(500).send("Error al obtener el listado de problemas");
+                return res.status(500).send("Error al obtener el listado de incidentes COCODE");
             }
 
             db.query(sqlQuery, [...paramsPropietario, limite, offset], (err, result) => {
                 if (err) {
                     console.error(err);
-                    res.status(500).send("Error al obtener el listado de problemas");
+                    res.status(500).send("Error al obtener el listado de incidentes COCODE");
                 } else {
                     const data = result.map((row) => ({
                         ...row,
@@ -269,7 +269,7 @@ router.put("/actualizar", (req, res) => {
     db.query(sqlSelectOld, [id_problema], (errOld, resultOld) => {
         if (errOld || resultOld.length === 0) {
             console.error(errOld);
-            return res.status(500).send("Error al verificar el registro previo de la incidencia");
+            return res.status(500).send("Error al verificar el registro previo del incidente COCODE");
         }
 
         const registroViejo = resultOld[0];
@@ -287,7 +287,7 @@ router.put("/actualizar", (req, res) => {
                 db.query(sqlUpdate, paramsUpdate, (updateErr, updateResult) => {
                 if (updateErr) {
                     console.error(updateErr);
-                    return res.status(500).send("Error al actualizar la incidencia");
+                    return res.status(500).send("Error al actualizar el incidente COCODE");
                 }
 
                 // 3. Evaluar qué campos cambiaron exactamente para la Bitácora
@@ -299,8 +299,8 @@ router.put("/actualizar", (req, res) => {
                 if (registroViejo.id_afiliado !== parseInt(cocodeId, 10)) cambios.push(`COCODE ID: '${registroViejo.id_afiliado}' -> '${cocodeId}'`);
 
                 const detallesString = cambios.length > 0 
-                    ? `Modificado por ${nombre_usuario_operador}. Cambios en problema ID #${id_problema}: ${cambios.join(', ')}`
-                    : `Se guardó la incidencia ID #${id_problema} sin efectuar variaciones en sus campos primarios.`;
+                    ? `Modificado por ${nombre_usuario_operador}. Cambios en incidente COCODE ID #${id_problema}: ${cambios.join(', ')}`
+                    : `Se guardó el incidente COCODE ID #${id_problema} sin efectuar variaciones en sus campos primarios.`;
 
                 const sqlBitacora = `
                     INSERT INTO bitacora (id_usuario, tipo_movimiento, ejecutado_por, detalles) 
@@ -310,7 +310,7 @@ router.put("/actualizar", (req, res) => {
                 const finalizarActualizacion = () => {
                     db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detallesString], (bitacoraErr) => {
                         if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
-                        return res.status(200).send("Incidencia actualizada correctamente");
+                        return res.status(200).send("Incidente COCODE actualizado correctamente");
                     });
                 };
 
@@ -323,7 +323,7 @@ router.put("/actualizar", (req, res) => {
                 `, [id_problema, Number(asignado_a), id_usuario_operador || null], (asignacionErr) => {
                     if (asignacionErr) {
                         console.error("Error actualizando encargado del ticket:", asignacionErr);
-                        return res.status(500).send("La incidencia se actualizó, pero no se pudo cambiar el encargado");
+                        return res.status(500).send("El incidente COCODE se actualizó, pero no se pudo cambiar el encargado");
                     }
                     return finalizarActualizacion();
                 });
@@ -339,16 +339,16 @@ router.delete("/delete/:id_problema", (req, res) => {
 
     db.query('SELECT titulo, barrio_colonia FROM problemas WHERE id_problema = ?', [id_problema], (errFind, resultFind) => {
         if (errFind || resultFind.length === 0) {
-            return res.status(500).send("No se localizó la incidencia a remover");
+            return res.status(500).send("No se localizó el incidente COCODE a remover");
         }
 
         const problema = resultFind[0];
-        const detalles = `Se eliminó el reporte de problema '${problema.titulo.toUpperCase()}' ubicado en '${problema.barrio_colonia.toUpperCase()}' (ID previo removido: #${id_problema}).`;
+        const detalles = `Se eliminó el incidente COCODE '${problema.titulo.toUpperCase()}' ubicado en '${problema.barrio_colonia.toUpperCase()}' (ID previo removido: #${id_problema}).`;
 
         db.query('DELETE FROM problemas WHERE id_problema=?', [id_problema], (err, result) => {
             if (err) {
                 console.error(err);
-                return res.status(500).send("Error al eliminar el registro de la tabla problemas");
+                return res.status(500).send("Error al eliminar el incidente COCODE");
             }
 
             const sqlBitacora = `
@@ -358,7 +358,7 @@ router.delete("/delete/:id_problema", (req, res) => {
 
             db.query(sqlBitacora, [id_usuario_operador, nombre_usuario_operador, detalles], (bitacoraErr) => {
                 if (bitacoraErr) console.error("Error al escribir en bitácora:", bitacoraErr);
-                return res.status(200).send("Problema eliminado del registro de auditoría"); 
+                return res.status(200).send("Incidente COCODE eliminado del registro de auditoría");
             });
         });
     });

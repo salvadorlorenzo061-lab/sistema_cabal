@@ -10,7 +10,7 @@ const MODULOS = [
   { key: 'comunidades',   label: 'Aldeas / Caserios' },
   { key: 'roles',         label: 'Roles' },
   { key: 'cocode',        label: 'Incidente Cocode' },
-  { key: 'problemas',     label: 'Problemas' },
+  { key: 'problemas',     label: 'Incidente COCODE' },
   { key: 'lideres',       label: 'Lideres' },
   { key: 'propersonales', label: 'Incidentes Personales' },
   { key: 'reporteria',    label: 'Reporteria' },
