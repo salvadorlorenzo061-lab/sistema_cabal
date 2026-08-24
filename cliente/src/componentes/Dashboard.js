@@ -4,6 +4,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Dashboard() {
+  const sesionActiva = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('sesion_cabal') || 'null');
+    } catch (_) {
+      return null;
+    }
+  })();
+  const parametrosSesion = {
+    id_usuario: Number(sesionActiva?.id_usuario) || 0,
+    rol: sesionActiva?.rol || ''
+  };
+
   const [cocodes, setCocodes] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [problemas, setProblemas] = useState([]);
@@ -20,9 +32,9 @@ function Dashboard() {
     const normalizeList = (payload) => (Array.isArray(payload) ? payload : (payload?.data || []));
 
     Promise.allSettled([
-      Axios.get(`${API_BASE}/afiliados`, { params: { pagina: 1, limite: 5000 } }),
+      Axios.get(`${API_BASE}/afiliados`, { params: { pagina: 1, limite: 5000, ...parametrosSesion } }),
       Axios.get(`${API_BASE}/usuarios`),
-      Axios.get(`${API_BASE}/problemas`),
+      Axios.get(`${API_BASE}/problemas`, { params: { pagina: 1, limite: 5000, ...parametrosSesion } }),
       Axios.get(`${API_BASE}/comunidades`),
       Axios.get(`${API_BASE}/municipios`),
       Axios.get(`${API_BASE}/bitacora`)

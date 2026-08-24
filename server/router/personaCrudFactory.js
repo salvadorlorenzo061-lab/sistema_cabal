@@ -63,7 +63,7 @@ const crearRouterCrudPersona = ({
         const offset = (pagina - 1) * limite;
         const idUsuario = parseInt(req.query.id_usuario || '0', 10);
         const rol = String(req.query.rol || '').trim().toLowerCase();
-        const puedeVerTodos = rol === 'administrador' || rol === 'supervisor general';
+        const puedeVerTodos = rol === 'admin' || rol === 'administrador' || rol === 'supervisor general';
         const whereSQL = puedeVerTodos ? '' : 'WHERE id_usuario = ?';
         const params = puedeVerTodos ? [] : [idUsuario];
 

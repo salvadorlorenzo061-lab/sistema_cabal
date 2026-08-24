@@ -173,7 +173,7 @@ router.get("/", (req, res) => {
     const offset = (pagina - 1) * limite;
     const idUsuario = parseInt(req.query.id_usuario || '0', 10);
     const rol = String(req.query.rol || '').trim().toLowerCase();
-    const puedeVerTodos = rol === 'administrador' || rol === 'supervisor general';
+    const puedeVerTodos = rol === 'admin' || rol === 'administrador' || rol === 'supervisor general';
 
     if (!puedeVerTodos && !idUsuario) {
         return res.status(400).json({ message: "No se pudo identificar al usuario de la sesión." });
